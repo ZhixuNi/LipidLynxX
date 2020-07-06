@@ -1,7 +1,17 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2016-2019  SysMedOs_team @ AG Bioanalytik, University of Leipzig:
+# Copyright (C) 2016-2020  SysMedOs_team @ AG Bioanalytik, University of Leipzig:
 # SysMedOs_team: Zhixu Ni, Georgia Angelidou, Mike Lange, Maria Fedorova
+#
+# LipidLynxX is Dual-licensed
+#   For academic and non-commercial use: GPLv2 License:
+#   For commercial use: please contact the SysMedOs team by email.
+#
+# Please cite our publication in an appropriate form.
+#   LipidLynxX preprint on bioRxiv.org
+#   Zhixu Ni, Maria Fedorova.
+#   "LipidLynxX: lipid annotations converter for large scale lipidomics and epilipidomics datasets"
+#   DOI: 10.1101/2020.04.09.033894
 #
 # For more info please contact:
 #     Developer Zhixu Ni zhixu.ni@uni-leipzig.de
@@ -25,7 +35,7 @@ def parse_lipidlynx(abbr: str) -> dict:
 
     info_dct = {}
 
-    converted_dct = Converter.convert_string(abbr)
+    converted_dct = Converter.convert_str(abbr)
     lynx_id_lst = converted_dct.get("output", [])
     if len(lynx_id_lst) == 1:
         lynx_id = lynx_id_lst[0]
