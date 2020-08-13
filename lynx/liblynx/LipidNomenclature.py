@@ -1,16 +1,13 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2016-2020  SysMedOs_team @ AG Bioanalytik, University of Leipzig:
-# SysMedOs_team: Zhixu Ni, Georgia Angelidou, Mike Lange, Maria Fedorova
 #
-# LipidLynxX is Dual-licensed
-#   For academic and non-commercial use: GPLv2 License:
-#   For commercial use: please contact the SysMedOs team by email.
+# LipidLynxX is using GPL V3 License
 #
 # Please cite our publication in an appropriate form.
 #   LipidLynxX preprint on bioRxiv.org
 #   Zhixu Ni, Maria Fedorova.
-#   "LipidLynxX: lipid annotations converter for large scale lipidomics and epilipidomics datasets"
+#   "LipidLynxX: a data transfer hub to support integration of large scale lipidomics datasets"
 #   DOI: 10.1101/2020.04.09.033894
 #
 # For more info please contact:
@@ -185,8 +182,8 @@ class ParserFA:
                         c_shift = 3
                         if c_shift * _mod_count > int(fa_info_dct["NUM_C"]) - 2:
                             c_shift = (
-                                2
-                            )  # if more C=C in chain and no bis-allylic position
+                                2  # if more C=C in chain and no bis-allylic position
+                            )
                             logger.info(
                                 "Too many C=C, try to remove bis-allylic positions"
                             )

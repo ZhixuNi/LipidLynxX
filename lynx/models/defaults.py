@@ -1,22 +1,20 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2016-2020  SysMedOs_team @ AG Bioanalytik, University of Leipzig:
-# SysMedOs_team: Zhixu Ni, Georgia Angelidou, Mike Lange, Maria Fedorova
 #
-# LipidLynxX is Dual-licensed
-#   For academic and non-commercial use: GPLv2 License:
-#   For commercial use: please contact the SysMedOs team by email.
+# LipidLynxX is using GPL V3 License
 #
 # Please cite our publication in an appropriate form.
 #   LipidLynxX preprint on bioRxiv.org
 #   Zhixu Ni, Maria Fedorova.
-#   "LipidLynxX: lipid annotations converter for large scale lipidomics and epilipidomics datasets"
+#   "LipidLynxX: a data transfer hub to support integration of large scale lipidomics datasets"
 #   DOI: 10.1101/2020.04.09.033894
 #
 # For more info please contact:
 #     Developer Zhixu Ni zhixu.ni@uni-leipzig.de
 
 import json
+import os
 
 from lynx.utils.cfg_reader import app_cfg_info
 from lynx.utils.params_loader import (
@@ -34,6 +32,17 @@ default_input_rules = build_input_rules(app_cfg_info["input_rules"])
 default_output_rules = build_output_rules(app_cfg_info["output_rules"])
 default_cv_file = get_abs_path(app_cfg_info["controlled_vocabularies"])
 default_alias_file = get_abs_path(app_cfg_info["defined_alias"])
+default_kegg_file = get_abs_path(app_cfg_info["resource_kegg"])
+default_lion_file = get_abs_path(app_cfg_info["resource_lion"])
+default_temp_folder = app_cfg_info.get("temp_folder", r"lynx/temp")
+default_temp_max_days = int(app_cfg_info.get("temp_max_days", "3"))
+default_temp_max_files = int(app_cfg_info.get("temp_max_files", "99"))
+
+if os.path.isdir(default_temp_folder):
+    pass
+else:
+    os.mkdir(default_temp_folder)
+default_temp_folder = get_abs_path(default_temp_folder)
 
 with open(default_cv_file, "r") as cv_js:
     cv_alias_json = json.load(cv_js)
@@ -47,6 +56,16 @@ for _mod in cv_alias_json:
 
 cv_rgx_dct = build_mod_parser(cv_alias_info)
 # abbr_cfg_df = pd.read_excel(cfg_info_dct["defined_alias"])
+
+with open(default_kegg_file, "r") as kegg_json_obj:
+    kegg_ids = json.load(kegg_json_obj)
+
+with open(default_lion_file, "r") as lion_json_obj:
+    lion_ids = json.load(lion_json_obj)
+
+default_template_files = {
+    "LipidLynxX_Linker_Template.csv": "lynx/static/files/LipidLynxX_Linker_Template.csv"
+}
 
 lipid_level_lst = ["B", "D", "S"]
 mod_level_lst = ["0", "1", "2", "3", "4", "5"]

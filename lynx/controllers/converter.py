@@ -1,16 +1,13 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2016-2020  SysMedOs_team @ AG Bioanalytik, University of Leipzig:
-# SysMedOs_team: Zhixu Ni, Georgia Angelidou, Mike Lange, Maria Fedorova
 #
-# LipidLynxX is Dual-licensed
-#   For academic and non-commercial use: GPLv2 License:
-#   For commercial use: please contact the SysMedOs team by email.
+# LipidLynxX is using GPL V3 License
 #
 # Please cite our publication in an appropriate form.
 #   LipidLynxX preprint on bioRxiv.org
 #   Zhixu Ni, Maria Fedorova.
-#   "LipidLynxX: lipid annotations converter for large scale lipidomics and epilipidomics datasets"
+#   "LipidLynxX: a data transfer hub to support integration of large scale lipidomics datasets"
 #   DOI: 10.1101/2020.04.09.033894
 #
 # For more info please contact:
@@ -21,7 +18,7 @@ from typing import List, Dict, Union, Tuple
 
 from lynx.controllers.encoder import Encoder
 
-from lynx.models.api_models import ConvertedStrData, ConvertedListData
+from lynx.models.api_models import ConvertedStrData, ConvertedListData, StyleType
 from lynx.utils.log import app_logger
 from lynx.models.defaults import (
     default_output_rules,
@@ -50,7 +47,7 @@ class Converter:
     def convert_str(self, input_str: str, level: str = None,) -> ConvertedStrData:
         output_dct = {}
         # Set COMP_DB to max level B2
-        if re.search(r'COMP\\s*[_]?\\s*(DB)?', self.style):
+        if re.search(r"COMP\\s*[_]?\\s*(DB)?", self.style):
             level = "B2"
         if input_str and isinstance(input_str, str) and len(input_str) < 512:
             converted_id = self.encoder.convert(input_str, level=level)
@@ -80,8 +77,12 @@ class Converter:
         for abbr_result in abbr_result_lst:
             for k in output_dct:
                 output_dct[k].append(abbr_result.get(k, ""))
-        for k in output_dct:
-            output_dct[k] = [v for v in output_dct[k] if v]  # remove "" or None
+        # for k in output_dct:
+        #     output_dct[k] = [v for v in output_dct[k] if v]  # remove "" or None
+        if "skipped" in output_dct:
+            output_dct["skipped"] = [v for v in output_dct["skipped"] if v]
+        if "converted" in output_dct:
+            output_dct["converted"] = [v for v in output_dct["converted"] if v]
         converted_lst_obj = ConvertedListData(
             input=output_dct.get("input"),
             output=output_dct.get("output"),
@@ -126,24 +127,50 @@ class Converter:
         return output_dct
 
 
+def convert_lipid(
+    lipid: str,
+    style: Union[StyleType, str] = StyleType.lipidlynxx,
+    level: str = "B1",
+    logger=app_logger,
+):
+    converter = Converter(
+        style=style,
+        input_rules=default_input_rules,
+        output_rules=default_output_rules,
+        logger=logger,
+    )
+    if lipid:
+        converted_name = converter.convert_str(input_str=lipid, level=level).output
+        if isinstance(converted_name, str) and len(converted_name) > 0:
+            pass
+        else:
+            converted_name = ""
+    else:
+        converted_name = ""
+
+    return converted_name
+
+
 if __name__ == "__main__":
     # from lynx.utils.log import logger
 
     t_in_lst = [
         # "GM3(d18:1/18:2(9Z,11Z)(12OH))",
-        # "TG P-18:1_18:2(9Z,11Z)(12OH)_18:1(9)(11OH)",
-        # "TG P-18:1_18:2(9Z,11Z)_18:1(9)",
-        # "CL(1'-[18:1(9Z)/18:2(9Z,12Z)],3'-[18:2(9Z,12Z)/18:2(9Z,12Z)])",
-        # "TG(16:0/18:2/9:0<oxo{9}>)",
-        # "HETE",
-        # "HETE",
-        # "SPBP 18:0;O",
-        # "SPBP 18:0;O3",
-        # "Cer 18:1;3O/20:4",
-        # "CoA(20:3(11Z,14Z,17Z))",
-        # "CoA 18:2;O",
-        # "FACoA 18:0",
+        "TG P-18:1_18:2(9Z,11Z)(12OH)_18:1(9)(11OH)",
+        "TG P-18:1_18:2(9Z,11Z)_18:1(9)",
+        "CL(1'-[18:1(9Z)/18:2(9Z,12Z)],3'-[18:2(9Z,12Z)/18:2(9Z,12Z)])",
+        "TG(16:0/18:2/9:0<oxo{9}>)",
+        "HETE",
+        "HETE",
+        "SPBP 18:0;O",
+        "SPBP 18:0;O3",
+        "Cer 18:1;3O/20:4",
+        "CoA(20:3(11Z,14Z,17Z))",
+        "CoA 18:2;O",
+        "FACoA 18:0",
         "Cer 24:2",
+        "LMGP01010594",
+        "lid",
     ]
     lv = "B1"
     # test_out_rule = "COMP_DB"
@@ -153,8 +180,9 @@ if __name__ == "__main__":
         t1_out = lynx_converter.convert(t_in, level="B1")
         app_logger.info(f"Input: {t_in} -> Best Output: {t1_out}")
 
-    # t2_out = lynx_converter.convert(t_in_lst)
-    # logger.info(f"Input: {t_in_lst} -> Best Output: {t2_out}")
+    t2_out = lynx_converter.convert(t_in_lst)
+    app_logger.info(f"Input: {t_in_lst} -> Best Output: {t2_out}")
+    app_logger.info(t2_out)
     #
     # t3_out = lynx_converter.convert({"1": t_in_lst})
     # logger.info(f"Input: {t_in_lst} -> Best Output: {t3_out}")
