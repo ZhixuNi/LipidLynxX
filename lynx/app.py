@@ -17,7 +17,7 @@ from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from fastapi.staticfiles import StaticFiles
 
-from lynx.routers import api, frontend
+from lynx.routers import api, frontend, session
 from lynx.utils.cfg_reader import app_prefix, api_version, app_cfg_info, lynx_version
 
 
@@ -36,6 +36,7 @@ app = FastAPI(
 
 app.include_router(api.router, prefix=f"{app_prefix}/api", tags=["api"])
 app.include_router(frontend.router, prefix=f"{app_prefix}")
+app.include_router(session.router, prefix=f"{app_prefix}/session", tags=["session"])
 app.mount(
     f"{app_prefix}/images", StaticFiles(directory="lynx/static/images"), name="images"
 )

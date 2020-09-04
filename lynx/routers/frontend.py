@@ -19,6 +19,7 @@ import os
 from pathlib import Path
 
 from fastapi import APIRouter, File, Form, Request, UploadFile, HTTPException
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import FileResponse
 from fastapi.templating import Jinja2Templates
 
@@ -47,6 +48,7 @@ from lynx.utils.frontend_tools import (
     get_linker_response_data,
 )
 from lynx.utils.toolbox import get_levels, get_style_level, get_url_safe_str
+from lynx.utils.session_tools import create_session_id
 
 
 # upload file size check
@@ -84,6 +86,13 @@ async def equalizer(request: Request):
     )
 
 
+@router.get("/equalizer_test/", include_in_schema=False)
+async def equalizer_test(request: Request):
+    return templates.TemplateResponse(
+        "equalizer_test.html", {"request": request, "out_dct": {}}
+    )
+
+
 @router.get(f"/", include_in_schema=False)
 async def home(request: Request):
     return templates.TemplateResponse(
@@ -98,7 +107,9 @@ def levels(request: Request):
 
 
 @router.get("/linker/", include_in_schema=False)
-async def linker(request: Request,):
+async def linker(
+    request: Request,
+):
     return templates.TemplateResponse(
         "linker.html", {"request": request, "all_resources": {}}
     )
@@ -199,61 +210,140 @@ async def converter_file(
     return templates.TemplateResponse("converter.html", response_data)
 
 
-@router.post("/equalizer/file/", include_in_schema=False)
-async def equalizer_file(
+# @router.post("/equalizer/file/", include_in_schema=False)
+# async def equalizer_file(
+#     request: Request, file_obj: UploadFile = File(...), match_levels: str = Form(...)
+# ):
+#     table_info, err_lst = get_table(file_obj, err_lst=[])
+#     if table_info:
+#         input_data = InputDictData(data=table_info)
+#         usr_levels = get_levels(match_levels)
+#         if isinstance(usr_levels, str):
+#             export_data = await api.equalize_single_level(input_data, usr_levels)
+#         elif isinstance(usr_levels, list):
+#             levels_data = LevelsData(levels=usr_levels)
+#             export_data = await api.equalize_multiple_levels(input_data, levels_data)
+#         else:
+#             export_data = None
+#             err_lst.append(f"Invalid levels: {match_levels}")
+#         if isinstance(export_data, EqualizerExportData):
+#             # data_encoded = get_url_safe_str(export_data.dict().get("data"))
+#             file_type = "xlsx"
+#             output_name = get_output_name("Equalizer", file_type)
+#             output_path = os.path.join(default_temp_folder, output_name)
+#             output_info = create_equalizer_output(
+#                 export_data.dict().get("data"), output_name=output_path
+#             )
+#             if (
+#                 isinstance(output_info, str)
+#                 and output_info == output_path
+#                 and os.path.isfile(output_path)
+#             ):
+#                 render_data_dct = {
+#                     "request": request,
+#                     "err_msgs": err_lst,
+#                     "output_file_name": output_name,
+#                     "output_generated": True,
+#                 }
+#             else:
+#                 render_data_dct = {
+#                     "request": request,
+#                     "err_msgs": err_lst,
+#                     "output_generated": False,
+#                 }
+#         else:
+#             render_data_dct = {
+#                 "request": request,
+#                 "err_msgs": err_lst,
+#                 "output_generated": False,
+#             }
+#     else:
+#         render_data_dct = {
+#             "request": request,
+#             "err_msgs": err_lst,
+#             "output_generated": False,
+#         }
+#
+#     return templates.TemplateResponse("equalizer.html", render_data_dct)
+
+
+@router.post("/equalizer_test/file/", include_in_schema=False)
+async def equalizer_test_file(
     request: Request, file_obj: UploadFile = File(...), match_levels: str = Form(...)
 ):
     table_info, err_lst = get_table(file_obj, err_lst=[])
     if table_info:
         input_data = InputDictData(data=table_info)
         usr_levels = get_levels(match_levels)
+        # input_data_json = jsonable_encoder(input_data)
         if isinstance(usr_levels, str):
-            export_data = await api.equalize_single_level(input_data, usr_levels)
+            session_id_data = {"data": table_info, "level": usr_levels}
+            session_data = {"data": input_data, "levels": usr_levels}
+            session_id = create_session_id(data=session_id_data)
+            # export_data = await api.equalize_single_level(input_data, usr_levels)
         elif isinstance(usr_levels, list):
             levels_data = LevelsData(levels=usr_levels)
-            export_data = await api.equalize_multiple_levels(input_data, levels_data)
+            session_id_data = {"data": table_info, "levels": usr_levels}
+            session_data = {"data": input_data, "levels": usr_levels}
+            session_id = create_session_id(data=session_id_data)
+            # export_data = await api.equalize_multiple_levels(input_data, levels_data)
         else:
             export_data = None
+            session_id = None
+            err_lst.append('Can NOT create task, please check input data and try again.')
+            session_data = {}
             err_lst.append(f"Invalid levels: {match_levels}")
-        if isinstance(export_data, EqualizerExportData):
-            # data_encoded = get_url_safe_str(export_data.dict().get("data"))
-            file_type = "xlsx"
-            output_name = get_output_name("Equalizer", file_type)
-            output_path = os.path.join(default_temp_folder, output_name)
-            output_info = create_equalizer_output(
-                export_data.dict().get("data"), output_name=output_path
-            )
-            if (
-                isinstance(output_info, str)
-                and output_info == output_path
-                and os.path.isfile(output_path)
-            ):
-                render_data_dct = {
-                    "request": request,
-                    "err_msgs": err_lst,
-                    "output_file_name": output_name,
-                    "output_generated": True,
-                }
-            else:
-                render_data_dct = {
-                    "request": request,
-                    "err_msgs": err_lst,
-                    "output_generated": False,
-                }
-        else:
-            render_data_dct = {
-                "request": request,
-                "err_msgs": err_lst,
-                "output_generated": False,
-            }
     else:
-        render_data_dct = {
-            "request": request,
-            "err_msgs": err_lst,
-            "output_generated": False,
-        }
+        err_lst.append('Can NOT create task, please check input data and try again.')
+        err_lst.append('Can NOT read input file.')
+        session_id = "NO_SESSION"
+        session_data = {}
+    #     if isinstance(export_data, EqualizerExportData):
+    #         # data_encoded = get_url_safe_str(export_data.dict().get("data"))
+    #         file_type = "xlsx"
+    #         output_name = get_output_name("Equalizer", file_type)
+    #         output_path = os.path.join(default_temp_folder, output_name)
+    #         output_info = create_equalizer_output(
+    #             export_data.dict().get("data"), output_name=output_path
+    #         )
+    #         if (
+    #             isinstance(output_info, str)
+    #             and output_info == output_path
+    #             and os.path.isfile(output_path)
+    #         ):
+    #             render_data_dct = {
+    #                 "request": request,
+    #                 "err_msgs": err_lst,
+    #                 "output_file_name": output_name,
+    #                 "output_generated": True,
+    #             }
+    #         else:
+    #             render_data_dct = {
+    #                 "request": request,
+    #                 "err_msgs": err_lst,
+    #                 "output_generated": False,
+    #             }
+    #     else:
+    #         render_data_dct = {
+    #             "request": request,
+    #             "err_msgs": err_lst,
+    #             "output_generated": False,
+    #         }
+    # else:
+    #     render_data_dct = {
+    #         "request": request,
+    #         "err_msgs": err_lst,
+    #         "output_generated": False,
+    #     }
+    render_data_dct = {
+        "request": request,
+        "err_msgs": err_lst,
+        "session_id": session_id,
+        "session_data": session_data,
+        "output_file_name": None,
+    }
 
-    return templates.TemplateResponse("equalizer.html", render_data_dct)
+    return templates.TemplateResponse("equalizer_test.html", render_data_dct)
 
 
 @router.post("/linker/text", include_in_schema=False)

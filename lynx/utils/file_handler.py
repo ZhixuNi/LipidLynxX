@@ -476,7 +476,7 @@ def clean_temp_folder(
     earliest_unix_time = current_time - max_days * 86400  # 24 * 60 * 60 == 86400
     removed_files = []
     temp_files_lst = os.listdir(temp_dir)
-    file_suffix_rgx = re.compile(r"^(.*)(\.)(csv|xlsx?)$", re.IGNORECASE)
+    file_suffix_rgx = re.compile(r"^(.*)(\.)(csv|xlsx?|json|txt)$", re.IGNORECASE)
     temp_file_path_lst = [
         os.path.join(temp_dir, f) for f in temp_files_lst if file_suffix_rgx.match(f)
     ]

@@ -40,10 +40,11 @@ from lynx.models.defaults import (
 from lynx.utils.log import app_logger
 from lynx.utils.toolbox import get_level
 from lynx.utils.file_handler import clean_temp_folder
+from lynx.utils.session_tools import create_session_id
 
 router = APIRouter()
 
-default_levels = LevelsData(levels=["B1", "D1"])
+default_levels = ["B1", "D1"]
 
 removed_files = clean_temp_folder(
     default_temp_folder, default_temp_max_days, default_temp_max_files
@@ -199,12 +200,16 @@ async def equalize_single_level(
 
 @router.post("/equalize/multiple-levels/", response_model=EqualizerExportData)
 async def equalize_multiple_levels(
-    data: InputDictData, levels: Optional[LevelsData] = default_levels
+    data: InputDictData, levels: Optional[list] = None
 ) -> EqualizerExportData:
     """
     Equalize a dict of lipid names into supported levels and export to supported style
     """
     # print(levels.levels)
+    if not levels:
+        levels = default_levels
+    if not isinstance(levels, LevelsData):
+        levels = LevelsData(levels=levels)
     equalizer = Equalizer(data.data, level=levels.levels)
     equalizer_data = equalizer.cross_match()
     return equalizer_data
