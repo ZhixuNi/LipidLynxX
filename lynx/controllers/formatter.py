@@ -42,78 +42,25 @@ class Formatter(object):
                 delta += elem_nominal_info[elem] * elements[elem]
         return delta
 
-    def format_db(self, info: dict) -> dict:
-        db_count_lst = info.get("NUM_DB", [])
-        db_site_lst = info.get("DB_SITE", [])
-        db_site_info_lst = info.get("DB_SITE_INFO", [])
-        db_site_lst = [s.strip(" ") for s in db_site_lst]
-        db_site_lst = [s.strip(",") for s in db_site_lst]
-        db_site_info_lst = [si.strip(" ") for si in db_site_info_lst]
-        formatted_db_type_lst = []
-        db_lv_dct = {}
-        if db_count_lst:
-            db_count = int(db_count_lst[0])
-        else:
-            db_count = 0
-        #
-        # if db_count == len(db_site_lst) == len(db_site_info_lst):
-        #     formatted_db_lst = zip(db_site_lst, db_site_info_lst)
-        # elif db_count == len(db_site_info_lst):
-        #     db_site_lst = [""] * db_count
-        #     formatted_db_lst = zip(db_site_lst, db_site_info_lst)
-        # elif db_count == len(db_site_lst):
-        #     db_site_info_lst = [""] * db_count
-        #     formatted_db_lst = zip(db_site_lst, db_site_info_lst)
-        # elif db_count > 0 and not db_site_lst and not db_site_info_lst:
-        #     db_site_lst = [""] * db_count
-        #     db_site_info_lst = [""] * db_count
-        #     formatted_db_lst = zip(db_site_lst, db_site_info_lst)
-        # else:
-        #     self.logger.warning(
-        #         f"DB_site_lst: {db_site_lst} | formatted_db_type_lst: {formatted_db_type_lst}"
-        #     )
-        #     formatted_db_lst = []
-        # formatted_db_lst = list(formatted_db_lst)
-        # db_info_dct = {}
-        # if formatted_db_lst:
-        db_level = 0
-        db_db_level = 0
-        if len(db_site_lst) == db_count and len(db_site_info_lst) != db_count:
-            if "Z" not in db_site_info_lst and "E" not in db_site_info_lst:
-                db_db_level = 0.1
-        elif len(db_site_lst) == db_count and len(db_site_info_lst) == db_count:
-            if "Z" in db_site_info_lst or "E" in db_site_info_lst:
-                db_db_level = 0.2
-        else:
-            pass
-
-        db_level += db_db_level
-        db_info_dct = {
-            "DB_CV": "",
-            "DB_LEVEL": db_level,
-            "DB_COUNT": db_count,
-            "DB_SITE": db_site_lst,
-            "DB_SITE_INFO": db_site_info_lst,
-            "DB_ORDER": self.raw_cv["DB"].get("ORDER", 0),
-        }
-
-        return {"DB_LEVEL": db_level, "DB_INFO": {"0.0_DB": db_info_dct}}
-
     def format_mods(self, info: dict) -> dict:
         formatted_mod_lst = []
         raw_mod_type_lst = info.get("MOD_TYPE", [])
+        unique_raw_mod_type_lst = raw_mod_type_lst
+        # unique_raw_mod_type_lst = list(set(raw_mod_type_lst))
         mod_type_lst = []
-        if raw_mod_type_lst and len(raw_mod_type_lst) > 1:
-            if raw_mod_type_lst[0] not in ["DB", ""]:
-                mod_type_lst.append(raw_mod_type_lst[0])
+        if unique_raw_mod_type_lst and len(unique_raw_mod_type_lst) > 1:
+            if unique_raw_mod_type_lst[0] not in ["DB", ""]:
+                mod_type_lst.append(unique_raw_mod_type_lst[0])
                 for idx in range(1, len(mod_type_lst) + 1):
-                    if raw_mod_type_lst[idx] not in ["DB", ""]:
-                        mod_type_lst.append(raw_mod_type_lst[idx])
+                    if unique_raw_mod_type_lst[idx] not in ["DB", ""]:
+                        mod_type_lst.append(unique_raw_mod_type_lst[idx])
             else:
-                mod_type_lst = raw_mod_type_lst
+                mod_type_lst = unique_raw_mod_type_lst
         else:
-            mod_type_lst = raw_mod_type_lst
+            mod_type_lst = unique_raw_mod_type_lst
         mod_count_lst = info.get("MOD_COUNT", [])
+        if mod_type_lst == [""]:
+            mod_count_lst = [info["DB"][0]]
         mod_site_lst = info.get("MOD_SITE", [])
         mod_site_info_lst = info.get("MOD_SITE_INFO", [])
         mod_site_lst = [s.strip(" ") for s in mod_site_lst]
@@ -133,6 +80,8 @@ class Formatter(object):
                         self.logger.debug(
                             f"mod_type: {mod_type} identified as {matched_cv}"
                         )
+                        # if matched_cv not in formatted_mod_type_lst:
+                        #     formatted_mod_type_lst.append(matched_cv)
                         formatted_mod_type_lst.append(matched_cv)
                         if matched_cv == "Delta":
                             mod_lv_dct[matched_cv] = self.raw_cv["Delta"].get(
@@ -206,6 +155,7 @@ class Formatter(object):
 
         mod_info_dct = {}
         if formatted_mod_lst:
+            formatted_mod_lst = list(formatted_mod_lst)
             for mod_tp in formatted_mod_lst:
                 delta_mod_count = mod_tp[0]
                 if delta_mod_count and isinstance(delta_mod_count, str):
@@ -238,6 +188,7 @@ class Formatter(object):
                 db_mod_level = 0
                 mod_count = existed_mod_count + delta_mod_count
                 if mod_type == "DB":
+                    # mod_count = int(info["DB"][0])
                     true_site_lst = [s for s in existed_mod_site_lst if s != ""]
                     true_site_info_lst = [
                         s for s in existed_mod_site_info_lst if s != ""
@@ -348,14 +299,10 @@ class Formatter(object):
             pass
 
         residue_info_dct["LINK"] = link
-        residue_info_dct["DB"] = self.format_db(info)
         residue_info_dct["MOD"] = self.format_mods(info)
         residue_info_dct["NUM_C"] = int(info.get("NUM_C", ["0"])[0])
         residue_info_dct["NUM_DB"] = int(info.get("DB", ["0"])[0])
         residue_info_dct["NUM_O"] = num_o
-        residue_info_dct["RESIDUE_LEVEL"] = residue_info_dct["DB"].get(
-            "DB_LEVEL", 0
-        ) + residue_info_dct["MOD"].get("MOD_LEVEL", 0)
 
         return residue_info_dct
 

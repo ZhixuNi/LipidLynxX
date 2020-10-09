@@ -85,6 +85,14 @@ class Decoder(object):
                     matched_info_dct["LINK"] = "O-"
                 elif links.lower().startswith("p"):
                     matched_info_dct["LINK"] = "P-"
+                elif links.lower().startswith("m"):
+                    matched_info_dct["LINK"] = "m"
+                elif links.lower().startswith("d"):
+                    matched_info_dct["LINK"] = "d"
+                elif links.lower().startswith("t"):
+                    matched_info_dct["LINK"] = "t"
+                elif links.lower().startswith("h"):
+                    matched_info_dct["LINK"] = "h"
                 else:
                     pass
             elif isinstance(links, list):
@@ -94,6 +102,14 @@ class Decoder(object):
                         std_links.append("O-")
                     elif link.lower().startswith("p"):
                         std_links.append("P-")
+                    elif link.lower().startswith("m"):
+                        std_links.append("m")
+                    elif link.lower().startswith("d"):
+                        std_links.append("d")
+                    elif link.lower().startswith("t"):
+                        std_links.append("t")
+                    elif link.lower().startswith("h"):
+                        std_links.append("t")
                 matched_info_dct["LINK"] = std_links
             else:
                 pass
@@ -353,8 +369,7 @@ if __name__ == "__main__":
     # t_in = "TG(16:0/18:2/20:4<OH>)"
     # t_in = "TG(16:0/18:2/HETE)"
     # RefMet
-    # t_in = "PC(36:2e)"
-    t_in = "20:4(5Z,8Z,11Z,14Z)(7R-OH,12S-OH)"
+    t_in = "PC(36:2e)"
 
     extractor = Decoder(rules=default_input_rules)
     t_out = extractor.extract(t_in)
