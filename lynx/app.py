@@ -20,9 +20,8 @@ from fastapi.staticfiles import StaticFiles
 
 from lynx.api import api
 from lynx.routers.app_frontend import frontend
-from lynx.utils.cfg_reader import app_prefix, app_cfg_info
+from lynx.utils.cfg_reader import app_cfg_info, app_prefix
 from lynx.utils.ports import check_port
-
 
 app = FastAPI(title="LipidLynxX", debug=True)
 

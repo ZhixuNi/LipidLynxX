@@ -46,6 +46,7 @@
     "S5.1",
     "S5.2"
   ],
+  "SUPPORT_MODIFICATION": 0,
   "SEPARATORS": {
     "DB_SEPARATOR": ":",
     "O_SEPARATOR": ";",

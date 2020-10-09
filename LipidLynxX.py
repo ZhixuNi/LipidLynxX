@@ -14,11 +14,12 @@
 #     Developer Zhixu Ni zhixu.ni@uni-leipzig.de
 
 import webbrowser
+
 import uvicorn
 
 from lynx.app import app
 from lynx.daemon import daemon_lynx
-from lynx.utils.cfg_reader import app_prefix, app_cfg_info
+from lynx.utils.cfg_reader import app_cfg_info, app_prefix
 from lynx.utils.ports import check_port
 
 

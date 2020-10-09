@@ -16,13 +16,13 @@
 import json
 import os
 
-from jsonschema import Draft7Validator, RefResolver
 import regex as re
+from jsonschema import Draft7Validator, RefResolver
 
-from lynx.utils.params_loader import load_output_rule
-from lynx.models.defaults import res_schema, res_schema_path, default_output_rules
-from lynx.models.modification import Modifications, merge_mods
+from lynx.models.defaults import default_output_rules, res_schema, res_schema_path
+from lynx.models.modification import merge_mods, Modifications
 from lynx.utils.log import app_logger
+from lynx.utils.params_loader import load_output_rule
 from lynx.utils.toolbox import check_json
 
 

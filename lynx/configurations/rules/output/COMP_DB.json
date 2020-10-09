@@ -7,6 +7,7 @@
   "SUPPORTED_LEVELS": [
     "B2"
   ],
+  "SUPPORT_MODIFICATION": 0,
   "SEPARATORS": {
     "DB_SEPARATOR": ":",
     "O_SEPARATOR": ";",

@@ -14,16 +14,12 @@
 #     Developer Zhixu Ni zhixu.ni@uni-leipzig.de
 
 import re
-from typing import List, Dict, Union, Tuple
+from typing import Dict, List, Union
 
 from lynx.controllers.encoder import Encoder
-
-from lynx.models.api_models import ConvertedStrData, ConvertedListData, StyleType
+from lynx.models.api_models import ConvertedListData, ConvertedStrData, StyleType
+from lynx.models.defaults import default_input_rules, default_output_rules
 from lynx.utils.log import app_logger
-from lynx.models.defaults import (
-    default_output_rules,
-    default_input_rules,
-)
 from lynx.utils.toolbox import keep_string_only
 
 
@@ -44,7 +40,11 @@ class Converter:
         )
         self.logger = logger
 
-    def convert_str(self, input_str: str, level: str = None,) -> ConvertedStrData:
+    def convert_str(
+        self,
+        input_str: str,
+        level: str = None,
+    ) -> ConvertedStrData:
         output_dct = {}
         # Set COMP_DB to max level B2
         if re.search(r"COMP\\s*[_]?\\s*(DB)?", self.style):

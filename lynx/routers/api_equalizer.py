@@ -14,7 +14,7 @@
 #     Developer Zhixu Ni zhixu.ni@uni-leipzig.de
 
 from multiprocessing import Process
-from typing import Optional, Union, List
+from typing import List, Optional, Union
 
 from fastapi import APIRouter, status
 
@@ -27,11 +27,7 @@ from lynx.models.api_models import (
     LevelsData,
 )
 from lynx.mq.client import equalizer_client
-from lynx.utils.job_manager import (
-    create_job_token,
-    is_job_finished,
-    get_job_output
-)
+from lynx.utils.job_manager import create_job_token, get_job_output, is_job_finished
 
 router = APIRouter()
 
@@ -40,9 +36,13 @@ default_levels = LevelsData(levels=["B1", "D1"])
 
 # GET APIs
 @router.get(
-    "/jobs/{token}", response_model=JobStatus, status_code=status.HTTP_202_ACCEPTED,
+    "/jobs/{token}",
+    response_model=JobStatus,
+    status_code=status.HTTP_202_ACCEPTED,
 )
-async def check_equalizer_job_status(token: str,):
+async def check_equalizer_job_status(
+    token: str,
+):
     """
     Check the status of a job submitted to converter module.
     """
@@ -92,16 +92,20 @@ async def equalize_multiple_levels(
 
 @router.post("/dict/", response_model=JobStatus, status_code=status.HTTP_201_CREATED)
 async def create_equalize_job(
-    data: InputDictData, levels: Union[str, List[str]] = "B1", file_type: str = "xlsx",
+    data: InputDictData,
+    levels: Union[str, List[str]] = "B1",
+    file_type: str = "xlsx",
 ):
-    """
-    """
+    """"""
     token = create_job_token(JobType(job="convert"))
     job_execute_data = {
         "data": data.data,
         "params": {"levels": levels, "file_type": file_type},
     }
-    Process(target=equalizer_client, args=(token, job_execute_data, "dict"),).start()
+    Process(
+        target=equalizer_client,
+        args=(token, job_execute_data, "dict"),
+    ).start()
 
     job_status_data = {
         "data": data.dict(),

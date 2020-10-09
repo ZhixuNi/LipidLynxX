@@ -15,9 +15,6 @@
 
 import os
 
-from natsort import natsorted
-import regex as re
-
 from lynx.models.cv import CV
 from lynx.models.defaults import default_cv_file, elem_nominal_info
 from lynx.utils.log import app_logger
@@ -313,5 +310,4 @@ class Formatter(object):
 
 
 if __name__ == "__main__":
-
     pass

@@ -18,15 +18,15 @@ from typing import Dict, List
 
 from natsort import natsorted
 
-from lynx.utils.params_loader import load_output_rule
 from lynx.controllers.decoder import Decoder
-from lynx.models.residue import Residue, merge_residues
 from lynx.models.defaults import (
-    default_output_rules,
     default_input_rules,
+    default_output_rules,
     supported_levels,
 )
+from lynx.models.residue import merge_residues, Residue
 from lynx.utils.log import app_logger
+from lynx.utils.params_loader import load_output_rule
 
 
 class Encoder(object):
@@ -330,7 +330,9 @@ class Encoder(object):
         return best_id
 
     def export_level(
-        self, lipid_name: str, level: str = "B1",
+        self,
+        lipid_name: str,
+        level: str = "B1",
     ):
 
         lv_id = ""

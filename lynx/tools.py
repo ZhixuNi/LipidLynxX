@@ -18,28 +18,25 @@ import json
 import os
 import re
 from pathlib import Path
-from typing import List, Union
+from typing import List
 
 import click_spinner
 import typer
-
-from lynx.utils.log import cli_logger
 
 from lynx.controllers.converter import Converter
 from lynx.controllers.equalizer import Equalizer
 from lynx.controllers.linker import get_cross_links, get_lmsd_name, get_swiss_name
 from lynx.models.api_models import StyleType
+from lynx.utils.cfg_reader import app_cfg_info, lynx_version
 from lynx.utils.cli_utils import cli_get_table, cli_save_output
 from lynx.utils.file_handler import (
     create_converter_output,
     create_equalizer_output,
     get_output_name,
 )
-
-from lynx.utils.cfg_reader import app_cfg_info, lynx_version
+from lynx.utils.log import cli_logger
 from lynx.utils.params_loader import build_input_rules, build_output_rules
 from lynx.utils.toolbox import get_levels, get_style_level
-
 
 cli_app = typer.Typer(
     help=f"LipidLynxX CLI tools version {lynx_version}. "
@@ -103,7 +100,8 @@ def convert_lipid(
     else:
         converted_name = ""
         typer.secho(
-            'Please input a lipid name. e.g. "PLPC".', fg=typer.colors.YELLOW,
+            'Please input a lipid name. e.g. "PLPC".',
+            fg=typer.colors.YELLOW,
         )
         typer.echo(convert_lipid.__doc__)
 
@@ -215,7 +213,10 @@ def convert_lipids(
 def convert_file(
     file: Path = typer.Argument(None),
     column: str = typer.Option(
-        None, "--column", "-c", help="name of the column that contains lipid notations",
+        None,
+        "--column",
+        "-c",
+        help="name of the column that contains lipid notations",
     ),
     output_file: Path = typer.Option(
         None,
@@ -310,7 +311,10 @@ def convert_file(
 def convert(
     source: str = typer.Argument(None),
     column: str = typer.Option(
-        None, "--column", "-c", help="name of the column that contains lipid notations",
+        None,
+        "--column",
+        "-c",
+        help="name of the column that contains lipid notations",
     ),
     style: StyleType = typer.Option(
         "LipidLynxX",
@@ -414,7 +418,10 @@ def equalize(
     table_dct = cli_get_table(file)
     levels = get_levels(level)
     typer.echo(
-        typer.style(f"Equalize lipid names on {levels} level.", fg=typer.colors.CYAN,)
+        typer.style(
+            f"Equalize lipid names on {levels} level.",
+            fg=typer.colors.CYAN,
+        )
     )
     typer.echo(f"Processing file: {file.name} ...")
     with click_spinner.spinner():

@@ -13,10 +13,10 @@
 # For more info please contact:
 #     Developer Zhixu Ni zhixu.ni@uni-leipzig.de
 
-from typing import Dict, Union, List, Any
+from typing import Dict, List, Union
 
-from natsort import natsorted
 import regex as re
+from natsort import natsorted
 
 from lynx.controllers.formatter import Formatter
 
@@ -357,7 +357,6 @@ class Decoder(object):
 
 
 if __name__ == "__main__":
-
     # LIPID MAPS
     # t_in = "GM3(d18:1/18:2(9Z,12Z))"
     # t_in = "TG (P-18:1/18:2(9Z,12Z)/20:4(5Z,8Z,11Z,14Z)(7R-OH,12S-OH))"

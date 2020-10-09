@@ -14,6 +14,7 @@
 #     Developer Zhixu Ni zhixu.ni@uni-leipzig.de
 
 import re
+
 from pydantic import parse_obj_as
 
 from lynx.controllers.converter import Converter

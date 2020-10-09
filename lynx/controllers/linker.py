@@ -15,13 +15,13 @@
 
 import json
 import re
-from typing import Union, List
+import urllib.parse
+from typing import List, Union
 
 import aiohttp
-import requests
 import natsort
 import pandas as pd
-import urllib.parse
+import requests
 
 from lynx.controllers.converter import convert_lipid
 from lynx.models.api_models import StyleType
@@ -153,7 +153,6 @@ def get_lion_id(lipid_name: str = "PC(16:0/20:4)"):
 
 
 def get_lmsd_subclass(lmsd_id: str = "LMGP01010594") -> str:
-
     sub_class = ""
     if lmsd_id.startswith("LM") and len(lmsd_id) >= 8:
         raw_subclass_str = lmsd_id[2:8]
@@ -368,7 +367,6 @@ async def get_lmsd_linked_ids(
 
 
 async def get_external_link(ref_id: str, ref_db: str, check_url: bool = False) -> str:
-
     ref_db_urls = CROSS_LINK_APIS.get("link", {})
     ref_url = ""
     if ref_db in DEFAULT_DB_INFO and ref_id:

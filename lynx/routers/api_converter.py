@@ -25,18 +25,13 @@ from lynx.models.api_models import (
     InputStrData,
     JobStatus,
     JobType,
-    LvType,
     LevelsData,
+    LvType,
     StyleType,
 )
 from lynx.mq.client import converter_client
-from lynx.utils.job_manager import (
-    create_job_token,
-    is_job_finished,
-    get_job_output
-)
+from lynx.utils.job_manager import create_job_token, get_job_output, is_job_finished
 from lynx.utils.toolbox import get_level
-
 
 router = APIRouter()
 
@@ -68,9 +63,13 @@ async def convert_lipid(
 
 
 @router.get(
-    "/jobs/{token}", response_model=JobStatus, status_code=status.HTTP_202_ACCEPTED,
+    "/jobs/{token}",
+    response_model=JobStatus,
+    status_code=status.HTTP_202_ACCEPTED,
 )
-async def check_converter_job_status(token: str,):
+async def check_converter_job_status(
+    token: str,
+):
     """
     Check the status of a job submitted to converter module.
     """
@@ -87,7 +86,9 @@ async def check_converter_job_status(token: str,):
 # Post APIs
 @router.post("/str/", response_model=JobStatus, status_code=status.HTTP_201_CREATED)
 async def create_convert_str_job(
-    data: InputStrData, style: StyleType, level: Optional[LvType] = "MAX",
+    data: InputStrData,
+    style: StyleType,
+    level: Optional[LvType] = "MAX",
 ):
     """
 
@@ -105,7 +106,10 @@ async def create_convert_str_job(
         "export_style": style,
         "export_level": level,
     }
-    Process(target=converter_client, args=(token, job_execute_data),).start()
+    Process(
+        target=converter_client,
+        args=(token, job_execute_data),
+    ).start()
 
     job_status_data = {
         "data": data.dict(),
@@ -139,14 +143,25 @@ async def create_convert_list_job(
     token = create_job_token(JobType(job="convert"))
     job_execute_data = {
         "data": data.data,
-        "params": {"style": style, "level": level, "file_type": file_type,},
+        "params": {
+            "style": style,
+            "level": level,
+            "file_type": file_type,
+        },
     }
     print(job_execute_data)
-    Process(target=converter_client, args=(token, job_execute_data),).start()
+    Process(
+        target=converter_client,
+        args=(token, job_execute_data),
+    ).start()
 
     job_status_data = {
         "data": data.dict(),
-        "params": {"style": style, "level": level, "file_type": file_type,},
+        "params": {
+            "style": style,
+            "level": level,
+            "file_type": file_type,
+        },
     }
     job_status = "created"
     job_info = JobStatus(token=token, status=job_status, data=job_status_data)
@@ -175,13 +190,24 @@ async def create_convert_dict_job(
     token = create_job_token(JobType(job="convert"))
     job_execute_data = {
         "data": data.data,
-        "params": {"style": style, "level": level, "file_type": file_type,},
+        "params": {
+            "style": style,
+            "level": level,
+            "file_type": file_type,
+        },
     }
-    Process(target=converter_client, args=(token, job_execute_data, "dict"),).start()
+    Process(
+        target=converter_client,
+        args=(token, job_execute_data, "dict"),
+    ).start()
 
     job_status_data = {
         "data": data.dict(),
-        "params": {"style": style, "level": level, "file_type": file_type,},
+        "params": {
+            "style": style,
+            "level": level,
+            "file_type": file_type,
+        },
     }
     job_status = "created"
     job_info = JobStatus(token=token, status=job_status, data=job_status_data)

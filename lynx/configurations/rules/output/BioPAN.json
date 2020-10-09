@@ -5,8 +5,9 @@
   ],
   "NOMENCLATURE": "BioPAN",
   "SUPPORTED_LEVELS": [
-    "B2"
+    "B0"
   ],
+  "SUPPORT_MODIFICATION": 0,
   "SEPARATORS": {
     "DB_SEPARATOR": ":",
     "O_SEPARATOR": ";",

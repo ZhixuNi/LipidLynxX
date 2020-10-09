@@ -18,15 +18,13 @@ from typing import Dict, List, Union
 
 from jsonschema import Draft7Validator, RefResolver
 from natsort import natsorted
-import regex as re
 
 from lynx.models.defaults import (
-    lynx_schema_cfg,
     core_schema,
     core_schema_path,
-    default_output_rules,
     db_level_lst,
-    mod_level_lst,
+    default_output_rules,
+    lynx_schema_cfg,
 )
 from lynx.utils.basics import get_abs_path
 from lynx.utils.cfg_reader import api_version

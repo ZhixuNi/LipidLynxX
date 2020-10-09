@@ -19,11 +19,10 @@ import os
 from lynx.utils.basics import get_abs_path
 from lynx.utils.cfg_reader import app_cfg_info
 from lynx.utils.params_loader import (
-    build_mod_parser,
     build_input_rules,
+    build_mod_parser,
     build_output_rules,
 )
-from lynx.utils.ports import check_port
 
 # Define default values across LipidLynx
 # load default values from files defined in config.ini
@@ -69,7 +68,7 @@ with open(default_lion_file, "r") as lion_json_obj:
 default_template_files = {
     "LipidLynxX_Converter_Template.csv": "lynx/static/files/LipidLynxX_Converter_Template.csv",
     "LipidLynxX_Equalizer_Template.csv": "lynx/static/files/LipidLynxX_Equalizer_Template.csv",
-    "LipidLynxX_Linker_Template.csv": "lynx/static/files/LipidLynxX_Linker_Template.csv"
+    "LipidLynxX_Linker_Template.csv": "lynx/static/files/LipidLynxX_Linker_Template.csv",
 }
 
 lipid_level_lst = ["B", "M", "S"]

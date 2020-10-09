@@ -13,12 +13,11 @@
 # For more info please contact:
 #     Developer Zhixu Ni zhixu.ni@uni-leipzig.de
 
-from enum import Enum
 import re
+from enum import Enum
 from typing import Dict, List, Literal, Union
 
 from pydantic import BaseModel, constr
-
 
 lipid_name_rgx_str = r"^\s*.{0,512}\s*$"
 LipidNameType = constr(regex=lipid_name_rgx_str)

@@ -16,16 +16,16 @@
 import json
 from typing import Dict, List, Union
 
+import regex as re
 from jsonschema import Draft7Validator, RefResolver
 from natsort import natsorted
-import regex as re
 
 from lynx.models.defaults import (
-    lynx_schema_cfg,
     core_schema,
     core_schema_path,
-    mod_db_level_lst,
     default_output_rules,
+    lynx_schema_cfg,
+    mod_db_level_lst,
 )
 from lynx.utils.basics import get_abs_path
 from lynx.utils.cfg_reader import api_version
@@ -264,7 +264,10 @@ class Modifications(object):
                 "MOD_SITE",
                 "SITE_BRACKET_RIGHT",
             ]
-        return self.to_mod_base(mod_seg_lst=mod_segments, get_db_only=get_db_only,)
+        return self.to_mod_base(
+            mod_seg_lst=mod_segments,
+            get_db_only=get_db_only,
+        )
 
     def to_mod_site_info(self, get_db_only: bool = False):
         return self.to_mod_base(

@@ -13,27 +13,22 @@
 # For more info please contact:
 #     Developer Zhixu Ni zhixu.ni@uni-leipzig.de
 
-from multiprocessing import Process
 import re
+from multiprocessing import Process
 
 from fastapi import APIRouter, HTTPException, status
 
 from lynx.controllers.linker import get_cross_links, get_lmsd_name, get_swiss_name
 from lynx.models.api_models import (
+    InputDictData,
+    InputListData,
     JobStatus,
     JobType,
     LevelsData,
-    InputDictData,
-    InputListData,
 )
 from lynx.mq.client import linker_client
 from lynx.routers.api_converter import convert_lipid
-from lynx.utils.job_manager import (
-    is_job_finished,
-    get_job_output,
-    save_job,
-    create_job_token,
-)
+from lynx.utils.job_manager import create_job_token, get_job_output, is_job_finished
 
 router = APIRouter()
 
@@ -168,9 +163,13 @@ async def get_link_lipid(
 
 
 @router.get(
-    "/jobs/{token}", response_model=JobStatus, status_code=status.HTTP_202_ACCEPTED,
+    "/jobs/{token}",
+    response_model=JobStatus,
+    status_code=status.HTTP_202_ACCEPTED,
 )
-async def check_linker_job(token: str,):
+async def check_linker_job(
+    token: str,
+):
     """"""
     if is_job_finished(token):
         job_data = get_job_output(token)
@@ -197,7 +196,9 @@ async def link_str(
 
 @router.post("/list/", status_code=status.HTTP_201_CREATED)
 async def link_list(
-    lipid_names: list, export_url: bool = False, export_names: bool = True,
+    lipid_names: list,
+    export_url: bool = False,
+    export_names: bool = True,
 ) -> dict:
     """
     link a list of lipids to related resources from posted lipid name list
@@ -246,7 +247,10 @@ async def create_link_list_job(
             "file_type": file_type,
         },
     }
-    Process(target=linker_client, args=(token, job_execute_data, "list"),).start()
+    Process(
+        target=linker_client,
+        args=(token, job_execute_data, "list"),
+    ).start()
     job_status = "created"
     job_info = JobStatus(token=token, status=job_status, data=job_execute_data)
 
@@ -270,7 +274,10 @@ async def create_link_dict_job(
             "file_type": file_type,
         },
     }
-    Process(target=linker_client, args=(token, job_execute_data, "dict"),).start()
+    Process(
+        target=linker_client,
+        args=(token, job_execute_data, "dict"),
+    ).start()
     job_status = "created"
     job_info = JobStatus(token=token, status=job_status, data=job_execute_data)
 

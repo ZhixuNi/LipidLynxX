@@ -13,23 +13,17 @@
 # For more info please contact:
 #     Developer Zhixu Ni zhixu.ni@uni-leipzig.de
 
-from enum import Enum
 import itertools
 import json
-from operator import itemgetter
 import re
+from operator import itemgetter
 from typing import Dict, List, Optional
 
 from jsonschema import Draft7Validator
 from natsort import natsorted
-from pydantic import BaseModel, constr, conint
+from pydantic import BaseModel, conint, constr
 
-from lynx.models.api_models import LvType
-from lynx.models.defaults import (
-    lynx_schema_cfg,
-    lipid_level_lst,
-    mod_db_level_lst,
-)
+from lynx.models.defaults import (lipid_level_lst, lynx_schema_cfg, mod_db_level_lst)
 from lynx.utils.basics import get_abs_path
 from lynx.utils.cfg_reader import api_version
 from lynx.utils.log import app_logger

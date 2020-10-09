@@ -17,8 +17,8 @@ from typing import Union
 
 import regex as re
 
-from lynx.utils.log import app_logger
 from lynx.utils.file_handler import get_json
+from lynx.utils.log import app_logger
 
 
 class InputRules(object):
