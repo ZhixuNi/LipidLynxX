@@ -1,5 +1,5 @@
 {
-  "_DATE": 20200214,
+  "_DATE": 20201013,
   "_AUTHORS": [
     "zhixu.ni@uni-leipzig.de"
   ],
@@ -46,7 +46,7 @@
     "S5.1",
     "S5.2"
   ],
-  "SUPPORT_MODIFICATION": 0,
+  "SUPPORT_MODIFICATION": 1,
   "SEPARATORS": {
     "DB_SEPARATOR": ":",
     "O_SEPARATOR": ";",
@@ -64,115 +64,193 @@
       "S": "/"
     }
   },
-  "MODS": {
-    "MOD": {
+
+  "SITE": {
+    "SITE_INFO": {
       "ORDER": [
-        "MOD_COUNT",
-        "MOD_CV",
-        "SITE_BRACKET_LEFT",
-        "MOD_SITE",
-        "MOD_SITE_INFO",
-        "SITE_BRACKET_RIGHT"
+        "SITE",
+        "SITE_INFO"
       ],
       "OPTIONAL": [
-        "MOD_COUNT",
-        "MOD_CV",
+        "SITE_INFO"
+      ],
+      "SITE": "(\\s?,)?([0-9]{1,2})",
+      "SITE_INFO": "([EZRS])?",
+      "EXAMPLES": [
+        "12",
+        "12Z"
+      ]
+    },
+    "SITE_INFO_SUM": {
+      "ORDER": [
         "SITE_BRACKET_LEFT",
-        "MOD_SITE",
-        "MOD_SITE_INFO",
-        "SITE_BRACKET_LEFT"
+        "SITE_INFO",
+        "SITE_BRACKET_RIGHT"
+      ],
+      "REPEAT": {
+        "SITE_INFO": [1, 10]
+      },
+      "SITE_BRACKET_LEFT": "$.SEPARATORS.SITE_BRACKET_LEFT.INFO",
+      "SITE_INFO": "$.SITE.SITE_INFO.INFO",
+      "SITE_BRACKET_RIGHT": "$.SEPARATORS.SITE_BRACKET_LEFT.INFO",
+      "EXAMPLES": [
+        "{9Z,12Z}"
+      ]
+    }
+  },
+  "DB": {
+    "DB_INFO_SUM": {
+      "ORDER": [
+        "DB_SITES"
+      ],
+      "DB_SITES": "$.SITE.SITE_INFO_SUM.INFO",
+      "EXAMPLES": [
+        "{12}",
+        "{9,12}",
+        "{9Z,12Z}"
+      ]
+    }
+  },
+  "O": {
+    "O_INFO_SUM": {
+      "ORDER": [
+        "O_SITES"
+      ],
+      "O_SITES": "$.SITE.SITE_INFO_SUM.INFO",
+      "EXAMPLES": [
+        "{1}",
+        "{1,3}",
+        "{1R,3R}"
+      ]
+    }
+  },
+  "MOD": {
+    "MOD_INFO": {
+      "ORDER": [
+        "MOD_SEPARATOR",
+        "MOD_COUNT",
+        "MOD_TYPE",
+        "SITE_INFO_SUM"
+      ],
+      "OPTIONAL": [
+        "MOD_SEPARATOR",
+        "MOD_COUNT",
+        "SITE_INFO_SUM"
+      ],
+      "MOD_SEPARATOR": "$.SEPARATORS.COMMA.INFO",
+      "MOD_COUNT":  "[+-]?(\\s?,)?([0-9]{1,2})?",
+      "MOD_TYPE": "([a-zA-Z]*[-0-9a-zA-Z]*)",
+      "MOD_SITES": "$.SITE.SITE_INFO_SUM.INFO",
+      "EXAMPLES": [
+        "+O",
+        "OH{9}",
+        ",2OH{9R,12S}"
+      ]
+    },
+    "MOD_INFO_SUM": {
+      "ORDER": [
+        "MOD_BRACKET_LEFT",
+        "MOD_INFO",
+        "MOD_BRACKET_RIGHT"
       ],
       "REPEAT": {
         "MOD": [1, 10]
       },
-      "MOD_COUNT": "\\d?\\d?",
-      "MOD_CV": "([a-zA-Z]*[-0-9a-zA-Z]*)",
-      "SITE_BRACKET_LEFT": "$.SEPARATORS.MODS_BRACKET_LEFT.0",
-      "MOD_SITE": "(\\s?,)?([0-9]{1,2})",
-      "MOD_SITE_INFO": "([EZRS])?",
-      "SITE_BRACKET_RIGHT": "$.SEPARATORS.SITE_BRACKET_RIGHT.0",
+      "MOD_BRACKET_LEFT": "$.SEPARATORS.MOD_BRACKET_LEFT.INFO",
+      "MOD_INFO": "$.MOD.MOD_INFO.INFO",
+      "MOD_BRACKET_RIGHT": "$.SEPARATORS.MOD_BRACKET_RIGHT.INFO",
       "EXAMPLES": [
-        "{9,12}",
-        "{9Z,12Z}",
-        "OH",
-        "2OH",
-        "OH{8R}",
-        "2OH{8R,15S}"
-      ]
-    },
-    "SUM_MODS": {
-      "ORDER": [
-        "RESIDUE_BRACKET_LEFT",
-        "MOD",
-        "RESIDUE_BRACKET_RIGHT"
-      ],
-      "REPEAT": {
-        "MOD_SITE": [
-          1,
-          10
-        ],
-        "MOD_SITE_INFO": [
-          1,
-          10
-        ]
-      },
-      "BRACKET_LEFT": "$.SEPARATORS.BRACKET_LEFT.0",
-      "MOD": "$.MODS.MOD.0",
-      "RESIDUE_BRACKET_RIGHT": "$.SEPARATORS.BRACKET_RIGHT.0",
-      "EXAMPLES": [
-        "(9Z)",
-        "(9,12)",
-        "(9Z,12Z)"
+        "<2OH{9,12}>",
+        "<2OH{9R,12S}>",
+        "<2OH{9R,12S},oxo{4}>"
       ]
     }
   },
-  "RESIDUES": {
-    "RESIDUE": {
+  "RESIDUE": {
+    "RESIDUE_INFO": {
       "ORDER": [
+        "RESIDUE_SEPARATOR",
         "LINK",
-        "NUM_C",
+        "C_COUNT",
         "DB_SEPARATOR",
-        "NUM_DB",
+        "DB_COUNT",
+        "DB_INFO_SUM",
         "O_SEPARATOR",
-        "NUM_O",
-        "MOD_BRACKET_LEFT",
-        "SUM_MODS",
-        "MOD_BRACKET_RIGHT"
+        "O_COUNT",
+        "O_INFO_SUM",
+        "MOD_INFO_SUM"
       ],
       "OPTIONAL": [
+        "RESIDUE_SEPARATOR",
         "LINK",
-        "DB",
+        "DB_COUNT",
+        "DB_INFO_SUM",
         "O_SEPARATOR",
-        "NUM_O",
-        "MOD_BRACKET_LEFT",
-        "SUM_MODS",
-        "MOD_BRACKET_RIGHT"
+        "O_COUNT",
+        "O_INFO_SUM",
+        "MOD_INFO_SUM"
       ],
-      "REPEAT": {
-        "SUM_MODS": [
-          0,
-          10
-        ]
-      },
-      "LINK": "[OP]-|C|[mdt]|h",
-      "NUM_C": "[0-9]{1,2}",
-      "DB_SEPARATOR": ":",
-      "NUM_DB": "[1,2]?[0-9]",
-      "O_SEPARATOR": ";",
-      "NUM_O": "O[2-3]?",
-      "MOD_BRACKET_LEFT": "$.SEPARATORS.MOD_BRACKET_LEFT.0",
-      "SUM_MODS": "$.MODS.SUM_MODS.0",
-      "MOD_BRACKET_RIGHT": "$.SEPARATORS.MOD_BRACKET_LEFT.0"
+      "RESIDUE_SEPARATOR": "$.SEPARATORS.RESIDUE_SEPARATOR.INFO",
+      "LINK": "[OP]-",
+      "C_COUNT": "[0-9]{1,2}",
+      "DB_SEPARATOR": "$.SEPARATORS.COLON.INFO",
+      "DB_COUNT": "[1,2]?[0-9]",
+      "DB_INFO_SUM": "$.DB.DB_INFO_SUM.INFO",
+      "O_SEPARATOR": "$.SEPARATORS.SEMICOLON.INFO",
+      "O_COUNT": "[2-9]?OH?",
+      "O_INFO_SUM": "$.O.O_INFO_SUM.INFO",
+      "MOD_INFO_SUM": "$.MOD.MOD_INFO_SUM.INFO",
+      "EXAMPLES": [
+        "18:2;1",
+        "18:2",
+        "18:2{9Z,11E}<OH{12R}>",
+        "9:0<oxo{9}>",
+        "26:0<OH{3}>",
+        "34:1;2<FA16:0>",
+        "34:1<+14>",
+        "34:1<+O>",
+        "34:1<+O,-2H>"
+      ]
     },
-    "EXCEPTIONS": {
-      "PREFIX": "TEST"
+    "RESIDUE_ALIAS": {
+      "ORDER": [
+        "RESIDUE_SEPARATOR",
+        "ALIAS"
+      ],
+      "OPTIONAL": [
+        "RESIDUE_SEPARATOR"
+      ],
+      "RESIDUE_SEPARATOR": "$.SEPARATORS.RESIDUE_SEPARATOR.INFO",
+      "ALIAS": "[-,0-9a-zA-Z\\s]{3,}",
+      "EXAMPLES": [
+        "HETE",
+        "/HDoTE"
+      ]
+    },
+    "RESIDUE_INFO_SUM": {
+      "ORDER": [
+        "RESIDUE"
+      ],
+      "RESIDUE": "($.RESIDUE.RESIDUE_INFO.INFO)|($.RESIDUE.RESIDUE_ALIAS.INFO)",
+      "REPEAT": {
+        "RESIDUE": [1, 4]
+      },
+      "EXAMPLES": [
+        "18:2;1",
+        "18:2",
+        "9:0<oxo{9}>",
+        "34:1;2<FA16:0>",
+        "34:1<+14>",
+        "34:1<+O>",
+        "34:1<+O,-2H>"
+      ]
     }
   },
   "LMSD_CLASSES": {
     "FA01": {
       "ORDER": [
         "CLASS",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "MAX_RESIDUES": 1,
       "CLASS": {
@@ -185,7 +263,7 @@
     "FA02": {
       "ORDER": [
         "CLASS",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "MAX_RESIDUES": 1,
       "CLASS": {
@@ -198,7 +276,7 @@
     "FA03": {
       "ORDER": [
         "CLASS",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "MAX_RESIDUES": 1,
       "CLASS": {
@@ -211,7 +289,7 @@
     "FA04": {
       "ORDER": [
         "CLASS",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "MAX_RESIDUES": 1,
       "CLASS": {
@@ -224,7 +302,7 @@
     "FA0705": {
       "ORDER": [
         "CLASS",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "MAX_RESIDUES": 1,
       "CLASS": {
@@ -239,7 +317,7 @@
       "ORDER": [
         "CLASS",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "MAX_RESIDUES": 1,
@@ -255,7 +333,7 @@
       "ORDER": [
         "CLASS",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "MAX_RESIDUES": 2,
@@ -271,7 +349,7 @@
       "ORDER": [
         "CLASS",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -293,7 +371,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -321,7 +399,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -349,7 +427,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -377,7 +455,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -405,7 +483,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -435,7 +513,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -463,7 +541,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -491,7 +569,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -519,7 +597,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -547,7 +625,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "MAX_RESIDUES": 2,
@@ -575,7 +653,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -603,7 +681,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -631,7 +709,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -658,7 +736,7 @@
       "ORDER": [
         "CLASS",
         "SUFFIX",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "MAX_RESIDUES": 1,
       "CLASS": {
@@ -673,7 +751,7 @@
       "ORDER": [
         "CLASS",
         "SUFFIX",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "MAX_RESIDUES": 1,
       "CLASS": {
@@ -689,7 +767,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -723,7 +801,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -751,7 +829,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -782,7 +860,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -809,7 +887,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [

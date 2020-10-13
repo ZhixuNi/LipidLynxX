@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "description": "The double bond structure of LipidLynx output",
+  "description": "The double bond structure of LipidLynxX output",
   "type": "object",
   "required": [
     "api_version",
@@ -13,18 +13,18 @@
   ],
   "properties": {
     "api_version": {
-      "description": "Version of the LipidLynx api",
+      "description": "Version of the LipidLynxX api",
       "type": "string",
       "pattern": "^[012]\\.[0-9]$"
     },
     "id": {
-      "description": "The LipidLynx id",
+      "description": "The LipidLynxX id",
       "type": "string",
       "minLength": 2,
       "maxLength": 384
     },
     "type": {
-      "description": "Type of the LipidLynx object",
+      "description": "Type of the LipidLynxX object",
       "type": "string",
       "enum": [
         "DB"

@@ -38,12 +38,12 @@ class InputRules(object):
         self.sources = self.raw_rules["SOURCES"]
         self.date = self.raw_rules.get("_DATE", 20200214)
         self.authors = self.raw_rules.get("_AUTHORS", ["example@uni-example.de"])
-        mods = self.raw_rules.get("MODS", {})
+        mods = self.raw_rules.get("MOD", {})
         if mods:
             self.supported_mods = list(mods.keys())
         else:
             self.supported_mods = []
-        self.supported_residues = list(self.raw_rules["RESIDUES"].keys())
+        self.supported_residues = list(self.raw_rules["RESIDUE"].keys())
         self.supported_classes = list(self.raw_rules["LIPID_CLASSES"].keys())
         self.supported_keys = (
             self.supported_mods + self.supported_residues + self.supported_classes
@@ -68,7 +68,7 @@ class InputRules(object):
         # )
 
     def __replace_refs__(self, rules: dict):
-        ref_rgx = re.compile(r"(\$)((\.[A-Z_]{1,99})+)(\.0)")
+        ref_rgx = re.compile(r"(\$)((\.[A-Z_]{1,99})+)(\.INFO)")
         for rule in rules:
             rule_dct = rules[rule]
             pattern = rule_dct["PATTERN"]
@@ -96,7 +96,7 @@ class InputRules(object):
                                             ref_patt = (
                                                 r"\$\."
                                                 + "\\.".join(ref_seg_lst)
-                                                + r"\.0"
+                                                + r"\.INFO"
                                             )
                                             ref_replace_dct[ref_patt] = ref_info
                                             break
@@ -112,7 +112,7 @@ class InputRules(object):
                                                 f"Found Ref Pattern: {ref_lst}"
                                             )
                                             ref_patt = (
-                                                r"\$\." + "\\.".join(ref_seg_lst) + ".0"
+                                                r"\$\." + "\\.".join(ref_seg_lst) + ".INFO"
                                             )
                                             ref_replace_dct[ref_patt] = ref_info
                                             break
@@ -121,7 +121,7 @@ class InputRules(object):
                                         if isinstance(ref_info, str):
                                             ref_pattern_lst.append(r"\." + ref)
                                             ref_pattern = (
-                                                r"\$" + "".join(ref_pattern_lst) + ".0"
+                                                r"\$" + "".join(ref_pattern_lst) + ".INFO"
                                             )
                                             ref_replace_dct[ref_pattern] = ref_info
                                             self.logger.debug(
@@ -380,6 +380,7 @@ class OutputRules(object):
         self.nomenclature = self.raw_rules.get("NOMENCLATURE", "LipidLynxX")
         self.supported_lmsd_classes = list(self.raw_rules["LMSD_CLASSES"].keys())
         self.separators = self.raw_rules["SEPARATORS"]
+        self.db_info = self.raw_rules.get("DB_INFO", {})
         self.mods = self.raw_rules.get("MODS", {})
         self.residues = self.raw_rules.get("RESIDUES", {})
         self.rules = self.build()
@@ -405,6 +406,7 @@ class OutputRules(object):
         rules = {
             "LMSD_CLASSES": {},
             "RESIDUES": self.residues,
+            "DB_INFO": self.db_info,
             "MODS": self.mods,
             "SEPARATORS": self.separators,
         }

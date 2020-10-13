@@ -45,11 +45,11 @@ class DB(object):
         self.logger = logger
         self.nomenclature = nomenclature
         self.export_rule = load_output_rule(output_rules, nomenclature)
-        self.db_sites_rule = self.export_rule.get("DB_SITES", None)
+        self.db_sites_rule = self.export_rule.get("DB_INFO", None)
         self.db_separators = self.export_rule.get("SEPARATORS", [])
         if not self.db_sites_rule:
             raise ValueError(
-                f"Cannot find output rule for 'MODS' from nomenclature: {nomenclature}."
+                f"Cannot find output rule for 'DB_SITES' from nomenclature: {nomenclature}."
             )
         self.db_info = db_info.get("DB_INFO", {}).get("0.0_DB", {})
         self.schema = schema
@@ -82,7 +82,7 @@ class DB(object):
 
     def to_db_site_info_list(self) -> List[str]:
         db_order = (
-            self.export_rule.get("DB_SITES", {}).get("DB_INFO", {}).get("ORDER", {})
+            self.export_rule.get("DB_INFO", {}).get("ORDER", {})
         )
         db_info_lst = []
         for db_seg in db_order:
@@ -110,7 +110,7 @@ class DB(object):
                 f'Cannot convert to higher level than the db_level "{self.db_level}". Input:{level}'
             )
 
-        if level in ["0", "0.0"]:
+        if level in ["0", "0.0", ".0"]:
             db_str = ""
         elif level == "0.1":
             db_str = self.to_db_site()
@@ -137,7 +137,7 @@ class DB(object):
 
     def get_db_info(self) -> dict:
         db_js_dct = {
-            "cv": "DB",
+            "cv": "",
             "count": self.db_count,
             "site": [int(s) for s in self.db_site],
             "site_info": self.db_site_info,
@@ -199,11 +199,11 @@ if __name__ == "__main__":
         "DB_INFO": {
             "0.0_DB": {
                 "DB_CV": "",
-                "DB_LEVEL": 0.2,
                 "DB_COUNT": 4,
+                "DB_LEVEL": 0.2,
+                "DB_ORDER": 0.01,
                 "DB_SITE": ["5", "8", "11", "14"],
                 "DB_SITE_INFO": ["Z", "Z", "Z", "Z"],
-                "DB_ORDER": 0.01,
             }
         },
     }

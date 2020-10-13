@@ -194,40 +194,40 @@ async def link_str(
     return await link_one_lipid(lipid_name, export_url, export_names)
 
 
-@router.post("/list/", status_code=status.HTTP_201_CREATED)
-async def link_list(
-    lipid_names: list,
-    export_url: bool = False,
-    export_names: bool = True,
-) -> dict:
-    """
-    link a list of lipids to related resources from posted lipid name list
-    """
-    linked_info = {}
-    for lipid_name in lipid_names:
-        linked_info[lipid_name] = await link_one_lipid(
-            lipid_name, export_url, export_names
-        )
-    return linked_info
-
-
-@router.post("/dict/", status_code=status.HTTP_201_CREATED)
-async def link_dict(
-    lipid_names: dict, export_url: bool = False, export_names: bool = True
-) -> dict:
-    """
-    link a list of lipids to related resources from posted lipid name list
-    """
-    linked_info = {}
-    for col in lipid_names:
-        lipid_col = lipid_names[col]
-        linked_col_info = {}
-        for lipid_name in lipid_col:
-            linked_col_info[lipid_name] = await link_one_lipid(
-                lipid_name, export_url, export_names
-            )
-        linked_info[col] = linked_col_info
-    return linked_info
+# @router.post("/list/", status_code=status.HTTP_201_CREATED)
+# async def link_list(
+#     lipid_names: list,
+#     export_url: bool = False,
+#     export_names: bool = True,
+# ) -> dict:
+#     """
+#     link a list of lipids to related resources from posted lipid name list
+#     """
+#     linked_info = {}
+#     for lipid_name in lipid_names:
+#         linked_info[lipid_name] = await link_one_lipid(
+#             lipid_name, export_url, export_names
+#         )
+#     return linked_info
+#
+#
+# @router.post("/dict/", status_code=status.HTTP_201_CREATED)
+# async def link_dict(
+#     lipid_names: dict, export_url: bool = False, export_names: bool = True
+# ) -> dict:
+#     """
+#     link a list of lipids to related resources from posted lipid name list
+#     """
+#     linked_info = {}
+#     for col in lipid_names:
+#         lipid_col = lipid_names[col]
+#         linked_col_info = {}
+#         for lipid_name in lipid_col:
+#             linked_col_info[lipid_name] = await link_one_lipid(
+#                 lipid_name, export_url, export_names
+#             )
+#         linked_info[col] = linked_col_info
+#     return linked_info
 
 
 @router.post("/list/", response_model=JobStatus, status_code=status.HTTP_201_CREATED)
