@@ -48,7 +48,7 @@ class Modifications(object):
         self.logger = logger
         self.nomenclature = nomenclature
         self.export_rule = load_output_rule(output_rules, nomenclature)
-        self.mod_rule = self.export_rule.get("MODS", None)
+        self.mod_rule = self.export_rule.get("MOD", None)
         self.mod_rule_orders = self.mod_rule.get("MOD", {}).get("ORDER", [])
         self.mod_separators = self.export_rule.get("SEPARATORS", [])
         if not self.mod_rule:

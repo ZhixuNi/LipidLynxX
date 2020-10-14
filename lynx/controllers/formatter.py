@@ -277,7 +277,7 @@ class Formatter(object):
             link = link_lst[0]
         else:
             link = ""
-        num_o_lst = info.get("NUM_O", ["0"])
+        num_o_lst = info.get("O_COUNT", ["0"])
         num_o = 0
         if num_o_lst:
             if num_o_lst[0] not in ["", " "]:
@@ -297,9 +297,9 @@ class Formatter(object):
 
         residue_info_dct["LINK"] = link
         residue_info_dct["MOD"] = self.format_mods(info)
-        residue_info_dct["NUM_C"] = int(info.get("NUM_C", ["0"])[0])
-        residue_info_dct["NUM_DB"] = int(info.get("DB", ["0"])[0])
-        residue_info_dct["NUM_O"] = num_o
+        residue_info_dct["C_COUNT"] = int(info.get("C_COUNT", ["0"])[0])
+        residue_info_dct["DB_COUNT"] = int(info.get("DB_COUNT", ["0"])[0])
+        residue_info_dct["O_COUNT"] = num_o
 
         return residue_info_dct
 

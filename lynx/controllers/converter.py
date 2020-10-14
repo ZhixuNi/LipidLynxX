@@ -172,8 +172,10 @@ if __name__ == "__main__":
         # "LMGP01010594",
         # "lid",
         # "PLPC",
-        "SM d18:1/24:0",
+        # "SM d18:1/24:0",
         # "DHA",
+        # "PC(18:1{9Z}/18:2{9Z,11E}<OH{12}>)",
+        "SM(18:1{4E};2OH{1R,3S}/18:2{8E,11E}<2OH{7S,18R},oxo{12}>)",
     ]
     lv = "M1"
     # test_out_rule = "COMP_DB"

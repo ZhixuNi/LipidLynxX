@@ -41,7 +41,7 @@ class Decoder(object):
         if c_search_rgx.search(lipid_name):
             is_this_class = True
         else:
-            if rule_class in ["RESIDUE", "SUM_RESIDUES", "RESIDUE_ALIAS", "ALIAS"]:
+            if rule_class in ["RESIDUE", "RESIDUE_INFO", "RESIDUE_INFO_SUM", "RESIDUE_ALIAS", "ALIAS"]:
                 is_this_class = True
             else:
                 pass
@@ -62,7 +62,7 @@ class Decoder(object):
 
         if any(
             [
-                re.search(r"^residue[s]?(_alia[s])?$", c, re.IGNORECASE),
+                re.search(r"^residue[s]?(_alia[s]|_info)?$", c, re.IGNORECASE),
                 re.search(r"mod", c, re.IGNORECASE),
             ]
         ):
@@ -189,14 +189,14 @@ class Decoder(object):
             for res in res_lst:
                 if res in alias:
                     if res != "":
-                        def_res = self.check_alias(res, "RESIDUE")
+                        def_res = self.check_alias(res, "RESIDUE_INFO")
                         if def_res:
                             res = def_res
                     matched_info_dct = self.check_segments(
-                        res, "RESIDUE", rule=alias_rule
+                        res, "RESIDUE_INFO", rule=alias_rule
                     )
                 else:
-                    matched_info_dct = self.check_segments(res, "RESIDUE", rule=rule)
+                    matched_info_dct = self.check_segments(res, "RESIDUE_INFO", rule=rule)
                 # num_o_chk_lst = matched_info_dct.get("NUM_O", [""])
                 # if isinstance(num_o_chk_lst, list) and re.match(r'\d?O|O\d?|\d', num_o_chk_lst[0]):
                 #     matched_info_dct["MOD_TYPE"] = ["O"] + matched_info_dct.get("MOD_TYPE", [])
@@ -252,7 +252,7 @@ class Decoder(object):
                 lynx_rule_idx = lr
         for r in c_rules:
             matched_dct = self.check_segments(lipid_name, c, r)
-            sum_residues_lst = matched_dct.get("SUM_RESIDUES", [])
+            sum_residues_lst = matched_dct.get("RESIDUE_INFO_SUM", [])
             obs_residues_lst = matched_dct.get("RESIDUE", [])
             alias_lst: list = matched_dct.get("ALIAS", [])
             if sum_residues_lst and len(sum_residues_lst) == 1 and obs_residues_lst:

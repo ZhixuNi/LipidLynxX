@@ -37,9 +37,9 @@ class Residue(object):
     ):
         self.logger = logger
         self.export_rule = load_output_rule(output_rules, nomenclature)
-        self.res_rule = self.export_rule.get("RESIDUES", None)
-        self.res_rule_orders = self.res_rule.get("RESIDUE", {}).get("ORDER", [])
-        self.res_separators = self.export_rule.get("SEPARATORS", [])
+        self.res_rule = self.export_rule.get("RESIDUE", None)
+        self.res_rule_orders = self.res_rule.get("RESIDUE_INFO", {}).get("ORDER", [])
+        self.res_separators = self.export_rule.get("SEPARATOR", [])
         self.res_info = residue_info
         self.__replace_mdt__()
 
