@@ -206,9 +206,9 @@ class Decoder(object):
                 out_res_dct[res] = matched_dct
 
         if len(out_res_lst) > 1 and lv_min == "B":
-            lv_min = "D"
+            lv_min = "M"
 
-        if lv_min == "D":
+        if lv_min == "M":
             no_res_lst = []
             spb_lst = []
             o_lst = []
@@ -232,10 +232,10 @@ class Decoder(object):
             )
 
         return {
-            "RESIDUES_ORDER": out_res_lst,
-            "RESIDUES_INFO": out_res_dct,
+            "residues_order": out_res_lst,
+            "residues_info": out_res_dct,
             # "RESIDUES_SEPARATOR": res_sep_lst,
-            "RESIDUES_SEPARATOR_LEVEL": lv_min,
+            "residues_separator_level": lv_min,
         }
 
     def extract_by_class_rule(
@@ -270,32 +270,32 @@ class Decoder(object):
                 # set specific classes into
                 for c_lmsd in c_lmsd_classes:
                     if c_lmsd.upper().startswith("FA"):
-                        residues_dct["RESIDUES_SEPARATOR_LEVEL"] = "S"
+                        residues_dct["residues_separator_level"] = "S"
                     elif c_lmsd.upper().startswith("SP"):
-                        residues_dct["RESIDUES_SEPARATOR_LEVEL"] = "S"
-                        sp_res_abbr_lst = residues_dct["RESIDUES_ORDER"]
+                        residues_dct["residues_separator_level"] = "S"
+                        sp_res_abbr_lst = residues_dct["residues_order"]
                         if len(sp_res_abbr_lst) == 2:
                             if (
                                 ";" in sp_res_abbr_lst[1]
                                 and ";" not in sp_res_abbr_lst[0]
                             ):
-                                residues_dct["RESIDUES_ORDER"] = [
+                                residues_dct["residues_order"] = [
                                     sp_res_abbr_lst[1],
                                     sp_res_abbr_lst[0],
                                 ]
                             elif re.match(
                                 r"[mdt].*", sp_res_abbr_lst[1]
                             ) and not re.match(r"[mdt].*", sp_res_abbr_lst[0]):
-                                residues_dct["RESIDUES_ORDER"] = [
+                                residues_dct["residues_order"] = [
                                     sp_res_abbr_lst[1],
                                     sp_res_abbr_lst[0],
                                 ]
                     elif c_lmsd.upper().startswith("ST"):
-                        residues_dct["RESIDUES_SEPARATOR_LEVEL"] = "S"
+                        residues_dct["residues_separator_level"] = "S"
                 matched_info_dct[r] = {
-                    "LMSD_CLASSES": c_lmsd_classes,
-                    "SEGMENTS": matched_dct,
-                    "RESIDUES": residues_dct,
+                    "lmsd_classes": c_lmsd_classes,
+                    "segments": matched_dct,
+                    "residues": residues_dct,
                     # "RESIDUES_SEPARATOR": res_sep,
                     # "SEPARATOR_LEVELS": sep_levels,
                 }

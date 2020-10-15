@@ -20,6 +20,10 @@ from lynx.models.defaults import default_cv_file, elem_nominal_info
 from lynx.utils.log import app_logger
 
 
+# upper case keys are used in dicts from regex matching of input or formatted for output
+# lower case keys are LipidLynxX internal keys for processing
+
+
 class Formatter(object):
     def __init__(self, cv_file: str = default_cv_file, logger=app_logger):
         if os.path.isfile(cv_file):
@@ -295,16 +299,16 @@ class Formatter(object):
         else:
             pass
 
-        residue_info_dct["LINK"] = link
-        residue_info_dct["MOD"] = self.format_mods(info)
-        residue_info_dct["C_COUNT"] = int(info.get("C_COUNT", ["0"])[0])
-        residue_info_dct["DB_COUNT"] = int(info.get("DB_COUNT", ["0"])[0])
-        residue_info_dct["O_COUNT"] = num_o
+        residue_info_dct["link"] = link
+        residue_info_dct["mods"] = self.format_mods(info)
+        residue_info_dct["c_count"] = int(info.get("C_COUNT", ["0"])[0])
+        residue_info_dct["db_count"] = int(info.get("DB_COUNT", ["0"])[0])
+        residue_info_dct["o_count"] = num_o
 
         return residue_info_dct
 
     def format(self, info: dict) -> dict:
-        formatted_info = {"RESIDUE": self.format_residue(info)}
+        formatted_info = {"residues": self.format_residue(info)}
 
         return formatted_info
 
