@@ -62,9 +62,9 @@
   "DB": {
     "DB_INFO_SUM": {
       "ORDER": [
-        "DB_SITES"
+        "DB_SITE"
       ],
-      "DB_SITES": "{{SITE.SITE_INFO_SUM}}",
+      "DB_SITE": "{{SITE.SITE_INFO_SUM}}",
       "EXAMPLES": [
         "{12}",
         "{9,12}",
@@ -75,9 +75,9 @@
   "O": {
     "O_INFO_SUM": {
       "ORDER": [
-        "O_SITES"
+        "O_SITE"
       ],
-      "O_SITES": "{{SITE.SITE_INFO_SUM}}",
+      "O_SITE": "{{SITE.SITE_INFO_SUM}}",
       "EXAMPLES": [
         "{1}",
         "{1,3}",
@@ -91,17 +91,17 @@
         "MOD_SEPARATOR",
         "MOD_COUNT",
         "MOD_TYPE",
-        "MOD_SITES"
+        "MOD_SITE"
       ],
       "OPTIONAL": [
         "MOD_SEPARATOR",
         "MOD_COUNT",
-        "MOD_SITES"
+        "MOD_SITE"
       ],
       "MOD_SEPARATOR": "{{SEPARATOR.COMMA}}",
       "MOD_COUNT":  "[+-]?(\\s?,)?([0-9]{1,2})?",
       "MOD_TYPE": "([a-zA-Z]*[-0-9a-zA-Z]+)",
-      "MOD_SITES": "{{SITE.SITE_INFO_SUM}}",
+      "MOD_SITE": "{{SITE.SITE_INFO_SUM}}",
       "EXAMPLES": [
         "+O",
         "OH{9}",

@@ -53,7 +53,7 @@ class Residue(object):
         mod_info = residue_info.get("MOD", {})
 
         self.mod_obj = Modifications(
-            mod_info, num_o=residue_info.get("NUM_O", 0), nomenclature=nomenclature
+            mod_info, num_o=residue_info.get("O_COUNT", 0), nomenclature=nomenclature
         )
         self.sum_mod_info = self.mod_obj.sum_mod_info
         self.mod_level = self.mod_obj.mod_level
@@ -74,26 +74,26 @@ class Residue(object):
         link = self.res_info.get("LINK", "")
         if link.lower() == "m":
             self.res_info["LINK"] = ""
-            self.res_info["NUM_O"] = 1 + self.res_info.get("NUM_O", 0)
+            self.res_info["O_COUNT"] = 1 + self.res_info.get("O_COUNT", 0)
         elif link.lower() == "d":
             self.res_info["LINK"] = ""
-            self.res_info["NUM_O"] = 2 + self.res_info.get("NUM_O", 0)
+            self.res_info["O_COUNT"] = 2 + self.res_info.get("O_COUNT", 0)
         elif link.lower() == "t":
             self.res_info["LINK"] = ""
-            self.res_info["NUM_O"] = 3 + self.res_info.get("NUM_O", 0)
+            self.res_info["O_COUNT"] = 3 + self.res_info.get("O_COUNT", 0)
         else:
             pass
 
     def __post_init__(self):
         res_str_dct = {}
-        num_o = self.res_info.get("NUM_O", 0)
+        num_o = self.res_info.get("O_COUNT", 0)
         for lv in self.linked_levels:
             res_str = ""
             for o in self.res_rule_orders:
                 if o in self.res_info or o in self.res_separators or o in ["SUM_MODS"]:
-                    if o == "NUM_O":
+                    if o == "O_COUNT":
                         if num_o > 0:
-                            o_seg_rgx = self.res_rule.get("RESIDUE", {}).get("NUM_O")
+                            o_seg_rgx = self.res_rule.get("RESIDUE", {}).get("O_COUNT")
                             # print("o_seg_rgx", o_seg_rgx)
                             if o_seg_rgx:
                                 if num_o == 1:
@@ -182,7 +182,7 @@ def merge_residues(
         link = res_info.get("LINK")
         if res.upper().startswith("P-") and link == "P-":
             res_info["LINK"] = "O-"
-            res_info["NUM_DB"] = res_info.get("NUM_DB") + 1
+            res_info["DB_COUNT"] = res_info.get("DB_COUNT") + 1
         for res_seg in res_info:
             if re.search(r"MOD", res_seg):
                 pass
@@ -222,9 +222,9 @@ if __name__ == "__main__":
         "d18:1": {
             "LINK": "d",
             "MOD": {"MOD_LEVEL": 0, "MOD_INFO": {}},
-            "NUM_C": 18,
-            "NUM_DB": 1,
-            "NUM_O": 0,
+            "C_COUNT": 18,
+            "DB_COUNT": 1,
+            "O_COUNT": 0,
         },
         "18:2(9Z,11Z)(12OH)": {
             "LINK": "",
@@ -253,9 +253,9 @@ if __name__ == "__main__":
                     },
                 },
             },
-            "NUM_C": 18,
-            "NUM_DB": 2,
-            "NUM_O": 0,
+            "C_COUNT": 18,
+            "DB_COUNT": 2,
+            "O_COUNT": 0,
         },
     }
     # for r in usr_res_info:

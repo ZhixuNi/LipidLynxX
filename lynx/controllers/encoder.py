@@ -141,9 +141,9 @@ class Encoder(object):
     #     return self.get_best_candidate(out_seg_lst)
 
     def get_residues(self, residues: dict):
-        residues_order = residues.get("RESIDUES_ORDER", [])
-        residues_sep_level = residues.get("RESIDUES_SEPARATOR_LEVEL", "")
-        residues_info = residues.get("RESIDUES_INFO", [])
+        residues_order = residues.get("residues_order", [])
+        residues_sep_level = residues.get("residues_separator_level", "")
+        residues_info = residues.get("residues_info", [])
         res_count = len(residues_order)
         # sum_residues_str = ""
         res_lv_id_dct = {}
@@ -210,8 +210,8 @@ class Encoder(object):
 
     def check_segments(self, parsed_info: dict):
         segments_dct = {}
-        lmsd_classes = parsed_info.get("LMSD_CLASSES", None)
-        segments = parsed_info["SEGMENTS"]
+        lmsd_classes = parsed_info.get("lmsd_classes", [])
+        segments = parsed_info["segments"]
         c_prefix_lst = segments.get("PREFIX", [])
         c_suffix_lst = segments.get("SUFFIX", [])
         c_has_prefix = False
@@ -226,7 +226,7 @@ class Encoder(object):
             c_has_suffix = True
         else:
             c_suffix_seg = ""
-        residues = parsed_info.get("RESIDUES", {})
+        residues = parsed_info.get("residues", {})
         sum_res_id_lv_dct = self.get_residues(residues)
         obs_c_seg_lst = segments.get("CLASS", [])
         c_seg = ""
@@ -302,7 +302,7 @@ class Encoder(object):
                     r_info = p_info[in_r]  # type: dict
                     checked_seg_info = self.check_segments(r_info)
                     comp_dct = self.compile_segments(checked_seg_info)
-                    res_info = r_info.get("RESIDUES", {}).get("RESIDUES_INFO", {})
+                    res_info = r_info.get("residues", {}).get("residues_info", {})
                     sum_db = 0
                     for res in res_info:
                         sum_db += res_info[res].get("NUM_DB", 0)
