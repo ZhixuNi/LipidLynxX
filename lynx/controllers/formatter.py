@@ -340,34 +340,31 @@ class Formatter(object):
             max_mod_level = 0
         # mod_info_dct["MOD_LEVEL"] = max_mod_level
 
-        return {"_level": max_mod_level, "info": mod_info_dct}
+        return {"level": max_mod_level, "info": mod_info_dct}
 
     def format_residue(self, info: dict) -> dict:
-        residue_info_dct = {}
+
         link_lst = info.get("LINK", [""])
         if link_lst:
             link = link_lst[0]
         else:
             link = ""
-
+        c_count = int(info.get("C_COUNT", ["0"])[0])
         db_info = self.format_db(info)
-        db_info_sum = {"_level": db_info.get("level", 0), "info": {"0_DB": db_info}}
+        db_info_sum = {"level": db_info.get("level", 0), "info": {"0_DB": db_info}}
         o_info = self.format_o(info)
-        o_info_sum = {"_level": o_info.get("level", 0), "info": {"0_O": o_info}}
+        o_info_sum = {"level": o_info.get("level", 0), "info": {"0_O": o_info}}
         mod_info_sum = self.format_mod(info)
 
-        res_lv = mod_info_sum.get("_level") + db_info_sum.get("_level")
+        res_lv = mod_info_sum.get("level") + db_info_sum.get("level")
 
-        residue_info_dct["_level"] = res_lv
-        residue_info_dct["link"] = link
-        residue_info_dct["c_count"] = int(info.get("C_COUNT", ["0"])[0])
-        residue_info_dct["db_count"] = db_info.get("count", 0)
-        residue_info_dct["db_info_sum"] = db_info_sum
-        residue_info_dct["o_count"] = o_info.get("count", 0)
-        residue_info_dct["o_info_sum"] = o_info_sum
-        residue_info_dct["mod_info_sum"] = mod_info_sum
+        residue_info_dct = {"link": link, "c_count": c_count,
+                            "db_count": db_info.get("count", 0), "db_info_sum": db_info_sum,
+                            "o_count": o_info.get("count", 0), "o_info_sum": o_info_sum, "mod_info_sum": mod_info_sum}
 
-        return residue_info_dct
+        residue_dct = {"level": res_lv, "info": residue_info_dct}
+
+        return residue_dct
 
     def format(self, info: dict) -> dict:
         formatted_info = {"residues": self.format_residue(info)}

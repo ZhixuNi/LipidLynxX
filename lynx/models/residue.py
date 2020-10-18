@@ -40,7 +40,8 @@ class Residue(object):
         self.res_rule = self.export_rule.get("RESIDUE", None)
         self.res_rule_orders = self.res_rule.get("RESIDUE_INFO", {}).get("ORDER", [])
         self.res_separators = self.export_rule.get("SEPARATOR", [])
-        self.res_info = residue_info
+        self.res_info = residue_info.get("info", {})
+        self.res_level = residue_info.get("level", {})
         self.__replace_mdt__()
 
         self.schema = schema
@@ -50,14 +51,14 @@ class Residue(object):
         )
         self.validator = Draft7Validator(res_schema, resolver=resolver)
 
-        mod_info = residue_info.get("MOD", {})
+        self.mod_info = self.res_info.get("mod_info_sum", {}).get("info", {})
+        self.mod_level = self.res_info.get("mod_info_sum", {}).get("level", 0)
 
         self.mod_obj = Modifications(
-            mod_info, num_o=residue_info.get("O_COUNT", 0), nomenclature=nomenclature
+            self.res_info.get("mod_info_sum", {}), o_count=self.res_info.get("o_count", 0), nomenclature=nomenclature
         )
         self.sum_mod_info = self.mod_obj.sum_mod_info
-        self.mod_level = self.mod_obj.mod_level
-        self.res_level = self.mod_level
+
         if float(self.mod_level) > 0:
             self.is_modified = True
         else:
@@ -172,8 +173,8 @@ def merge_residues(
         )
 
     all_mod_lst = [
-        residues_info[rm].get("MOD", {"MOD_LEVEL": 0, "MOD_INFO": {}})
-        for rm in residues_info
+        residues_info[residue_name].get("info", {}).get("mod_info_sum", {})
+        for residue_name in residues_info
     ]
     sum_mods_obj = merge_mods(all_mod_lst)
 
