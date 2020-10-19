@@ -50,8 +50,10 @@ class Modifications(object):
         self.nomenclature = nomenclature
         self.export_rule = load_output_rule(output_rules, nomenclature)
         self.mod_rule = self.export_rule.get("MOD", None)
-        self.mod_rule_orders = self.mod_rule.get("MOD", {}).get("ORDER", [])
-        self.mod_separators = self.export_rule.get("SEPARATORS", [])
+        self.mod_rule_orders = self.mod_rule.get("MOD_INFO_SUM", {}).get("ORDER", [])
+        self.mod_seg_rule = self.mod_rule.get("MOD_INFO", {})
+        self.mod_seg_rule_orders = self.mod_seg_rule.get("ORDER", {})
+        self.mod_separators = self.export_rule.get("SEPARATOR", [])
         if not self.mod_rule:
             raise ValueError(
                 f"Cannot find output rule for 'MODS' from nomenclature: {nomenclature}."
@@ -93,7 +95,7 @@ class Modifications(object):
         for mod in self.mod_info:
             mod_seg_info = self.mod_info[mod]
             mod_count = int(mod_seg_info.get("count", 0))
-            mod_elem_dct = mod_seg_info.get("verbose", {}).get('elements', {})
+            mod_elem_dct = mod_seg_info.get("verbose", {}).get("elements", {})
             for elem in mod_elem_dct:
                 if elem in sum_mod_elem_dct:
                     sum_mod_elem_dct[elem] += mod_count * mod_elem_dct[elem]
@@ -107,7 +109,7 @@ class Modifications(object):
         for mod in self.mod_info:
             mod_seg_info = self.mod_info[mod]
             mod_count = int(mod_seg_info.get("count", 0))
-            mod_mass_shift = mod_seg_info.get("verbose", {}).get('sum_mass_shift', 0)
+            mod_mass_shift = mod_seg_info.get("verbose", {}).get("mass_shift", 0)
             sum_mass_shift += mod_count * mod_mass_shift
         sum_mass_shift_str = f"{sum_mass_shift:+}"
 
@@ -121,12 +123,11 @@ class Modifications(object):
         mod_str_lst = []
         for mod in self.mod_info:
             mod_seg_info = self.mod_info[mod]
-            mod_elements = mod_seg_info.get("verbose", {}).get('elements', {})
+            mod_elements = mod_seg_info.get("verbose", {}).get("elements", {})
             mod_count = int(mod_seg_info.get("count", 0))
             for elem in mod_elements:
                 sum_elements[elem] = (
-                    sum_elements.get(elem, 0)
-                    + mod_elements.get(elem, 0) * mod_count
+                    sum_elements.get(elem, 0) + mod_elements.get(elem, 0) * mod_count
                 )
         if self.additional_o_count > 0:
             sum_elements["O"] = sum_elements.get("O", 0) + self.additional_o_count
@@ -135,7 +136,7 @@ class Modifications(object):
             if mod_elem in sum_elements:
                 # temp solution for elem level for Shorthand
                 # TODO(zhixu.ni@uni-leipzig.de): reformat following part into .json cfg
-                if re.match(r"\.*lynx\.*", self.nomenclature, re.IGNORECASE):
+                if re.match(r".*lynx.*", self.nomenclature, re.IGNORECASE):
                     mod_elem_count = f"{sum_elements[mod_elem]:+}"
                     if mod_elem_count == "+1":
                         mod_elem_count = "+"
@@ -154,122 +155,95 @@ class Modifications(object):
                     elif mod_elem_count == 1:
                         mod_str_lst.append(f"{mod_elem}{mod_elem_count}")
 
-        return f'{",".join(mod_str_lst)}'
+        return f'{",".join(mod_str_lst)}'.strip(",")
 
-    def to_mod_base(
-        self,
-        mod_seg_lst: Union[list, tuple],
-        get_db_only: bool = False,
-    ) -> str:
+    def to_mod_base(self, mod_seg_lst: Union[list, tuple], level: int = 3) -> str:
         mod_str_dct = {}
-        db_idx = None
+        mod_separator = self.mod_separators.get("MOD_SEPARATOR", ",")
+        site_left = self.mod_separators.get("SITE_BRACKET_LEFT", "{")
+        site_right = self.mod_separators.get("SITE_BRACKET_RIGHT", "{")
+        site_left = re.sub(r'\\', "", site_left)
+        site_right = re.sub(r'\\', "", site_right)
         for mod in self.mod_info:
             mod_seg_str = ""
-            is_mod_sites_with_info = False
-            mod_sites_lst = []
             mod_dct = self.mod_info[mod]
             mod_cv = mod_dct.get("cv", "")
             mod_lv = mod_dct.get("level", 0)
             mod_count = mod_dct.get("count", 0)
-            for o in self.mod_rule_orders:
-                if o in mod_seg_lst or o in self.mod_separators:
-                    if o == "MOD_COUNT":
-                        mod_count = mod_dct.get(o, 1)
-                        if mod_count > 1:
-                            if mod_lv > 2:
-                                mod_seg_str += str(mod_count)
-                            else:
-                                # mod_lv 1 is
-                                mod_seg_str += f"+{mod_count}"
-                        elif mod_count < 0 and mod_lv < 3:
+            for o in self.mod_seg_rule_orders:
+                if o == "MOD_COUNT":
+                    if mod_count > 1:
+                        if mod_lv > 2:
                             mod_seg_str += str(mod_count)
-                        elif mod_count == 1 and mod_cv not in ["", "DB"]:
-                            if mod_lv < 3:
-                                mod_seg_str += "+"
-                            else:
-                                pass
-                        elif mod_cv in ["", "DB"]:
-                            pass
                         else:
-                            raise ValueError(
-                                f"Modification count Error for modification level: {mod_lv}, got value: {mod_count}"
-                            )
-                    elif o == "MOD_CV":
-                        if mod_cv in ["", "DB"]:
-                            pass
-                        else:
-                            mod_seg_str += mod_cv
-                    elif o == "MOD_SITE" and "MOD_SITE_INFO" not in mod_seg_lst:
-                        mod_sites_lst = mod_dct.get("MOD_SITE", [])
-                        if mod_sites_lst:
-                            mod_seg_str += ",".join(mod_sites_lst)
+                            # mod_lv 1 is
+                            mod_seg_str += f"+{mod_count}"
+                    elif mod_count < 0 and mod_lv < 3:
+                        mod_seg_str += str(mod_count)
+                    elif mod_count == 1 and mod_cv not in ["", "DB"]:
+                        if mod_lv < 3:
+                            mod_seg_str += "+"
                         else:
                             pass
-                    elif o == "MOD_SITE" and "MOD_SITE_INFO" in mod_seg_lst:
-                        mod_sites_lst = mod_dct.get("MOD_SITE", [])
-                        is_mod_sites_with_info = True
-                    elif o == "MOD_SITE_INFO" and is_mod_sites_with_info:
-                        mod_sites_info_lst = mod_dct.get("MOD_SITE_INFO", [])
-                        mod_sites_cmb_lst = zip(mod_sites_lst, mod_sites_info_lst)
-                        mod_sites_str_lst = [f"{t[0]}{t[1]}" for t in mod_sites_cmb_lst]
-                        if mod_sites_str_lst:
-                            mod_seg_str += ",".join(mod_sites_str_lst)
-                        else:
-                            pass
-                    elif o.upper().endswith("_SEPARATOR"):
-                        mod_seg_str += self.mod_separators.get(o, "")
-                    elif re.search("BRACKET", o.upper()):
-                        mod_seg_str += self.mod_separators.get(o, "")
                     else:
-                        mod_seg_str += str(mod_dct.get(o, ""))
+                        raise ValueError(
+                            f"Modification count Error for modification level: {mod_lv}, got value: {mod_count}"
+                        )
+                elif o in ["MOD_CV", "MOD_TYPE"]:
+                    mod_seg_str += mod_cv
+                elif o.upper().endswith("_SEPARATOR"):
+                    mod_seg_str += self.mod_separators.get(o, "")
+                elif re.search("BRACKET", o.upper()):
+                    mod_seg_str += self.mod_separators.get(o, "")
+                else:
+                    if re.match(r"^(.*SITE)(.*)?$", o, re.IGNORECASE) and level > 3:
+                        mod_sites_lst = mod_dct.get("site", [])
+                        mod_sites_info_lst = mod_dct.get("site_info", [])
+                        mod_seg_site_str = ""
+                        if level == 4:
+                            mod_seg_site_str += ",".join(mod_sites_lst)
+                        elif level == 5:
+                            if mod_sites_info_lst:
+                                mod_seg_site_str += ",".join(mod_sites_info_lst)
+                            else:
+                                mod_seg_site_str += ",".join(mod_sites_lst)
+                        else:
+                            pass
+                        if mod_seg_site_str:
+                            mod_seg_str += f'{site_left}{mod_seg_site_str}{site_right}'
 
-            mod_seg_str = re.sub(r"\{\}", "", mod_seg_str)
+            # mod_seg_str = re.sub(r"\{\}", "", mod_seg_str)
             mod_seg_str = re.sub(r",,", ",", mod_seg_str)
             mod_str_dct[mod] = mod_seg_str.strip(",")
-        if get_db_only and db_idx and mod_str_dct:
-            mod_str_dct = {"0": mod_str_dct[db_idx]}
-        else:
-            if db_idx in mod_str_dct:
-                del mod_str_dct[db_idx]
-            else:
-                pass
+
         mod_str_lst = []
         if mod_str_dct:
             mod_str_dct_idx = natsorted(list(mod_str_dct.keys()))
             for k in mod_str_dct_idx:
                 mod_str_lst.append(mod_str_dct[k])
-        return ",".join(mod_str_lst).strip(",")
+        sum_mod_str = mod_separator.join(mod_str_lst).strip(",")
+        return sum_mod_str
 
-    def to_mod_count(self, get_db_only: bool = False):
-        return self.to_mod_base(
-            mod_seg_lst=["MOD_COUNT", "MOD_CV"], get_db_only=get_db_only
-        )
+    def to_mod_count(self):
+        return self.to_mod_base(mod_seg_lst=["MOD_COUNT", "MOD_TYPE"], level=3)
 
-    def to_mod_site(self, mod_segments: list, get_db_only: bool = False):
+    def to_mod_site(self, mod_segments: list):
         if not mod_segments:
             mod_segments = [
                 "MOD_COUNT",
-                "MOD_CV",
-                "SITE_BRACKET_LEFT",
+                "MOD_TYPE",
                 "MOD_SITE",
-                "SITE_BRACKET_RIGHT",
             ]
-        return self.to_mod_base(
-            mod_seg_lst=mod_segments,
-            get_db_only=get_db_only,
-        )
+        return self.to_mod_base(mod_seg_lst=mod_segments, level=4)
 
-    def to_mod_site_info(self, get_db_only: bool = False):
+    def to_mod_site_info(self):
         return self.to_mod_base(
             mod_seg_lst=[
                 "MOD_COUNT",
-                "MOD_CV",
-                "SITE_BRACKET_LEFT",
-                "MOD_SITE",
+                "MOD_TYPE",
                 "MOD_SITE_INFO",
-                "SITE_BRACKET_RIGHT",
             ],
-            get_db_only=get_db_only,
+            level=5,
         )
 
     def to_mod_level(self, level: Union[int, float, str] = 0) -> str:
@@ -443,7 +417,7 @@ def merge_mods(
                 existed_count = sum_mods_dct[mod_idx].get("count", 0)
                 sum_mods_dct[mod_idx]["count"] = (
                     mod_info[mod_idx].get("count", 0) + existed_count
-                    )
+                )
     max_level = 0
     for sum_mod_idx in sum_mods_dct:
         sum_mod_seg_info = sum_mods_dct[sum_mod_idx]
@@ -456,9 +430,7 @@ def merge_mods(
             sum_mod_seg_info["site_info"] = []
         sum_mods_dct[sum_mod_idx] = sum_mod_seg_info
 
-    merged_mods_dct = {
-        'level': max_level, 'info': sum_mods_dct
-    }
+    merged_mods_dct = {"level": max_level, "info": sum_mods_dct}
 
     sum_mod_obj = Modifications(merged_mods_dct)
 

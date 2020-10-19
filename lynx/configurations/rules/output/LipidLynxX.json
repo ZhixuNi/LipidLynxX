@@ -48,6 +48,7 @@
   ],
   "SUPPORT_MODIFICATION": 1,
   "SEPARATOR": {
+    "MOD_SEPARATOR": ",",
     "RESIDUE_SEPARATOR": "_|/",
     "SPACE": "\\s",
     "COLON": ":",
