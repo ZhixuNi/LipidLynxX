@@ -40,8 +40,9 @@ class Residue(object):
         self.res_rule = self.export_rule.get("RESIDUE", None)
         self.res_rule_orders = self.res_rule.get("RESIDUE_INFO", {}).get("ORDER", [])
         self.res_separators = self.export_rule.get("SEPARATOR", [])
-        self.res_info = residue_info.get("info", {})
+        self.res_info = residue_info
         self.res_level = residue_info.get("level", {})
+        # transfer the m/d/t label in Cer/SM/SP from link section into O section
         self.__replace_mdt__()
 
         self.schema = schema
@@ -55,9 +56,11 @@ class Residue(object):
         self.mod_level = self.res_info.get("mod_info_sum", {}).get("level", 0)
 
         self.mod_obj = Modifications(
-            self.res_info.get("mod_info_sum", {}), o_count=self.res_info.get("o_count", 0), nomenclature=nomenclature
+            self.res_info.get("mod_info_sum", {}),
+            o_count=self.res_info.get("o_count", 0),
+            nomenclature=nomenclature,
         )
-        self.sum_mod_info = self.mod_obj.sum_mod_info
+        self.sum_mod_info = self.mod_obj.info
 
         if float(self.mod_level) > 0:
             self.is_modified = True
@@ -72,29 +75,34 @@ class Residue(object):
         self.linked_ids = self.__post_init__()
 
     def __replace_mdt__(self):
-        link = self.res_info.get("LINK", "")
-        if link.lower() == "m":
-            self.res_info["LINK"] = ""
-            self.res_info["O_COUNT"] = 1 + self.res_info.get("O_COUNT", 0)
-        elif link.lower() == "d":
-            self.res_info["LINK"] = ""
-            self.res_info["O_COUNT"] = 2 + self.res_info.get("O_COUNT", 0)
-        elif link.lower() == "t":
-            self.res_info["LINK"] = ""
-            self.res_info["O_COUNT"] = 3 + self.res_info.get("O_COUNT", 0)
+        link = self.res_info.get("link", "")
+        if link:
+            existed_o_count = self.res_info.get("o_count", 0)
+            # convert m/d/t into corresponding O section
+            if link.lower() == "m":
+                self.res_info["link"] = ""
+                self.res_info["o_count"] = 1 + existed_o_count
+            elif link.lower() == "d":
+                self.res_info["link"] = ""
+                self.res_info["o_count"] = 2 + existed_o_count
+            elif link.lower() == "t":
+                self.res_info["link"] = ""
+                self.res_info["o_count"] = 3 + existed_o_count
+            else:
+                pass
         else:
             pass
 
     def __post_init__(self):
         res_str_dct = {}
-        num_o = self.res_info.get("O_COUNT", 0)
+        num_o = self.res_info.get("o_count", 0)
         for lv in self.linked_levels:
             res_str = ""
             for o in self.res_rule_orders:
                 if o in self.res_info or o in self.res_separators or o in ["SUM_MODS"]:
-                    if o == "O_COUNT":
+                    if o == "o_count":
                         if num_o > 0:
-                            o_seg_rgx = self.res_rule.get("RESIDUE", {}).get("O_COUNT")
+                            o_seg_rgx = self.res_rule.get("RESIDUE", {}).get("o_count")
                             # print("o_seg_rgx", o_seg_rgx)
                             if o_seg_rgx:
                                 if num_o == 1:
@@ -208,7 +216,7 @@ def merge_residues(
                         pass
 
     sum_res_dct["MOD"] = {
-        "MOD_LEVEL": sum_mods_obj.mod_level,
+        "MOD_LEVEL": sum_mods_obj.level,
         "MOD_INFO": sum_mods_obj.mod_info,
     }
 
@@ -219,44 +227,102 @@ def merge_residues(
 
 if __name__ == "__main__":
 
+    # usr_res_info = {
+    #     "link": "",
+    #     "c_count": 18,
+    #     "db_count": 1,
+    #     "db_info_sum": {
+    #         "level": 0.2,
+    #         "info": {
+    #             "0_DB": {
+    #                 "count": 1,
+    #                 "cv": "",
+    #                 "level": 0.2,
+    #                 "order": 0,
+    #                 "site": ["4"],
+    #                 "site_info": ["4E"],
+    #             }
+    #         },
+    #     },
+    #     "o_count": 2,
+    #     "o_info_sum": {
+    #         "level": 5,
+    #         "info": {
+    #             "0_O": {
+    #                 "count": 2,
+    #                 "cv": "OH",
+    #                 "level": 5,
+    #                 "order": 0,
+    #                 "site": ["1", "3"],
+    #                 "site_info": ["1R", "3S"],
+    #             }
+    #         },
+    #     },
+    #     "mod_info_sum": {
+    #         "level": 5,
+    #         "info": {
+    #             "5.01_OH": {
+    #                 "count": 2,
+    #                 "cv": "OH",
+    #                 "level": 5,
+    #                 "order": 5.01,
+    #                 "site": ["8", "18"],
+    #                 "site_info": ["8S", "18R"],
+    #                 "verbose": {"elements": {"O": 1}, "mass_shift": 16},
+    #             },
+    #             "5.02_oxo": {
+    #                 "count": 1,
+    #                 "cv": "oxo",
+    #                 "level": 4,
+    #                 "order": 5.02,
+    #                 "site": ["10"],
+    #                 "site_info": [],
+    #                 "verbose": {"elements": {"H": -2, "O": 1}, "mass_shift": 14},
+    #             },
+    #         },
+    #     },
+    # }
     usr_res_info = {
-        "d18:1": {
-            "LINK": "d",
-            "MOD": {"MOD_LEVEL": 0, "MOD_INFO": {}},
-            "C_COUNT": 18,
-            "DB_COUNT": 1,
-            "O_COUNT": 0,
+        "link": "d",
+        "c_count": 18,
+        "db_count": 1,
+        "db_info_sum": {
+            "level": 0.2,
+            "info": {
+                "0_DB": {
+                    "count": 1,
+                    "cv": "",
+                    "level": 0.2,
+                    "order": 0,
+                    "site": ["4"],
+                    "site_info": ["4E"],
+                }
+            },
         },
-        "18:2(9Z,11Z)(12OH)": {
-            "LINK": "",
-            "MOD": {
-                "MOD_LEVEL": 4.2,
-                "MOD_INFO": {
-                    "0.01_DB": {
-                        "MOD_CV": "DB",
-                        "MOD_LEVEL": 0.2,
-                        "MOD_COUNT": 2,
-                        "MOD_SITE": ["9", "11"],
-                        "MOD_SITE_INFO": ["Z", "Z"],
-                        "MOD_ORDER": 0.01,
-                        "MOD_ELEMENTS": {"H": -2},
-                        "MOD_MASS_SHIFT": 0,
-                    },
-                    "5.01_OH": {
-                        "MOD_CV": "OH",
-                        "MOD_LEVEL": 4,
-                        "MOD_COUNT": 1,
-                        "MOD_SITE": ["12"],
-                        "MOD_SITE_INFO": [""],
-                        "MOD_ORDER": 5.01,
-                        "MOD_ELEMENTS": {"O": 1},
-                        "MOD_MASS_SHIFT": 16,
-                    },
+        "o_count": 0,
+        "o_info_sum": {},
+        "mod_info_sum": {
+            "level": 5,
+            "info": {
+                "5.01_OH": {
+                    "count": 2,
+                    "cv": "OH",
+                    "level": 5,
+                    "order": 5.01,
+                    "site": ["8", "18"],
+                    "site_info": ["8S", "18R"],
+                    "verbose": {"elements": {"O": 1}, "mass_shift": 16},
+                },
+                "5.02_oxo": {
+                    "count": 1,
+                    "cv": "oxo",
+                    "level": 4,
+                    "order": 5.02,
+                    "site": ["10"],
+                    "site_info": [],
+                    "verbose": {"elements": {"H": -2, "O": 1}, "mass_shift": 14},
                 },
             },
-            "C_COUNT": 18,
-            "DB_COUNT": 2,
-            "O_COUNT": 0,
         },
     }
     # for r in usr_res_info:
@@ -264,7 +330,8 @@ if __name__ == "__main__":
     #     logger.debug(usr_res_obj.linked_ids)
     #     # usr_res_json = res_obj.to_json()
 
-    usr_res_obj = merge_residues(usr_res_info)
+    # usr_res_obj = merge_residues(usr_res_info)
+    usr_res_obj = Residue(usr_res_info)
     app_logger.debug(usr_res_obj.linked_ids)
     # usr_res_json = res_obj.to_json()
     app_logger.info("FINISHED")

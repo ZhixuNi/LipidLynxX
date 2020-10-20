@@ -61,7 +61,7 @@ class Modifications(object):
         self.mod_info = mod_info_sum.get("info", {})
         self.schema = schema
         self.type = "Modification"
-        self.mod_level = str(mod_info_sum.get("level", 0))
+        self.level = str(mod_info_sum.get("level", 0))
         with open(get_abs_path(lynx_schema_cfg[self.schema]), "r") as s_obj:
             self.validator = Draft7Validator(
                 json.load(s_obj),
@@ -71,11 +71,11 @@ class Modifications(object):
             )
         self.db_count = db_count
         self.additional_o_count = o_count
-        self.sum_mod_info = self.to_sum_info()
+        self.info = self.to_dict()
 
-        self.mod_id = self.sum_mod_info.get("id", "")
-        self.mod_linked_ids = self.sum_mod_info.get("linked_ids", {})
-        self.mod_list = self.sum_mod_info.get("info", {})
+        self.mod_id = self.info.get("id", "")
+        self.mod_linked_ids = self.info.get("linked_ids", {})
+        self.mod_list = self.info.get("info", {})
 
     def __str__(self):
         return self.to_json()
@@ -162,8 +162,8 @@ class Modifications(object):
         mod_separator = self.mod_separators.get("MOD_SEPARATOR", ",")
         site_left = self.mod_separators.get("SITE_BRACKET_LEFT", "{")
         site_right = self.mod_separators.get("SITE_BRACKET_RIGHT", "{")
-        site_left = re.sub(r'\\', "", site_left)
-        site_right = re.sub(r'\\', "", site_right)
+        site_left = re.sub(r"\\", "", site_left)
+        site_right = re.sub(r"\\", "", site_right)
         for mod in self.mod_info:
             mod_seg_str = ""
             mod_dct = self.mod_info[mod]
@@ -197,20 +197,23 @@ class Modifications(object):
                     mod_seg_str += self.mod_separators.get(o, "")
                 else:
                     if re.match(r"^(.*SITE)(.*)?$", o, re.IGNORECASE) and level > 3:
-                        mod_sites_lst = mod_dct.get("site", [])
-                        mod_sites_info_lst = mod_dct.get("site_info", [])
+                        mod_sites_lst = natsorted(mod_dct.get("site", []))
+                        mod_sites_info_lst = natsorted(mod_dct.get("site_info", []))
                         mod_seg_site_str = ""
-                        if level == 4:
-                            mod_seg_site_str += ",".join(mod_sites_lst)
-                        elif level == 5:
-                            if mod_sites_info_lst:
-                                mod_seg_site_str += ",".join(mod_sites_info_lst)
-                            else:
+                        if level <= float(self.level):
+                            if level == 4:
                                 mod_seg_site_str += ",".join(mod_sites_lst)
+                            elif level == 5:
+                                if mod_sites_info_lst:
+                                    mod_seg_site_str += ",".join(mod_sites_info_lst)
+                                else:
+                                    mod_seg_site_str += ",".join(mod_sites_lst)
+                            else:
+                                pass
                         else:
                             pass
                         if mod_seg_site_str:
-                            mod_seg_str += f'{site_left}{mod_seg_site_str}{site_right}'
+                            mod_seg_str += f"{site_left}{mod_seg_site_str}{site_right}"
 
             # mod_seg_str = re.sub(r"\{\}", "", mod_seg_str)
             mod_seg_str = re.sub(r",,", ",", mod_seg_str)
@@ -250,9 +253,9 @@ class Modifications(object):
         mod_str = ""
         if not isinstance(level, str):
             level = str(level)
-        if float(level) > float(self.mod_level):
+        if float(level) > float(self.level):
             raise ValueError(
-                f'Cannot convert to higher level than the mod_level "{self.mod_level}". Input:{level}'
+                f'Cannot convert to higher level than the mod_level "{self.level}". Input:{level}'
             )
 
         if level.startswith("0"):
@@ -299,80 +302,47 @@ class Modifications(object):
 
     def to_all_levels(self, as_list: bool = False) -> Union[Dict[str, str], List[str]]:
         all_levels_info = {}
-        if self.mod_level in mod_level_lst:
-            mod_idx = mod_level_lst.index(self.mod_level)
+        if self.level in mod_level_lst:
+            mod_idx = mod_level_lst.index(self.level)
             output_levels_lst = mod_level_lst[: mod_idx + 1]
         else:
-            raise ValueError(f"Modification level not supported: {self.mod_level}")
+            raise ValueError(f"Modification level not supported: {self.level}")
 
         for level in output_levels_lst:
             all_levels_info[level] = self.to_mod_level(level)
 
         return all_levels_info
 
-    def get_mod_info(self) -> list:
-        mod_js_lst = []
-        for mod_idx in self.mod_info:
-            mod_seg_dct = self.mod_info[mod_idx]
-            mod_sites_lst = mod_seg_dct.get("MOD_SITE", [])
-            if mod_sites_lst:
-                try:
-                    sites = [int(i) for i in mod_seg_dct.get("MOD_SITE", [])]
-                except ValueError:
-                    sites = []
-            else:
-                sites = []
-            mod_js_dct = {
-                "cv": mod_seg_dct.get("MOD_CV", ""),
-                "count": mod_seg_dct.get("MOD_COUNT", 0),
-                "site": sites,
-                "site_info": mod_seg_dct.get("MOD_SITE_INFO", []),
-                "order": mod_seg_dct.get("MOD_ORDER", 0),
-                "elements": mod_seg_dct.get("MOD_ELEMENTS", {}),
-                "mass_shift": mod_seg_dct.get("MOD_MASS_SHIFT", 0),
-            }
-            mod_js_lst.append(mod_js_dct)
-        return mod_js_lst
-
-    def to_sum_info(self):
+    def to_dict(self):
         linked_ids = self.to_all_levels()
-        mod_id = linked_ids.get(self.mod_level, "")
-        if float(self.mod_level) > 0 and mod_id:
+        mod_id = linked_ids.get(self.level, "")
+        if float(self.level) > 0:
             sum_mod_info_dct = {
                 "api_version": api_version,
                 "type": self.type,
                 "id": mod_id,
-                "level": self.mod_level,
+                "level": self.level,
                 "linked_ids": linked_ids,
                 "linked_levels": natsorted(list(linked_ids.keys())),
-                "info": self.get_mod_info(),
+                "info": self.mod_info,
             }
-        elif float(self.mod_level) > 0 and not mod_id:
-            sum_mod_info_dct = {
-                "api_version": api_version,
-                "type": self.type,
-                "id": mod_id,
-                "level": self.mod_level,
-                "linked_ids": linked_ids,
-                "linked_levels": natsorted(list(linked_ids.keys())),
-                "info": self.get_mod_info(),
-            }
-        elif float(self.mod_level) == 0:
+        elif float(self.level) == 0:
             sum_mod_info_dct = {}
         else:
             raise ValueError(
-                f"Cannot format_mods modification code to level {self.mod_level} "
+                f"Cannot format_mods modification code to level {self.level} "
                 f"from input: {self.mod_info}"
             )
 
         return sum_mod_info_dct
 
     def to_json(self):
-        mod_json_str = json.dumps(self.sum_mod_info)
+        mod_json_str = json.dumps(self.info)
 
         if check_json(
             validator=self.validator,
-            json_obj=json.loads(mod_json_str, logger=self.logger),
+            json_obj=json.loads(mod_json_str),
+            logger=self.logger,
         ):
             return mod_json_str
         else:
@@ -440,27 +410,25 @@ def merge_mods(
 if __name__ == "__main__":
 
     usr_mod_info = {
-        "MOD_LEVEL": 5.2,
-        "MOD_INFO": {
-            "0.01_DB": {
-                "MOD_CV": "DB",
-                "MOD_LEVEL": 0.2,
-                "MOD_COUNT": 2,
-                "MOD_SITE": ["9", "11"],
-                "MOD_SITE_INFO": ["Z", "Z"],
-                "MOD_ORDER": 0.01,
-                "MOD_ELEMENTS": {"H": -2},
-                "MOD_MASS_SHIFT": 0,
-            },
+        "level": 5,
+        "info": {
             "5.01_OH": {
-                "MOD_CV": "OH",
-                "MOD_LEVEL": 5,
-                "MOD_COUNT": 1,
-                "MOD_SITE": ["12"],
-                "MOD_SITE_INFO": ["R"],
-                "MOD_ORDER": 5.01,
-                "MOD_ELEMENTS": {"O": 1},
-                "MOD_MASS_SHIFT": 16,
+                "count": 2,
+                "cv": "OH",
+                "level": 5,
+                "order": 5.01,
+                "site": ["8", "18"],
+                "site_info": ["8S", "18R"],
+                "verbose": {"elements": {"O": 1}, "mass_shift": 16},
+            },
+            "5.02_oxo": {
+                "count": 1,
+                "cv": "oxo",
+                "level": 4,
+                "order": 5.02,
+                "site": ["10"],
+                "site_info": [],
+                "verbose": {"elements": {"H": -2, "O": 1}, "mass_shift": 14},
             },
         },
     }

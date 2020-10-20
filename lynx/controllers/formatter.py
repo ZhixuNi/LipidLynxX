@@ -16,6 +16,8 @@
 import re
 import os
 
+from natsort import natsorted
+
 from lynx.models.cv import CV
 from lynx.models.defaults import default_cv_file, elem_nominal_info
 from lynx.utils.log import app_logger
@@ -91,8 +93,8 @@ class Formatter(object):
                 pass
             if o_count > 0:
                 o_site_info_dct = self.format_site_info(info.get("O_SITE", [""])[0])
-                o_site_lst = o_site_info_dct.get("site", [])
-                o_site_info_lst = o_site_info_dct.get("site_info", [])
+                o_site_lst = natsorted(o_site_info_dct.get("site", []))
+                o_site_info_lst = natsorted(o_site_info_dct.get("site_info", []))
                 if re.match(r".*OH.*", o_str):
                     if o_site_info_lst:
                         o_lv = 5
@@ -122,8 +124,8 @@ class Formatter(object):
             db_count = int(db_info_lst[0])
             if db_count > 0:
                 db_site_info_dct = self.format_site_info(info.get("DB_SITE", [""])[0])
-                db_site_lst = db_site_info_dct.get("site", [])
-                db_site_info_lst = db_site_info_dct.get("site_info", [])
+                db_site_lst = natsorted(db_site_info_dct.get("site", []))
+                db_site_info_lst = natsorted(db_site_info_dct.get("site_info", []))
                 if db_site_info_lst:
                     db_lv = 0.2
                 else:
@@ -303,8 +305,8 @@ class Formatter(object):
                     "cv": mod_type,
                     "level": mod_level,
                     "order": mod_order,
-                    "site": existed_mod_site_lst,
-                    "site_info": existed_mod_site_info_lst
+                    "site": natsorted(existed_mod_site_lst),
+                    "site_info": natsorted(existed_mod_site_info_lst)
                 }
                 verbose = {}
                 if mod_type in self.raw_cv:
