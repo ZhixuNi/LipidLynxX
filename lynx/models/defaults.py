@@ -139,6 +139,7 @@ supported_levels = [
 
 lynx_schema_cfg = {
     "lynx_db": r"lynx/models/schema/lynx_db.schema.json",
+    "lynx_o": r"lynx/models/schema/lynx_sp_o.schema.json",
     "lynx_mod": r"lynx/models/schema/lynx_mod.schema.json",
     "lynx_residue": r"lynx/models/schema/lynx_residue.schema.json",
     "lynx_lipidclass": r"lynx/models/schema/lynx_lipidclass.schema.json",

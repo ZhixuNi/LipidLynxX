@@ -25,8 +25,7 @@ from lynx.models.defaults import (
     core_schema_path,
     default_output_rules,
     lynx_schema_cfg,
-    mod_level_lst,
-    mod_db_level_lst,
+    mod_level_lst
 )
 from lynx.utils.basics import get_abs_path
 from lynx.utils.cfg_reader import api_version
@@ -35,7 +34,7 @@ from lynx.utils.params_loader import load_output_rule
 from lynx.utils.toolbox import check_json
 
 
-class Modifications(object):
+class Modification(object):
     def __init__(
         self,
         mod_info_sum: dict,
@@ -53,12 +52,12 @@ class Modifications(object):
         self.mod_rule_orders = self.mod_rule.get("MOD_INFO_SUM", {}).get("ORDER", [])
         self.mod_seg_rule = self.mod_rule.get("MOD_INFO", {})
         self.mod_seg_rule_orders = self.mod_seg_rule.get("ORDER", {})
-        self.mod_separators = self.export_rule.get("SEPARATOR", [])
+        self.mod_separators = self.export_rule.get("SEPARATOR", {})
         if not self.mod_rule:
             raise ValueError(
                 f"Cannot find output rule for 'MODS' from nomenclature: {nomenclature}."
             )
-        self.mod_info = mod_info_sum.get("info", {})
+        self.info = mod_info_sum.get("info", {})
         self.schema = schema
         self.type = "Modification"
         self.level = str(mod_info_sum.get("level", 0))
@@ -71,11 +70,9 @@ class Modifications(object):
             )
         self.db_count = db_count
         self.additional_o_count = o_count
-        self.info = self.to_dict()
-
-        self.mod_id = self.info.get("id", "")
-        self.mod_linked_ids = self.info.get("linked_ids", {})
-        self.mod_list = self.info.get("info", {})
+        self.details = self.to_dict()
+        self.id = self.details.get("id", "")
+        self.linked_ids = self.details.get("linked_ids", {})
 
     def __str__(self):
         return self.to_json()
@@ -92,8 +89,8 @@ class Modifications(object):
 
     def get_sum_elements_shift(self):
         sum_mod_elem_dct = {}
-        for mod in self.mod_info:
-            mod_seg_info = self.mod_info[mod]
+        for mod in self.info:
+            mod_seg_info = self.info[mod]
             mod_count = int(mod_seg_info.get("count", 0))
             mod_elem_dct = mod_seg_info.get("verbose", {}).get("elements", {})
             for elem in mod_elem_dct:
@@ -106,8 +103,8 @@ class Modifications(object):
 
     def to_mass_shift(self) -> str:
         sum_mass_shift = 0
-        for mod in self.mod_info:
-            mod_seg_info = self.mod_info[mod]
+        for mod in self.info:
+            mod_seg_info = self.info[mod]
             mod_count = int(mod_seg_info.get("count", 0))
             mod_mass_shift = mod_seg_info.get("verbose", {}).get("mass_shift", 0)
             sum_mass_shift += mod_count * mod_mass_shift
@@ -121,8 +118,8 @@ class Modifications(object):
         sum_elements = {}
         mod_elem_lst = ["C", "O", "N", "S", "H", "Na"]
         mod_str_lst = []
-        for mod in self.mod_info:
-            mod_seg_info = self.mod_info[mod]
+        for mod in self.info:
+            mod_seg_info = self.info[mod]
             mod_elements = mod_seg_info.get("verbose", {}).get("elements", {})
             mod_count = int(mod_seg_info.get("count", 0))
             for elem in mod_elements:
@@ -164,9 +161,9 @@ class Modifications(object):
         site_right = self.mod_separators.get("SITE_BRACKET_RIGHT", "{")
         site_left = re.sub(r"\\", "", site_left)
         site_right = re.sub(r"\\", "", site_right)
-        for mod in self.mod_info:
+        for mod in self.info:
             mod_seg_str = ""
-            mod_dct = self.mod_info[mod]
+            mod_dct = self.info[mod]
             mod_cv = mod_dct.get("cv", "")
             mod_lv = mod_dct.get("level", 0)
             mod_count = mod_dct.get("count", 0)
@@ -324,20 +321,20 @@ class Modifications(object):
                 "level": self.level,
                 "linked_ids": linked_ids,
                 "linked_levels": natsorted(list(linked_ids.keys())),
-                "info": self.mod_info,
+                "info": self.info,
             }
         elif float(self.level) == 0:
             sum_mod_info_dct = {}
         else:
             raise ValueError(
                 f"Cannot format_mods modification code to level {self.level} "
-                f"from input: {self.mod_info}"
+                f"from input: {self.info}"
             )
 
         return sum_mod_info_dct
 
     def to_json(self):
-        mod_json_str = json.dumps(self.info)
+        mod_json_str = json.dumps(self.details)
 
         if check_json(
             validator=self.validator,
@@ -355,7 +352,7 @@ def merge_mods(
     schema: str = "lynx_mod",
     output_rules: dict = default_output_rules,
     nomenclature: str = "LipidLynxX",
-) -> Modifications:
+) -> Modification:
     sum_mods_dct = {}
     if isinstance(mods_collection, list):
         pass
@@ -370,8 +367,8 @@ def merge_mods(
         )
 
     for mod_seg in mods_collection:
-        if isinstance(mod_seg, Modifications):
-            mod_info = mod_seg.mod_info
+        if isinstance(mod_seg, Modification):
+            mod_info = mod_seg.details.get("info")
         elif isinstance(mod_seg, dict):
             mod_info = mod_seg.get("info", {})
         else:
@@ -382,7 +379,7 @@ def merge_mods(
 
         for mod_idx in mod_info:
             if mod_idx not in sum_mods_dct:
-                sum_mods_dct[mod_idx] = mod_info[mod_idx]
+                sum_mods_dct[mod_idx] = dict(mod_info[mod_idx])
             else:
                 existed_count = sum_mods_dct[mod_idx].get("count", 0)
                 sum_mods_dct[mod_idx]["count"] = (
@@ -402,14 +399,14 @@ def merge_mods(
 
     merged_mods_dct = {"level": max_level, "info": sum_mods_dct}
 
-    sum_mod_obj = Modifications(merged_mods_dct)
+    sum_mod_obj = Modification(merged_mods_dct)
 
     return sum_mod_obj
 
 
 if __name__ == "__main__":
 
-    usr_mod_info = {
+    usr_mod1 = {
         "level": 5,
         "info": {
             "5.01_OH": {
@@ -432,14 +429,34 @@ if __name__ == "__main__":
             },
         },
     }
+    usr_mod2 = {
+        "level": 4,
+        "info": {
+            "5.01_OH": {
+                "count": 1,
+                "cv": "OH",
+                "level": 4,
+                "order": 5.01,
+                "site": ["12"],
+                "site_info": [],
+                "verbose": {"elements": {"O": 1}, "mass_shift": 16},
+            },
+        },
+    }
+    usr_mod_obj1 = Modification(usr_mod1)
+    usr_mod_obj2 = Modification(usr_mod2)
+    app_logger.debug(usr_mod_obj1.level)
+    app_logger.debug(usr_mod_obj1.info)
+    app_logger.debug(usr_mod_obj2.level)
+    app_logger.debug(usr_mod_obj2.info)
+    mod_dct = usr_mod_obj1.to_dict()
+    mod_json = usr_mod_obj1.to_json()
 
-    usr_mod_obj = Modifications(usr_mod_info)
-    app_logger.debug(usr_mod_obj)
-    mod_json = usr_mod_obj.to_json()
+    usr_sum_mods_obj = merge_mods([usr_mod1, usr_mod2])
 
-    usr_sum_mods_obj = merge_mods([usr_mod_obj, usr_mod_obj])
-
-    app_logger.debug(usr_sum_mods_obj)
+    app_logger.debug(usr_sum_mods_obj.level)
+    app_logger.debug(usr_sum_mods_obj.info)
+    sum_mod_dct = usr_sum_mods_obj.to_dict()
     sum_mod_json = usr_sum_mods_obj.to_json()
 
     app_logger.info("FINISHED")

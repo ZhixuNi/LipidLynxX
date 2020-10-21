@@ -23,7 +23,7 @@ from natsort import natsorted
 from lynx.models.defaults import (
     core_schema,
     core_schema_path,
-    db_level_lst,
+    mod_level_lst,
     default_output_rules,
     lynx_schema_cfg,
 )
@@ -34,11 +34,11 @@ from lynx.utils.params_loader import load_output_rule
 from lynx.utils.toolbox import check_json
 
 
-class DB(object):
+class SP_O(object):
     def __init__(
         self,
-        db_info_sum: dict,
-        schema: str = "lynx_db",
+        sp_o_info_sum: dict,
+        schema: str = "lynx_o",
         output_rules: dict = default_output_rules,
         nomenclature: str = "LipidLynxX",
         logger=app_logger,
@@ -46,16 +46,16 @@ class DB(object):
         self.logger = logger
         self.nomenclature = nomenclature
         self.export_rule = load_output_rule(output_rules, nomenclature)
-        self.db_sites_rule = self.export_rule.get("SITE", None)
-        self.db_separators = self.export_rule.get("SEPARATOR", {})
-        if not self.db_sites_rule:
+        self.sp_o_sites_rule = self.export_rule.get("SITE", None)
+        self.sp_o_separators = self.export_rule.get("SEPARATOR", {})
+        if not self.sp_o_sites_rule:
             raise ValueError(
-                f"Cannot find output rule for 'DB_SITES' from nomenclature: {nomenclature}."
+                f"Cannot find output rule for 'O_SITES' from nomenclature: {nomenclature}."
             )
-        self.info = db_info_sum.get("info", {}).get("0.01_DB", {})
+        self.info = sp_o_info_sum.get("info", {}).get("0.02_SP_O", {})
         self.schema = schema
-        self.type = "DB"
-        self.level = str(db_info_sum.get("level", 0))
+        self.type = "SP_O"
+        self.level = str(sp_o_info_sum.get("level", 0))
         if self.level == "0":
             self.level = "0.0"
         with open(get_abs_path(lynx_schema_cfg[self.schema]), "r") as s_obj:
@@ -77,65 +77,67 @@ class DB(object):
     def __repr__(self):
         return self.to_json()
 
-    def to_db_level(self, level: str = "0.0") -> str:
-        db_str = ""
-        site_left = self.db_separators.get("SITE_BRACKET_LEFT", "{")
-        site_right = self.db_separators.get("SITE_BRACKET_RIGHT", "{")
-        site_left = re.sub(r"\\", "", site_left)
-        site_right = re.sub(r"\\", "", site_right)
+    def to_sp_o_level(self, level: str = "0") -> str:
+        o_str = ""
+        site_left = re.sub(
+            r"\\", "", self.sp_o_separators.get("SITE_BRACKET_LEFT", "{")
+        )
+        site_right = re.sub(
+            r"\\", "", self.sp_o_separators.get("SITE_BRACKET_RIGHT", "{")
+        )
         if not isinstance(level, str):
             level = str(level)
         if float(level) > float(self.level):
             raise ValueError(
-                f'Cannot convert to higher level than the db_level "{self.level}". Input:{level}'
+                f'Cannot convert to higher level than the sp_o_level "{self.level}". Input:{level}'
             )
         try:
-            level_f = float(level)
+            level_i = int(level)
         except ValueError:
-            self.logger.warning(f'Cannot process db.level: {level}')
-            level_f = 0.0
-        if level_f > 0:
-            db_sites_lst = natsorted(self.info.get("site", []))
-            db_sites_info_lst = natsorted(self.info.get("site_info", []))
-            db_seg_site_str = ""
-            if level == "0.1":
-                db_seg_site_str += ",".join(db_sites_lst)
-            elif level == "0.2":
-                if db_sites_info_lst:
-                    db_seg_site_str += ",".join(db_sites_info_lst)
+            self.logger.warning(f"Cannot process db.level: {level}")
+            level_i = 0
+        if level_i > 3:
+            sp_o_sites_lst = natsorted(self.info.get("site", []))
+            sp_o_sites_info_lst = natsorted(self.info.get("site_info", []))
+            sp_o_seg_site_str = ""
+            if level == "4":
+                sp_o_seg_site_str += ",".join(sp_o_sites_lst)
+            elif level == "5":
+                if sp_o_sites_info_lst:
+                    sp_o_seg_site_str += ",".join(sp_o_sites_info_lst)
                 else:
-                    db_seg_site_str += ",".join(db_sites_lst)
+                    sp_o_seg_site_str += ",".join(sp_o_sites_lst)
             else:
                 pass
         else:
-            db_seg_site_str = ""
-        if db_seg_site_str:
-            db_str += f"{site_left}{db_seg_site_str}{site_right}"
+            sp_o_seg_site_str = ""
+        if sp_o_seg_site_str:
+            o_str += f"{site_left}{sp_o_seg_site_str}{site_right}"
 
-        return db_str
+        return o_str
 
     def to_all_levels(self, as_list: bool = False) -> Union[Dict[str, str], List[str]]:
         all_levels_dct = {}
-        if self.level in db_level_lst:
-            db_idx = db_level_lst.index(self.level)
-            output_levels_lst = db_level_lst[: db_idx + 1]
+        if self.level in mod_level_lst:
+            sp_o_idx = mod_level_lst.index(self.level)
+            output_levels_lst = mod_level_lst[: sp_o_idx + 1]
         else:
             raise ValueError(f"DB level not supported: {self.level}")
 
         for level in output_levels_lst:
-            all_levels_dct[level] = self.to_db_level(level)
+            all_levels_dct[level] = self.to_sp_o_level(level)
         all_levels_info = all_levels_dct
 
         return all_levels_info
 
     def to_dict(self):
         linked_ids = self.to_all_levels()
-        db_id = linked_ids.get(self.level, "")
-        if float(self.level) > 0:
-            sum_db_info_dct = {
+        sp_o_id = linked_ids.get(self.level, "")
+        if float(self.level) >= 0:
+            sum_sp_o_info_dct = {
                 "api_version": api_version,
                 "type": self.type,
-                "id": db_id,
+                "id": sp_o_id,
                 "level": self.level,
                 "linked_ids": linked_ids,
                 "linked_levels": natsorted(list(linked_ids.keys())),
@@ -143,39 +145,39 @@ class DB(object):
             }
         else:
             raise ValueError(
-                f"Cannot format DB code to level {self.level} "
+                f"Cannot format SP_O code to level {self.level} "
                 f"from input: {self.info}"
             )
 
-        return sum_db_info_dct
+        return sum_sp_o_info_dct
 
     def to_json(self):
-        db_json_str = json.dumps(self.details)
+        sp_o_json_str = json.dumps(self.details)
 
         if check_json(
             validator=self.validator,
-            json_obj=json.loads(db_json_str),
+            json_obj=json.loads(sp_o_json_str),
         ):
-            return db_json_str
+            return sp_o_json_str
         else:
             raise Exception(f"Schema test FAILED. Schema {self.schema}")
 
 
 if __name__ == "__main__":
 
-    usr_db = {
-        "level": 0.2,
+    usr_sp_o = {
+        "level": 5,
         "info": {
-            "0.01_DB": {
-                "count": 1,
+            "0.02_SP_O": {
+                "count": 2,
                 "cv": "",
-                "level": 0.2,
-                "order": 0.01,
-                "site": ["4"],
-                "site_info": ["4E"],
+                "level": 5,
+                "order": 0.02,
+                "site": ["1", "3"],
+                "site_info": ["1R", "3S"],
             }
         },
     }
 
-    db_obj = DB(db_info_sum=usr_db)
-    print(db_obj.to_json())
+    sp_o_obj = SP_O(sp_o_info_sum=usr_sp_o)
+    print(sp_o_obj.to_json())

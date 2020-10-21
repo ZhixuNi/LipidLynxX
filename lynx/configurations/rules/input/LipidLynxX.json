@@ -73,12 +73,12 @@
       ]
     }
   },
-  "O": {
-    "O_INFO_SUM": {
+  "SP_O": {
+    "SP_O_INFO_SUM": {
       "ORDER": [
-        "O_SITE"
+        "SP_O_SITE"
       ],
-      "O_SITE": "{{SITE.SITE_INFO_SUM}}",
+      "SP_O_SITE": "{{SITE.SITE_INFO_SUM}}",
       "EXAMPLES": [
         "{1}",
         "{1,3}",
@@ -137,9 +137,9 @@
         "DB_SEPARATOR",
         "DB_COUNT",
         "DB_INFO_SUM",
-        "O_SEPARATOR",
-        "O_COUNT",
-        "O_INFO_SUM",
+        "SP_O_SEPARATOR",
+        "SP_O_COUNT",
+        "SP_O_INFO_SUM",
         "MOD_INFO_SUM"
       ],
       "OPTIONAL": [
@@ -147,9 +147,9 @@
         "LINK",
         "DB_COUNT",
         "DB_INFO_SUM",
-        "O_SEPARATOR",
-        "O_COUNT",
-        "O_INFO_SUM",
+        "SP_O_SEPARATOR",
+        "SP_O_COUNT",
+        "SP_O_INFO_SUM",
         "MOD_INFO_SUM"
       ],
       "RESIDUE_SEPARATOR": "{{SEPARATOR.RESIDUE_SEPARATOR}}",
@@ -158,9 +158,9 @@
       "DB_SEPARATOR": "{{SEPARATOR.COLON}}",
       "DB_COUNT": "[1,2]?[0-9]",
       "DB_INFO_SUM": "{{DB.DB_INFO_SUM}}",
-      "O_SEPARATOR": "{{SEPARATOR.SEMICOLON}}",
-      "O_COUNT": "[2-9]?OH?",
-      "O_INFO_SUM": "{{O.O_INFO_SUM}}",
+      "SP_O_SEPARATOR": "{{SEPARATOR.SEMICOLON}}",
+      "SP_O_COUNT": "[2-9]?OH?",
+      "SP_O_INFO_SUM": "{{SP_O.SP_O_INFO_SUM}}",
       "MOD_INFO_SUM": "{{MOD.MOD_INFO_SUM}}",
       "EXAMPLES": [
         "18:2;1",

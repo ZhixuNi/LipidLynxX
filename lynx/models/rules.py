@@ -48,9 +48,9 @@ class InputRules(object):
             self.supported_db = list(db.keys())
         else:
             self.supported_db = []
-        o = self.raw_rules.get("O", {})
-        if o:
-            self.supported_o = list(o.keys())
+        sp_o = self.raw_rules.get("SP_O", {})
+        if sp_o:
+            self.supported_o = list(sp_o.keys())
         else:
             self.supported_o = []
         mods = self.raw_rules.get("MOD", {})
@@ -291,7 +291,7 @@ class InputRules(object):
     def build(self) -> dict:
         sum_rules = self.__build__(self.supported_site, "SITE")
         sum_rules.update(self.__build__(self.supported_db, "DB"))
-        sum_rules.update(self.__build__(self.supported_o, "O"))
+        sum_rules.update(self.__build__(self.supported_o, "SP_O"))
         sum_rules.update(self.__build__(self.supported_mods, "MOD"))
         sum_rules.update(self.__build__(self.supported_residues, "RESIDUE"))
         # sum_rules = self.__replace_refs__(sum_rules)
@@ -419,7 +419,7 @@ class OutputRules(object):
         self.separators = self.raw_rules["SEPARATOR"]
         self.sites = self.raw_rules.get("SITE", {})
         self.db = self.raw_rules.get("DB", {})
-        self.o = self.raw_rules.get("O", {})
+        self.sp_o = self.raw_rules.get("SP_O", {})
         self.mods = self.raw_rules.get("MOD", {})
         self.residues = self.raw_rules.get("RESIDUE", {})
         self.rules = self.build()
@@ -447,7 +447,7 @@ class OutputRules(object):
             "SEPARATOR": self.separators,
             "SITE": self.sites,
             "DB": self.db,
-            "O": self.o,
+            "SP_O": self.sp_o,
             "MOD": self.mods,
             "RESIDUE": self.residues,
         }

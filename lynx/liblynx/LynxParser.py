@@ -41,13 +41,13 @@ def parse_lipidlynx(abbr: str) -> dict:
 
     if fa_decoder.is_fa(lynx_id):
         smi = fa_decoder.get_smi_fa(lynx_id)
-        logger.info(lynx_id + ": " + smi)
+        logger.details(lynx_id + ": " + smi)
     elif pl_decoder.is_pl(lynx_id):
         smi = pl_decoder.get_smi_pl(lynx_id)
-        logger.info(lynx_id + ": " + smi)
+        logger.details(lynx_id + ": " + smi)
     else:
         smi = ""
-        logger.info(f"Can NOT parse abbreviation: {lynx_id}")
+        logger.details(f"Can NOT parse abbreviation: {lynx_id}")
 
     try:
         mol = Chem.MolFromSmiles(smi)

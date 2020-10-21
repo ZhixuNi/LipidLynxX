@@ -27,7 +27,7 @@
       "description": "Type of the LipidLynxX object",
       "type": "string",
       "enum": [
-        "DB"
+        "O", "SP_O"
       ]
     },
     "level": {

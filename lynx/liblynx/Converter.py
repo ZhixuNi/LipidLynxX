@@ -52,7 +52,7 @@ class Converter:
             raise FileNotFoundError
         abbr_df.fillna("", inplace=True)
         groups_lst = abbr_df.columns.tolist()
-        logger.info(
+        logger.details(
             f'Input {len(groups_lst)} abbreviation groups: {", ".join(groups_lst)}'
         )
 
@@ -161,4 +161,4 @@ if __name__ == "__main__":
 
     converter.convert_table(test_in_file, test_out_file)
 
-    logger.info("lynx convert_lipid finished.")
+    logger.details("lynx convert_lipid finished.")

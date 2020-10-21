@@ -20,7 +20,7 @@ import regex as re
 from jsonschema import Draft7Validator, RefResolver
 
 from lynx.models.defaults import default_output_rules, res_schema, res_schema_path
-from lynx.models.modification import merge_mods, Modifications
+from lynx.models.modification import merge_mods, Modification
 from lynx.utils.log import app_logger
 from lynx.utils.params_loader import load_output_rule
 from lynx.utils.toolbox import check_json
@@ -55,12 +55,12 @@ class Residue(object):
         self.mod_info = self.res_info.get("mod_info_sum", {}).get("info", {})
         self.mod_level = self.res_info.get("mod_info_sum", {}).get("level", 0)
 
-        self.mod_obj = Modifications(
+        self.mod_obj = Modification(
             self.res_info.get("mod_info_sum", {}),
             o_count=self.res_info.get("o_count", 0),
             nomenclature=nomenclature,
         )
-        self.sum_mod_info = self.mod_obj.info
+        self.sum_mod_info = self.mod_obj.details
 
         if float(self.mod_level) > 0:
             self.is_modified = True
@@ -217,7 +217,7 @@ def merge_residues(
 
     sum_res_dct["MOD"] = {
         "MOD_LEVEL": sum_mods_obj.level,
-        "MOD_INFO": sum_mods_obj.mod_info,
+        "MOD_INFO": sum_mods_obj.info,
     }
 
     sum_res_obj = Residue(sum_res_dct, schema, output_rules, nomenclature)
@@ -334,4 +334,4 @@ if __name__ == "__main__":
     usr_res_obj = Residue(usr_res_info)
     app_logger.debug(usr_res_obj.linked_ids)
     # usr_res_json = res_obj.to_json()
-    app_logger.info("FINISHED")
+    app_logger.details("FINISHED")

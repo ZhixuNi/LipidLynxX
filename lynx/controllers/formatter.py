@@ -53,15 +53,17 @@ class Formatter(object):
         site_lst = []
         site_info_lst = []
         for site_seg in info_lst:
-            if re.match(r'^\d{1,2}[EZRS]$', site_seg):
+            if re.match(r"^\d{1,2}[EZRS]$", site_seg):
                 site_lst.append(site_seg[:-1])
                 site_info_lst.append(site_seg)
-            elif re.match(r'^\d{1,2}$', site_seg):
+            elif re.match(r"^\d{1,2}$", site_seg):
                 site_lst.append(site_seg)
                 site_info_lst.append(site_seg)
             else:
                 self.logger.warning(f"Can NOT decode site: {site_seg} in {info}")
-        chk_site_info_lst = [si for si in site_info_lst if re.match(r'^\d{1,2}[EZRS]$', si)]
+        chk_site_info_lst = [
+            si for si in site_info_lst if re.match(r"^\d{1,2}[EZRS]$", si)
+        ]
         if chk_site_info_lst:
             pass
         else:
@@ -70,13 +72,13 @@ class Formatter(object):
 
         return site_info_dct
 
-    def format_o(self, info: dict):
+    def format_sp_o(self, info: dict):
         o_count = 0
         o_str = ""
         o_lv = 0
         o_site_lst = []
         o_site_info_lst = []
-        o_info_lst = info.get("O_COUNT", [])
+        o_info_lst = info.get("SP_O_COUNT", [])
         if o_info_lst:
             o_str = str(o_info_lst[0]).strip(" ").upper()
             if o_str:
@@ -92,7 +94,7 @@ class Formatter(object):
             else:
                 pass
             if o_count > 0:
-                o_site_info_dct = self.format_site_info(info.get("O_SITE", [""])[0])
+                o_site_info_dct = self.format_site_info(info.get("SP_O_SITE", [""])[0])
                 o_site_lst = natsorted(o_site_info_dct.get("site", []))
                 o_site_info_lst = natsorted(o_site_info_dct.get("site_info", []))
                 if re.match(r".*OH.*", o_str):
@@ -103,12 +105,17 @@ class Formatter(object):
                             o_lv = 4
                         else:
                             o_lv = 3
-
+                elif re.match(r"^\d{0,2}O\d{0,2}$", o_str):
+                    o_lv = 2
+        if o_lv >= 3:
+            sp_o_cv = "OH"
+        else:
+            sp_o_cv = "O"
         o_info = {
             "count": o_count,
-            "cv": re.sub(r"\d", "", o_str),
+            "cv": sp_o_cv,
             "level": o_lv,
-            "order": 0,
+            "order": 0.02,
             "site": o_site_lst,
             "site_info": o_site_info_lst,
         }
@@ -139,7 +146,7 @@ class Formatter(object):
             "count": db_count,
             "cv": "",
             "level": db_lv,
-            "order": 0,
+            "order": 0.01,
             "site": db_site_lst,
             "site_info": db_site_info_lst,
         }
@@ -201,9 +208,9 @@ class Formatter(object):
                             )
         mod_type_count = len(formatted_mod_type_lst)
         if (
-                mod_type_lst
-                and formatted_mod_type_lst
-                and len(mod_type_lst) == mod_type_count
+            mod_type_lst
+            and formatted_mod_type_lst
+            and len(mod_type_lst) == mod_type_count
         ):
             info["MOD_TYPE"] = formatted_mod_type_lst
 
@@ -306,24 +313,18 @@ class Formatter(object):
                     "level": mod_level,
                     "order": mod_order,
                     "site": natsorted(existed_mod_site_lst),
-                    "site_info": natsorted(existed_mod_site_info_lst)
+                    "site_info": natsorted(existed_mod_site_info_lst),
                 }
                 verbose = {}
                 if mod_type in self.raw_cv:
-                    verbose["elements"] = self.raw_cv[mod_type].get(
-                        "ELEMENTS", {}
-                    )
+                    verbose["elements"] = self.raw_cv[mod_type].get("ELEMENTS", {})
                     if (
-                            mod_type not in ["Delta", "DB"]
-                            and mod_type not in mass_shift_dct
+                        mod_type not in ["Delta", "DB"]
+                        and mod_type not in mass_shift_dct
                     ):
-                        verbose["mass_shift"] = self.to_mass_shift(
-                            verbose["elements"]
-                        )
+                        verbose["mass_shift"] = self.to_mass_shift(verbose["elements"])
                     elif mod_type == "Delta" and mod_type in mass_shift_dct:
-                        verbose["mass_shift"] = mass_shift_dct.get(
-                            "Delta", 0
-                        )
+                        verbose["mass_shift"] = mass_shift_dct.get("Delta", 0)
                     else:
                         verbose["mass_shift"] = 0
                 else:
@@ -353,16 +354,25 @@ class Formatter(object):
             link = ""
         c_count = int(info.get("C_COUNT", ["0"])[0])
         db_info = self.format_db(info)
-        db_info_sum = {"level": db_info.get("level", 0), "info": {"0_DB": db_info}}
-        o_info = self.format_o(info)
-        o_info_sum = {"level": o_info.get("level", 0), "info": {"0_O": o_info}}
+        db_info_sum = {"level": db_info.get("level", 0), "info": {"0.01_DB": db_info}}
+        sp_o_info = self.format_sp_o(info)
+        sp_o_info_sum = {
+            "level": sp_o_info.get("level", 0),
+            "info": {"0.02_SP_O": sp_o_info},
+        }
         mod_info_sum = self.format_mod(info)
 
         res_lv = mod_info_sum.get("level") + db_info_sum.get("level")
 
-        residue_info_dct = {"link": link, "c_count": c_count,
-                            "db_count": db_info.get("count", 0), "db_info_sum": db_info_sum,
-                            "o_count": o_info.get("count", 0), "o_info_sum": o_info_sum, "mod_info_sum": mod_info_sum}
+        residue_info_dct = {
+            "link": link,
+            "c_count": c_count,
+            "db_count": db_info.get("count", 0),
+            "db_info_sum": db_info_sum,
+            "sp_o_count": sp_o_info.get("count", 0),
+            "sp_o_info_sum": sp_o_info_sum,
+            "mod_info_sum": mod_info_sum,
+        }
 
         residue_dct = {"level": res_lv, "info": residue_info_dct}
 
