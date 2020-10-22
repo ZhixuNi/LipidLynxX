@@ -39,7 +39,7 @@ class Modification(object):
         self,
         mod_info_sum: dict,
         db_count: int = 0,
-        o_count: int = 0,
+        sp_o_count: int = 0,
         schema: str = "lynx_mod",
         output_rules: dict = default_output_rules,
         nomenclature: str = "LipidLynxX",
@@ -69,7 +69,7 @@ class Modification(object):
                 ),
             )
         self.db_count = db_count
-        self.additional_o_count = o_count
+        self.sp_o_count = sp_o_count
         self.details = self.to_dict()
         self.id = self.details.get("id", "")
         self.linked_ids = self.details.get("linked_ids", {})
@@ -126,8 +126,8 @@ class Modification(object):
                 sum_elements[elem] = (
                     sum_elements.get(elem, 0) + mod_elements.get(elem, 0) * mod_count
                 )
-        if self.additional_o_count > 0:
-            sum_elements["O"] = sum_elements.get("O", 0) + self.additional_o_count
+        if self.sp_o_count > 0:
+            sum_elements["O"] = sum_elements.get("O", 0) + self.sp_o_count
 
         for mod_elem in mod_elem_lst:
             if mod_elem in sum_elements:

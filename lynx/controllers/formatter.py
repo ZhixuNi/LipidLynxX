@@ -99,15 +99,15 @@ class Formatter(object):
                 o_site_info_lst = natsorted(o_site_info_dct.get("site_info", []))
                 if re.match(r".*OH.*", o_str):
                     if o_site_info_lst:
-                        o_lv = 5
+                        o_lv = 0.2
                     else:
                         if o_site_lst:
-                            o_lv = 4
+                            o_lv = 0.1
                         else:
-                            o_lv = 3
+                            o_lv = 0.0
                 elif re.match(r"^\d{0,2}O\d{0,2}$", o_str):
                     o_lv = 2
-        if o_lv >= 3:
+        if o_lv > 0:
             sp_o_cv = "OH"
         else:
             sp_o_cv = "O"
@@ -362,7 +362,7 @@ class Formatter(object):
         }
         mod_info_sum = self.format_mod(info)
 
-        res_lv = mod_info_sum.get("level") + db_info_sum.get("level")
+        res_lv = mod_info_sum.get("level") + max(db_info_sum.get("level"), sp_o_info_sum.get("level"))
 
         residue_info_dct = {
             "link": link,

@@ -23,7 +23,7 @@ from natsort import natsorted
 from lynx.models.defaults import (
     core_schema,
     core_schema_path,
-    mod_level_lst,
+    db_level_lst,
     default_output_rules,
     lynx_schema_cfg,
 )
@@ -55,7 +55,7 @@ class SP_O(object):
         self.info = sp_o_info_sum.get("info", {}).get("0.02_SP_O", {})
         self.schema = schema
         self.type = "SP_O"
-        self.level = str(sp_o_info_sum.get("level", 0))
+        self.level = str(sp_o_info_sum.get("level", "0.0"))
         if self.level == "0":
             self.level = "0.0"
         with open(get_abs_path(lynx_schema_cfg[self.schema]), "r") as s_obj:
@@ -77,7 +77,7 @@ class SP_O(object):
     def __repr__(self):
         return self.to_json()
 
-    def to_sp_o_level(self, level: str = "0") -> str:
+    def to_sp_o_level(self, level: str = "0.0") -> str:
         o_str = ""
         site_left = re.sub(
             r"\\", "", self.sp_o_separators.get("SITE_BRACKET_LEFT", "{")
@@ -92,17 +92,17 @@ class SP_O(object):
                 f'Cannot convert to higher level than the sp_o_level "{self.level}". Input:{level}'
             )
         try:
-            level_i = int(level)
+            level_f = float(level)
         except ValueError:
             self.logger.warning(f"Cannot process db.level: {level}")
-            level_i = 0
-        if level_i > 3:
+            level_f = 0
+        if level_f > 0:
+            sp_o_seg_site_str = ""
             sp_o_sites_lst = natsorted(self.info.get("site", []))
             sp_o_sites_info_lst = natsorted(self.info.get("site_info", []))
-            sp_o_seg_site_str = ""
-            if level == "4":
+            if level == "0.1":
                 sp_o_seg_site_str += ",".join(sp_o_sites_lst)
-            elif level == "5":
+            elif level == "0.2":
                 if sp_o_sites_info_lst:
                     sp_o_seg_site_str += ",".join(sp_o_sites_info_lst)
                 else:
@@ -112,17 +112,19 @@ class SP_O(object):
         else:
             sp_o_seg_site_str = ""
         if sp_o_seg_site_str:
-            o_str += f"{site_left}{sp_o_seg_site_str}{site_right}"
+            o_str += f"OH{site_left}{sp_o_seg_site_str}{site_right}"
+        else:
+            o_str = "O"
 
         return o_str
 
     def to_all_levels(self, as_list: bool = False) -> Union[Dict[str, str], List[str]]:
         all_levels_dct = {}
-        if self.level in mod_level_lst:
-            sp_o_idx = mod_level_lst.index(self.level)
-            output_levels_lst = mod_level_lst[: sp_o_idx + 1]
+        if self.level in db_level_lst:
+            sp_o_idx = db_level_lst.index(self.level)
+            output_levels_lst = db_level_lst[: sp_o_idx + 1]
         else:
-            raise ValueError(f"DB level not supported: {self.level}")
+            raise ValueError(f"SP_O level not supported: {self.level}")
 
         for level in output_levels_lst:
             all_levels_dct[level] = self.to_sp_o_level(level)
@@ -166,12 +168,12 @@ class SP_O(object):
 if __name__ == "__main__":
 
     usr_sp_o = {
-        "level": 5,
+        "level": 0.2,
         "info": {
             "0.02_SP_O": {
                 "count": 2,
-                "cv": "",
-                "level": 5,
+                "cv": "OH",
+                "level": 0.2,
                 "order": 0.02,
                 "site": ["1", "3"],
                 "site_info": ["1R", "3S"],

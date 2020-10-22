@@ -15,12 +15,23 @@
 
 import json
 import os
+from typing import List
 
+from natsort import natsorted
 import regex as re
 from jsonschema import Draft7Validator, RefResolver
 
-from lynx.models.defaults import default_output_rules, res_schema, res_schema_path
+from lynx.models.db import DB
+from lynx.models.defaults import (
+    db_level_lst,
+    default_output_rules,
+    mod_level_lst,
+    res_schema,
+    res_schema_path,
+)
 from lynx.models.modification import merge_mods, Modification
+from lynx.models.sp_o import SP_O
+from lynx.utils.cfg_reader import api_version
 from lynx.utils.log import app_logger
 from lynx.utils.params_loader import load_output_rule
 from lynx.utils.toolbox import check_json
@@ -35,15 +46,26 @@ class Residue(object):
         nomenclature: str = "LipidLynxX",
         logger=app_logger,
     ):
+        self.nomenclature = nomenclature
         self.logger = logger
         self.export_rule = load_output_rule(output_rules, nomenclature)
         self.res_rule = self.export_rule.get("RESIDUE", None)
         self.res_rule_orders = self.res_rule.get("RESIDUE_INFO", {}).get("ORDER", [])
         self.res_separators = self.export_rule.get("SEPARATOR", [])
-        self.res_info = residue_info
-        self.res_level = residue_info.get("level", {})
+        self.info = residue_info.get("info", {})
+        self.level = residue_info.get("level", "0.0")
         # transfer the m/d/t label in Cer/SM/SP from link section into O section
         self.__replace_mdt__()
+
+        self.db = self.__init_db__()
+        self.sp_o = self.__init_sp_o__()
+        self.mod = self.__init_mod__()
+        self.linked_levels = self.__init_linked_levels__()
+
+        if float(self.mod.level) > 0:
+            self.is_modified = True
+        else:
+            self.is_modified = False
 
         self.schema = schema
         self.type = "FattyAcid"
@@ -52,100 +74,149 @@ class Residue(object):
         )
         self.validator = Draft7Validator(res_schema, resolver=resolver)
 
-        self.mod_info = self.res_info.get("mod_info_sum", {}).get("info", {})
-        self.mod_level = self.res_info.get("mod_info_sum", {}).get("level", 0)
-
-        self.mod_obj = Modification(
-            self.res_info.get("mod_info_sum", {}),
-            o_count=self.res_info.get("o_count", 0),
-            nomenclature=nomenclature,
-        )
-        self.sum_mod_info = self.mod_obj.details
-
-        if float(self.mod_level) > 0:
-            self.is_modified = True
-        else:
-            self.is_modified = False
-
-        if self.is_modified and self.sum_mod_info:
-            self.linked_levels = self.sum_mod_info.get("linked_levels", ["0"])
-        else:
-            self.linked_levels = ["0"]
-
-        self.linked_ids = self.__post_init__()
+        self.linked_ids = self.to_all_levels()
 
     def __replace_mdt__(self):
-        link = self.res_info.get("link", "")
+        link = self.info.get("link", "")
         if link:
-            existed_o_count = self.res_info.get("o_count", 0)
+            existed_o_count = self.info.get("sp_o_count", 0)
             # convert m/d/t into corresponding O section
             if link.lower() == "m":
-                self.res_info["link"] = ""
-                self.res_info["o_count"] = 1 + existed_o_count
+                self.info["link"] = ""
+                self.info["sp_o_count"] = 1 + existed_o_count
             elif link.lower() == "d":
-                self.res_info["link"] = ""
-                self.res_info["o_count"] = 2 + existed_o_count
+                self.info["link"] = ""
+                self.info["sp_o_count"] = 2 + existed_o_count
             elif link.lower() == "t":
-                self.res_info["link"] = ""
-                self.res_info["o_count"] = 3 + existed_o_count
+                self.info["link"] = ""
+                self.info["sp_o_count"] = 3 + existed_o_count
             else:
                 pass
         else:
             pass
 
-    def __post_init__(self):
+    def __init_db__(self) -> DB:
+        db_info_sum = self.info.get("db_info_sum", {})
+
+        db = DB(db_info_sum, nomenclature=self.nomenclature, logger=self.logger)
+
+        return db
+
+    def __init_sp_o__(self) -> SP_O:
+        sp_o_info_sum = self.info.get("sp_o_info_sum", {})
+
+        sp_o = SP_O(sp_o_info_sum, nomenclature=self.nomenclature, logger=self.logger)
+
+        return sp_o
+
+    def __init_mod__(self) -> Modification:
+        mod_info_sum = self.info.get("mod_info_sum", {})
+        db_count = self.info.get("db_count", 0)
+        sp_o_count = self.info.get("sp_o_count", 0)
+
+        mod = Modification(
+            mod_info_sum,
+            db_count=db_count,
+            sp_o_count=sp_o_count,
+            nomenclature=self.nomenclature,
+            logger=self.logger,
+        )
+        return mod
+
+    def __init_linked_levels__(self) -> List[str]:
+        db_lv = self.db.level
+        db_lvs = self.db.details.get("linked_levels", [db_lv])
+        sp_o_lv = self.sp_o.level
+        sp_o_lvs = self.sp_o.details.get("linked_levels", [sp_o_lv])
+        mod_lv = self.mod.level
+        mod_lvs = self.mod.details.get("linked_levels", [mod_lv])
+
+        max_level_f = max(float(db_lv), float(sp_o_lv))
+        max_level_f += int(mod_lv)
+        max_level = f"{max_level_f:.1f}"
+
+        if max_level != self.level:
+            max_lv = max(float(max_level), float(self.level))
+            self.level = f"{max_lv:.1f}"
+        else:
+            pass
+        sub_lvs = list(set(db_lvs + sp_o_lvs))
+        linked_lvs = []
+        for main_lv in mod_lvs:
+            for sub_lv in sub_lvs:
+                linked_lv = int(main_lv) + float(sub_lv)
+                linked_lvs.append(f"{linked_lv:.1f}")
+        linked_lvs = natsorted(list(set(linked_lvs)))
+        return linked_lvs
+
+    def collect_info(self) -> dict:
+        formatted_dct = {
+            "RESIDUE_SEPARATOR": self.res_separators.get("RESIDUE_SEPARATOR", "_"),
+            "LINK": self.info.get("link", ""),
+            "C_COUNT": self.info.get("c_count", 0),
+            "DB_SEPARATOR": self.res_separators.get("DB_SEPARATOR", ":"),
+            "DB_COUNT": self.db.count,
+        }
+        if self.db.count > 0:
+            formatted_dct["DB_INFO_SUM"] = self.db.details.get("linked_ids", {})
+        if self.sp_o.count > 0:
+            formatted_dct["SP_O_SEPARATOR"] = self.res_separators.get(
+                "SP_O_SEPARATOR", ";"
+            )
+            formatted_dct["SP_O_COUNT"] = self.sp_o.count
+            formatted_dct["SP_O_INFO_SUM"] = self.sp_o.details.get("linked_ids", {})
+        if self.is_modified:
+            formatted_dct["MOD_INFO_SUM"] = self.mod.details.get("linked_ids", {})
+
+        return formatted_dct
+
+    def to_all_levels(self):
         res_str_dct = {}
-        num_o = self.res_info.get("o_count", 0)
+        collected_info_dct = self.collect_info()
+
+        mod_left = self.res_separators.get("MOD_BRACKET_LEFT", "<")
+        mod_right = self.res_separators.get("MOD_BRACKET_RIGHT", ">")
+        mod_left = re.sub(r"\\", "", mod_left)
+        mod_right = re.sub(r"\\", "", mod_right)
+
         for lv in self.linked_levels:
             res_str = ""
-            for o in self.res_rule_orders:
-                if o in self.res_info or o in self.res_separators or o in ["SUM_MODS"]:
-                    if o == "o_count":
-                        if num_o > 0:
-                            o_seg_rgx = self.res_rule.get("RESIDUE", {}).get("o_count")
-                            # print("o_seg_rgx", o_seg_rgx)
-                            if o_seg_rgx:
-                                if num_o == 1:
-                                    if re.match(o_seg_rgx, str(num_o)):
-                                        res_str += str(num_o)
-                                    elif re.match(o_seg_rgx, "1"):
-                                        res_str += "1"
-                                    elif re.match(o_seg_rgx, "O"):
-                                        res_str += "O"
-                                    else:
-                                        res_str += "O"
-                                else:
-                                    if re.match(o_seg_rgx, str(num_o)):
-                                        res_str += str(num_o)
-                                    elif re.match(o_seg_rgx, f"{num_o}O"):
-                                        res_str += f"{num_o}O"
-                                    elif re.match(o_seg_rgx, f"O{num_o}"):
-                                        res_str += f"O{num_o}"
-                                    else:
-                                        res_str += str(num_o)
-                            else:
-                                res_str += str(num_o)
-                        else:
-                            pass
+            lv_seg_lst = lv.split(".")
+            if len(lv_seg_lst) == 1 and lv_seg_lst[0] in mod_level_lst:
+                main_lv = lv_seg_lst[0]
+                sub_lv = "0.0"
+            elif len(lv_seg_lst) == 2 and lv_seg_lst[0] in mod_level_lst:
+                main_lv = lv_seg_lst[0]
+                sub_lv = f"0.{lv_seg_lst[1]}"
+                if sub_lv in db_level_lst:
+                    pass
+                else:
+                    sub_lv = "0.0"
+            else:
+                main_lv = "0"
+                sub_lv = "0.0"
 
-                    elif o.upper().endswith("_SEPARATOR"):
-                        res_str += self.res_separators.get(o, "")
-                        if num_o == 0:
-                            res_str = res_str.strip(
-                                self.res_separators.get("O_SEPARATOR", "")
-                            )
-                    elif re.search("BRACKET", o.upper()):
-                        res_str += self.res_separators.get(o, "")
-                    elif o in ["MODS", "MOD"]:
-                        res_str += self.sum_mod_info.get("linked_ids", {}).get(lv, "")
-                    elif o in ["SUM_MODS"]:
-                        sum_o_seg = self.sum_mod_info.get("linked_ids", {}).get(lv, "")
-                        if num_o > 0 and re.match(r"\d?O\d?", sum_o_seg):
+            for o in self.res_rule_orders:
+                if o in collected_info_dct:
+                    o_info = collected_info_dct.get(o)
+                    if isinstance(o_info, int) or isinstance(o_info, float):
+                        o_info = str(o_info)
+                    else:
+                        pass
+                    if isinstance(o_info, str):
+                        if re.match("RESIDUE_SEPARATOR", o):
                             pass
                         else:
-                            res_str += sum_o_seg
+                            res_str += o_info
                     else:
-                        res_str += str(self.res_info.get(o, ""))
+                        if re.match(r".*_INFO_SUM$", o) and isinstance(o_info, dict):
+                            if o == "MOD_INFO_SUM":
+                                mod_seg = o_info.get(main_lv, "")
+                                if mod_seg:
+                                    res_str += f'{mod_left}{mod_seg}{mod_right}'
+                            else:
+                                res_str += o_info.get(sub_lv, "")
+
             na_brackets_lst = [r"\<\>", r"\{\}", r"\[\]", r"\(\)"]
             for b in na_brackets_lst:
                 res_str = re.sub(b, "", res_str)
@@ -153,14 +224,40 @@ class Residue(object):
 
         return res_str_dct
 
-    def to_json(self):
-        fa_lite_info_dct = self.fa_info_dct
-        fa_lite_info_dct.pop("mod_obj", None)
-        fa_json_str = json.dumps(fa_lite_info_dct)
-        if check_json(self.validator, json.loads(fa_json_str, logger=self.logger)):
-            return fa_json_str
+    def __str__(self):
+        return self.to_json()
+
+    def __repr__(self):
+        return self.to_json()
+
+    def to_dict(self):
+        res_id = self.linked_ids.get(self.level, "")
+        if float(self.level) >= 0:
+            sum_res_info_dct = {
+                "api_version": api_version,
+                "type": self.type,
+                "id": res_id,
+                "level": self.level,
+                "linked_ids": self.linked_ids,
+                "linked_levels": self.linked_levels,
+                "info": self.info,
+            }
         else:
-            raise Exception(f"JSON Schema check FAILED. Schema {self.schema}")
+            raise ValueError(
+                f"Cannot format Residue information to level {self.level} "
+                f"from input: {self.info}"
+            )
+
+        return sum_res_info_dct
+
+    # def to_json(self):
+    #     fa_lite_info_dct = self.fa_info_dct
+    #     fa_lite_info_dct.pop("mod_obj", None)
+    #     fa_json_str = json.dumps(fa_lite_info_dct)
+    #     if check_json(self.validator, json.loads(fa_json_str, logger=self.logger)):
+    #         return fa_json_str
+    #     else:
+    #         raise Exception(f"JSON Schema check FAILED. Schema {self.schema}")
 
 
 def merge_residues(
@@ -227,104 +324,124 @@ def merge_residues(
 
 if __name__ == "__main__":
 
-    # usr_res_info = {
-    #     "link": "",
-    #     "c_count": 18,
-    #     "db_count": 1,
-    #     "db_info_sum": {
-    #         "level": 0.2,
-    #         "info": {
-    #             "0_DB": {
-    #                 "count": 1,
-    #                 "cv": "",
-    #                 "level": 0.2,
-    #                 "order": 0,
-    #                 "site": ["4"],
-    #                 "site_info": ["4E"],
-    #             }
-    #         },
-    #     },
-    #     "o_count": 2,
-    #     "o_info_sum": {
-    #         "level": 5,
-    #         "info": {
-    #             "0_O": {
-    #                 "count": 2,
-    #                 "cv": "OH",
-    #                 "level": 5,
-    #                 "order": 0,
-    #                 "site": ["1", "3"],
-    #                 "site_info": ["1R", "3S"],
-    #             }
-    #         },
-    #     },
-    #     "mod_info_sum": {
-    #         "level": 5,
-    #         "info": {
-    #             "5.01_OH": {
-    #                 "count": 2,
-    #                 "cv": "OH",
-    #                 "level": 5,
-    #                 "order": 5.01,
-    #                 "site": ["8", "18"],
-    #                 "site_info": ["8S", "18R"],
-    #                 "verbose": {"elements": {"O": 1}, "mass_shift": 16},
-    #             },
-    #             "5.02_oxo": {
-    #                 "count": 1,
-    #                 "cv": "oxo",
-    #                 "level": 4,
-    #                 "order": 5.02,
-    #                 "site": ["10"],
-    #                 "site_info": [],
-    #                 "verbose": {"elements": {"H": -2, "O": 1}, "mass_shift": 14},
-    #             },
-    #         },
-    #     },
-    # }
     usr_res_info = {
-        "link": "d",
-        "c_count": 18,
-        "db_count": 1,
-        "db_info_sum": {
-            "level": 0.2,
-            "info": {
-                "0_DB": {
-                    "count": 1,
-                    "cv": "",
-                    "level": 0.2,
-                    "order": 0,
-                    "site": ["4"],
-                    "site_info": ["4E"],
-                }
-            },
-        },
-        "o_count": 0,
-        "o_info_sum": {},
-        "mod_info_sum": {
-            "level": 5,
-            "info": {
-                "5.01_OH": {
-                    "count": 2,
-                    "cv": "OH",
-                    "level": 5,
-                    "order": 5.01,
-                    "site": ["8", "18"],
-                    "site_info": ["8S", "18R"],
-                    "verbose": {"elements": {"O": 1}, "mass_shift": 16},
+        "level": 5.2,
+        "info": {
+            "link": "",
+            "c_count": 18,
+            "db_count": 1,
+            "db_info_sum": {
+                "level": 0.2,
+                "info": {
+                    "0.01_DB": {
+                        "count": 1,
+                        "cv": "",
+                        "level": 0.2,
+                        "order": 0.01,
+                        "site": ["4"],
+                        "site_info": ["4E"],
+                    }
                 },
-                "5.02_oxo": {
-                    "count": 1,
-                    "cv": "oxo",
-                    "level": 4,
-                    "order": 5.02,
-                    "site": ["10"],
-                    "site_info": [],
-                    "verbose": {"elements": {"H": -2, "O": 1}, "mass_shift": 14},
+            },
+            "sp_o_count": 2,
+            "sp_o_info_sum": {
+                "level": 0.2,
+                "info": {
+                    "0.02_SP_O": {
+                        "count": 2,
+                        "cv": "OH",
+                        "level": 0.2,
+                        "order": 0.02,
+                        "site": ["1", "3"],
+                        "site_info": ["1R", "3S"],
+                    }
+                },
+            },
+            "mod_info_sum": {
+                "level": 5,
+                "info": {
+                    "5.01_OH": {
+                        "count": 2,
+                        "cv": "OH",
+                        "level": 5,
+                        "order": 5.01,
+                        "site": ["8", "18"],
+                        "site_info": ["8S", "18R"],
+                        "verbose": {"elements": {"O": 1}, "mass_shift": 16},
+                    },
+                    "5.02_oxo": {
+                        "count": 1,
+                        "cv": "oxo",
+                        "level": 4,
+                        "order": 5.02,
+                        "site": ["10"],
+                        "site_info": [],
+                        "verbose": {"elements": {"H": -2, "O": 1}, "mass_shift": 14},
+                    },
                 },
             },
         },
     }
+
+    # usr_res_info = {
+    #     "level": 5.2,
+    #     "info": {
+    #         "link": "",
+    #         "c_count": 18,
+    #         "db_count": 1,
+    #         "db_info_sum": {
+    #             "level": 0.2,
+    #             "info": {
+    #                 "0.01_DB": {
+    #                     "count": 1,
+    #                     "cv": "",
+    #                     "level": 0.2,
+    #                     "order": 0.01,
+    #                     "site": ["4"],
+    #                     "site_info": ["4E"],
+    #                 }
+    #             },
+    #         },
+    #         "sp_o_count": 0,
+    #         "sp_o_info_sum": {
+    #             "level": 0,
+    #             "info": {
+    #                 "0.02_SP_O": {
+    #                     "count": 0,
+    #                     "cv": "O",
+    #                     "level": 0,
+    #                     "order": 0.02,
+    #                     "site": [],
+    #                     "site_info": [],
+    #                 }
+    #             },
+    #         },
+    #         "mod_info_sum": {
+    #             "level": 5,
+    #             "info": {
+    #                 "5.01_OH": {
+    #                     "count": 2,
+    #                     "cv": "OH",
+    #                     "level": 5,
+    #                     "order": 5.01,
+    #                     "site": ["8", "18"],
+    #                     "site_info": ["8S", "18R"],
+    #                     "verbose": {"elements": {"O": 1}, "mass_shift": 16},
+    #                 },
+    #                 "5.02_oxo": {
+    #                     "count": 1,
+    #                     "cv": "oxo",
+    #                     "level": 4,
+    #                     "order": 5.02,
+    #                     "site": ["10"],
+    #                     "site_info": [],
+    #                     "verbose": {"elements": {"H": -2, "O": 1}, "mass_shift": 14},
+    #                 },
+    #             },
+    #         },
+    #     },
+    # }
+
     # for r in usr_res_info:
     #     usr_res_obj = Residue(usr_res_info[r])
     #     logger.debug(usr_res_obj.linked_ids)
@@ -334,4 +451,4 @@ if __name__ == "__main__":
     usr_res_obj = Residue(usr_res_info)
     app_logger.debug(usr_res_obj.linked_ids)
     # usr_res_json = res_obj.to_json()
-    app_logger.details("FINISHED")
+    app_logger.info("FINISHED")
