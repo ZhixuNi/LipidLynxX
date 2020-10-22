@@ -84,7 +84,7 @@ def cli_save_output(output_info: Union[str, BytesIO], output_file: Path):
         raise typer.Exit(code=1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     f_csv = r"../../doc/sample_data/input/LipidLynxX_test.csv"
     f_t_csv = r"../../doc/sample_data/input/LipidLynxX_test_tab.csv"

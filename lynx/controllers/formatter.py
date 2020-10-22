@@ -169,10 +169,10 @@ class Formatter(object):
         link_lst = info.get("LINK", [""])
         if link_lst:
             link = link_lst[0]
-            link = link.strip(' ')
-            if re.match(r'^O[-]?$', link, re.IGNORECASE) or link == 'e':
+            link = link.strip(" ")
+            if re.match(r"^O[-]?$", link, re.IGNORECASE) or link == "e":
                 link = "O-"
-            elif re.match(r'^P[-]?$', link, re.IGNORECASE) or link == 'p':
+            elif re.match(r"^P[-]?$", link, re.IGNORECASE) or link == "p":
                 link = "P-"
             else:
                 pass
@@ -386,7 +386,9 @@ class Formatter(object):
         }
         mod_info_sum = self.format_mod(info)
 
-        res_lv = mod_info_sum.get("level") + max(db_info_sum.get("level"), sp_o_info_sum.get("level"))
+        res_lv = mod_info_sum.get("level") + max(
+            db_info_sum.get("level"), sp_o_info_sum.get("level")
+        )
 
         residue_info_dct = {
             "link": link,

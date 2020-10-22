@@ -58,7 +58,8 @@ def test_convert():
     if os.path.isfile(test_output):
         os.remove(test_output)
     result = runner.invoke(
-        cli_app, ["convert", test_input_file, "--output", test_output],
+        cli_app,
+        ["convert", test_input_file, "--output", test_output],
     )
     cli_output_lst = result.stdout.strip("\n").split("\n")
     print(cli_output_lst)
@@ -95,7 +96,8 @@ def test_convert_biopan():
     if os.path.isfile(test_output):
         os.remove(test_output)
     result = runner.invoke(
-        cli_app, ["convert", test_input_file, "--output", test_output],
+        cli_app,
+        ["convert", test_input_file, "--output", test_output],
     )
     cli_output_lst = result.stdout.strip("\n").split("\n")
     print(cli_output_lst)
@@ -124,7 +126,8 @@ def test_equalize():
     if os.path.isfile(test_output):
         os.remove(test_output)
     result = runner.invoke(
-        cli_app, ["equalize", test_input_file, "--output", test_output],
+        cli_app,
+        ["equalize", test_input_file, "--output", test_output],
     )
     cli_output_lst = result.stdout.strip("\n").split("\n")
     print(cli_output_lst)

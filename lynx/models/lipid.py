@@ -23,7 +23,7 @@ from jsonschema import Draft7Validator
 from natsort import natsorted
 from pydantic import BaseModel, conint, constr
 
-from lynx.models.defaults import (lipid_level_lst, lynx_schema_cfg, mod_db_level_lst)
+from lynx.models.defaults import lipid_level_lst, lynx_schema_cfg, mod_db_level_lst
 from lynx.utils.basics import get_abs_path
 from lynx.utils.cfg_reader import api_version
 from lynx.utils.log import app_logger

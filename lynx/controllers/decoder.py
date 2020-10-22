@@ -28,7 +28,10 @@ from lynx.utils.log import app_logger
 
 class Decoder(object):
     def __init__(
-        self, input_style: str = "", rules: dict = default_input_rules, logger=app_logger
+        self,
+        input_style: str = "",
+        rules: dict = default_input_rules,
+        logger=app_logger,
     ):
         self.input_style = input_style
         self.rules = rules

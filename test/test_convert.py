@@ -64,7 +64,10 @@ default_test_files = [
 
 @pytest.mark.parametrize("lipid,style,level,converted_lipid", default_test_lipids)
 def test_convert_results(
-    lipid: str, style: str, level: str, converted_lipid: str,
+    lipid: str,
+    style: str,
+    level: str,
+    converted_lipid: str,
 ):
     print(
         f"Convert {lipid} into {level} Level using {style} Style as {converted_lipid}."
@@ -81,7 +84,9 @@ def test_convert_results(
 
 @pytest.mark.parametrize("style,levels,file", default_test_names)
 def test_convert_names(
-    style: str, levels: list, file: str,
+    style: str,
+    levels: list,
+    file: str,
 ):
     in_df = pd.read_csv(get_abs_path(file))
     in_df.fillna("", inplace=True)

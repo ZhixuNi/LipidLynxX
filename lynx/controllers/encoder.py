@@ -51,7 +51,9 @@ class Encoder(object):
             "SEPARATOR_LEVELS", {}
         )
         self.separators = self.output_rules.get("SEPARATOR", {})
-        self.extractor = Decoder(input_style=self.input_rule, rules=input_rules, logger=logger)
+        self.extractor = Decoder(
+            input_style=self.input_rule, rules=input_rules, logger=logger
+        )
         self.logger = logger
 
     def get_best_id(self, candidate: Dict[str, str]) -> str:
@@ -335,9 +337,7 @@ class Encoder(object):
         return best_export_dct, best_input_rule
 
     def get_best_rule(self, lipid_name: str) -> str:
-        pre_best_export_dct, best_input_rule = self.export_all_levels(
-            lipid_name
-        )
+        pre_best_export_dct, best_input_rule = self.export_all_levels(lipid_name)
         return best_input_rule
 
     def convert(self, lipid_name: str, level: str = None) -> str:

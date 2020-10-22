@@ -51,6 +51,8 @@ class Converter:
         # Set COMP_DB to max level B2
         if re.search(r"COMP\\s*[_]?\\s*(DB)?", self.style):
             level = "B2"
+        elif re.search(r"BioPAN", self.style, re.IGNORECASE):
+            level = "B0"
         if input_str and isinstance(input_str, str) and len(input_str) < 512:
             converted_id = self.encoder.convert(input_str, level=level)
             if converted_id:
@@ -75,7 +77,8 @@ class Converter:
         if input_list and isinstance(input_list, list):
             input_list = keep_string_only(input_list, self.logger)
             for abbr in input_list:
-                abbr_result_lst.append(self.convert_str(abbr, level=level).dict())
+                abbr_result = self.convert_str(abbr, level=level).dict()
+                abbr_result_lst.append(abbr_result)
         for abbr_result in abbr_result_lst:
             for k in output_dct:
                 output_dct[k].append(abbr_result.get(k, ""))
@@ -112,7 +115,10 @@ class Converter:
         return output_dct
 
     def convert(
-        self, data: Union[dict, List[str], str], level: str = None, input_style: str = ""
+        self,
+        data: Union[dict, List[str], str],
+        level: str = None,
+        input_style: str = "",
     ) -> Dict[str, dict]:
         output_dct = {}
 
