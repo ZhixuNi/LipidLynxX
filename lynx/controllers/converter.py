@@ -27,6 +27,7 @@ class Converter:
     def __init__(
         self,
         style: str = "LipidLynxX",
+        input_style: str = "",
         input_rules: dict = default_input_rules,
         output_rules: dict = default_output_rules,
         logger=app_logger,
@@ -36,6 +37,7 @@ class Converter:
             style=style,
             input_rules=input_rules,
             output_rules=output_rules,
+            input_style=input_style,
             logger=logger,
         )
         self.logger = logger
@@ -110,7 +112,7 @@ class Converter:
         return output_dct
 
     def convert(
-        self, data: Union[dict, List[str], str], level: str = None
+        self, data: Union[dict, List[str], str], level: str = None, input_style: str = ""
     ) -> Dict[str, dict]:
         output_dct = {}
 

@@ -53,6 +53,15 @@ class SP_O(object):
                 f"Cannot find output rule for 'O_SITES' from nomenclature: {nomenclature}."
             )
         self.info = sp_o_info_sum.get("info", {}).get("0.02_SP_O", {})
+        if not self.info:
+            self.info = {
+                "count": 0,
+                "cv": "O",
+                "level": 0,
+                "order": 0.02,
+                "site": [],
+                "site_info": [],
+            }
         self.schema = schema
         self.type = "SP_O"
         self.level = str(sp_o_info_sum.get("level", "0.0"))
@@ -70,6 +79,9 @@ class SP_O(object):
         self.site = natsorted(self.info.get("site", []))
         self.site_info = natsorted(self.info.get("site_info", []))
         self.details = self.to_dict()
+
+        self.linked_ids = self.details.get("linked_ids", {})
+        self.linked_levels = self.details.get("linked_levels", [])
 
     def __str__(self):
         return self.to_json()

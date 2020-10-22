@@ -18,7 +18,7 @@ import json
 import os
 import re
 from pathlib import Path
-from typing import List
+from typing import List, Union
 
 import click_spinner
 import typer
@@ -26,6 +26,7 @@ import typer
 from lynx.controllers.converter import Converter
 from lynx.controllers.equalizer import Equalizer
 from lynx.controllers.linker import get_cross_links, get_lmsd_name, get_swiss_name
+from lynx.controllers.parser import detect_style
 from lynx.models.api_models import StyleType
 from lynx.utils.cfg_reader import app_cfg_info, lynx_version
 from lynx.utils.cli_utils import cli_get_table, cli_save_output
@@ -111,6 +112,12 @@ def convert_lipid(
 @cli_app.command(name="convert-lipids")
 def convert_lipids(
     lipids: str = typer.Argument(None),
+    fixed_style: bool = typer.Option(
+        False,
+        "--fixed_rule",
+        "-f",
+        help="Force to use the same input style to detect all lipids in the source data.",
+    ),
     style: StyleType = typer.Option(
         "LipidLynxX",
         "--style",
@@ -224,6 +231,12 @@ def convert_file(
         "-o",
         help="Path for the export file. Accept .txt/ .csv / .xlsx file.",
     ),
+    fixed_style: bool = typer.Option(
+        False,
+        "--fixed_rule",
+        "-f",
+        help="Force to use the same input style to detect all lipids in the source data.",
+    ),
     style: StyleType = typer.Option(
         "LipidLynxX",
         "--style",
@@ -238,19 +251,36 @@ def convert_file(
     ),
 ):
     """
-    Convert one .txt/ .csv / .xlsx FILE containing lipid names into supported levels
+    Convert one .csv /.tsv / .xlsx FILE containing lipid names into supported levels
     and export to supported style as .csv / .xlsx file.
     """
-    if column:
-        lipid_col_name = column
-        use_one_col = True
-        converted_only = True
-    else:
-        lipid_col_name = None
-        use_one_col = False
-        converted_only = False
 
-    raw_table_dct = cli_get_table(file)
+    raw_table_dct, table_header_lst = cli_get_table(file)
+
+    use_one_col = False
+    converted_only = False
+    lipid_col_name = None
+    if column:
+        if len(column) < 4:
+            try:
+                column = int(column)
+            except ValueError:
+                pass
+        if isinstance(column, str):
+            for col in table_header_lst:
+                if col.lower().strip(" ") == column.lower().strip(" "):
+                    lipid_col_name = col
+                    use_one_col = True
+                    converted_only = True
+        elif isinstance(column, int) and len(table_header_lst) > column:
+            lipid_col_name = table_header_lst[column]
+            use_one_col = True
+            converted_only = True
+        else:
+            pass
+    else:
+        pass
+
     if lipid_col_name:
         table_dct = {lipid_col_name: raw_table_dct.get(lipid_col_name)}
         if table_dct.get(lipid_col_name):
@@ -265,12 +295,7 @@ def convert_file(
     else:
         table_dct = raw_table_dct
     style, level = get_style_level(style, level)
-    lynx_converter = Converter(
-        style=style,
-        input_rules=default_input_rules,
-        output_rules=default_output_rules,
-        logger=cli_logger,
-    )
+
     typer.echo(
         typer.style(
             f"Convert lipid names into {style} style @ {level} level.",
@@ -278,18 +303,60 @@ def convert_file(
         )
     )
     typer.echo(f"Processing file: {file.name} ...")
-
+    fixed_input_style = ""
     with click_spinner.spinner():
         if use_one_col:
-            lipid_list = table_dct.get(lipid_col_name)
+            lipid_lst = table_dct.get(lipid_col_name)
+            if fixed_style and len(lipid_lst) > 5:
+                top_input_style = detect_style(lipid_lst[0])
+                bottom_input_style = detect_style(lipid_lst[-1])
+                if top_input_style == bottom_input_style:
+                    fixed_input_style = top_input_style
+            lynx_converter = Converter(
+                style=style,
+                input_rules=default_input_rules,
+                output_rules=default_output_rules,
+                logger=cli_logger, input_style=fixed_input_style
+            )
             converted_obj = lynx_converter.convert_list(
-                input_list=lipid_list, level=level
+                input_list=lipid_lst, level=level
             )
             converted_names = converted_obj.output
             converted_dct = {f"Converted_{lipid_col_name}": converted_names}
             converted_dct.update(raw_table_dct)
         else:
-            converted_dct = lynx_converter.convert_dict(table_dct, level=level)
+            if fixed_style:
+                converted_dct = {}
+                for k in table_dct:
+                    if isinstance(k, str) and len(k) < 256:
+                        k_val = table_dct[k]
+                        if isinstance(k_val, list):
+                            col_lipid_lst = k_val
+                        else:
+                            col_lipid_lst = [k_val]
+                        if col_lipid_lst:
+                            if len(col_lipid_lst) > 5:
+                                col_top_input_style = detect_style(col_lipid_lst[0])
+                                col_bottom_input_style = detect_style(col_lipid_lst[-1])
+                            if col_top_input_style == col_bottom_input_style:
+                                fixed_input_style = col_bottom_input_style
+                            lynx_converter = Converter(
+                                style=style,
+                                input_rules=default_input_rules,
+                                output_rules=default_output_rules,
+                                logger=cli_logger, input_style=fixed_input_style
+                            )
+                            converted_dct[k] = lynx_converter.convert_list(
+                                input_list=col_lipid_lst, level=level
+                            )
+            else:
+                lynx_converter = Converter(
+                    style=style,
+                    input_rules=default_input_rules,
+                    output_rules=default_output_rules,
+                    logger=cli_logger, input_style=fixed_input_style
+                )
+                converted_dct = lynx_converter.convert_dict(table_dct, level=level)
     if output_file:
         if isinstance(output_file, Path):
             pass
@@ -314,13 +381,19 @@ def convert(
         None,
         "--column",
         "-c",
-        help="name of the column that contains lipid notations",
+        help="Name or index of the column that contains lipid notations. # index count from 0.",
+    ),
+    fixed_style: bool = typer.Option(
+        False,
+        "--fixed_rule",
+        "-f",
+        help="Force to use the same input style to detect all lipids in the source data.",
     ),
     style: StyleType = typer.Option(
         "LipidLynxX",
         "--style",
         "-s",
-        help="The export style, choose from LipidLynxX, COMP_DB, and ShorthandNotation. Set to LipidLynxX by default.",
+        help="The export style, choose from LipidLynxX, BioPAN, COMP_DB, and ShorthandNotation. Set to LipidLynxX by default.",
     ),
     level: str = typer.Option(
         "MAX",
@@ -341,7 +414,7 @@ def convert(
     """
     Convert SOURCE lipid names into supported levels.
 
-    Support SOURCE input as JSON string or file path of .txt/ .csv/ .xlsx file.
+    Support SOURCE input as JSON string or file path of .csv/ .tsv/ .xlsx file.
 
     Use option --output to export a .csv / .xlsx file from input file.
 
@@ -367,9 +440,15 @@ def convert(
     if source:
 
         if isinstance(source, Path):
-            convert_file(file=source, output_file=output_file, style=style, level=level)
+            convert_file(
+                file=source,
+                output_file=output_file,
+                style=style,
+                level=level,
+                fixed_style=fixed_style,
+            )
         elif isinstance(source, str):
-            if re.match(r".+(\.csv|\.txt|\.xlsx)$", source, re.IGNORECASE):
+            if re.match(r".+(\.csv|\.tsv|\.xlsx)$", source, re.IGNORECASE):
                 if os.path.isfile(source):
                     convert_file(
                         file=Path(source),
@@ -379,7 +458,9 @@ def convert(
                         level=level,
                     )
             else:
-                convert_lipids(lipids=source, style=style, level=level)
+                convert_lipids(
+                    lipids=source, style=style, level=level, fixed_style=fixed_style
+                )
         else:
             typer.secho(
                 'Please input a lipid name. e.g. "PLPC" or a file path. Type --help to see instructions.',
@@ -415,7 +496,7 @@ def equalize(
     Equalize one .csv / .xlsx FILE containing lipid names into supported levels
     and export to supported style as .csv / .xlsx file.
     """
-    table_dct = cli_get_table(file)
+    table_dct, table_header_lst = cli_get_table(file)
     levels = get_levels(level)
     typer.echo(
         typer.style(
@@ -487,3 +568,4 @@ def link_lipid(
 
 if __name__ == "__main__":
     cli_app()
+    # python cli_lynx.py convert-file test/test_input/test_biopan_lite.csv --column 0 --output test/test_output/test_biopan_lite.xlsx -s BioPAN --fixed_rule

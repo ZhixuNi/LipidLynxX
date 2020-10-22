@@ -27,7 +27,10 @@ from lynx.utils.log import app_logger
 
 
 class Decoder(object):
-    def __init__(self, rules: dict = default_input_rules, logger=app_logger):
+    def __init__(
+        self, input_style: str = "", rules: dict = default_input_rules, logger=app_logger
+    ):
+        self.input_style = input_style
         self.rules = rules
         self.formatter = Formatter()
         self.alias = Alias(logger=logger)
@@ -41,7 +44,13 @@ class Decoder(object):
         if c_search_rgx.search(lipid_name):
             is_this_class = True
         else:
-            if rule_class in ["RESIDUE", "RESIDUE_INFO", "RESIDUE_INFO_SUM", "RESIDUE_ALIAS", "ALIAS"]:
+            if rule_class in [
+                "RESIDUE",
+                "RESIDUE_INFO",
+                "RESIDUE_INFO_SUM",
+                "RESIDUE_ALIAS",
+                "ALIAS",
+            ]:
                 is_this_class = True
             else:
                 pass
@@ -196,7 +205,9 @@ class Decoder(object):
                         res, "RESIDUE_INFO", rule=alias_rule
                     )
                 else:
-                    matched_info_dct = self.check_segments(res, "RESIDUE_INFO", rule=rule)
+                    matched_info_dct = self.check_segments(
+                        res, "RESIDUE_INFO", rule=rule
+                    )
                 # num_o_chk_lst = matched_info_dct.get("NUM_O", [""])
                 # if isinstance(num_o_chk_lst, list) and re.match(r'\d?O|O\d?|\d', num_o_chk_lst[0]):
                 #     matched_info_dct["MOD_TYPE"] = ["O"] + matched_info_dct.get("MOD_TYPE", [])
@@ -245,12 +256,17 @@ class Decoder(object):
         c_max_res = self.rules[c].get("MAX_RESIDUES", 1)
         res_sep = self.rules[c].get("RESIDUES_SEPARATOR", None)  # type: str
         sep_levels = self.rules[c].get("SEPARATOR_LEVELS", {})  # type: dict
+        # c_rules = self.rules[c].get("MATCH", {})
         c_rules = self.rules[c].get("MATCH", {})
         matched_info_dct = {}
         for lr in c_rules:
             if re.search(r"Lynx", lr, re.IGNORECASE):
                 lynx_rule_idx = lr
-        for r in c_rules:
+        if self.input_style in c_rules:
+            use_c_rules = [self.input_style]
+        else:
+            use_c_rules = c_rules
+        for r in use_c_rules:
             matched_dct = self.check_segments(lipid_name, c, r)
             sum_residues_lst = matched_dct.get("RESIDUE_INFO_SUM", [])
             obs_residues_lst = matched_dct.get("RESIDUE", [])

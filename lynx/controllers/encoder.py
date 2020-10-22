@@ -35,19 +35,23 @@ class Encoder(object):
         style: str = "LipidLynxX",
         input_rules: dict = default_input_rules,
         output_rules: dict = default_output_rules,
+        input_style: str = "",
         logger=app_logger,
     ):
         self.export_style = style
+        self.input_rule = input_style
         self.output_rules = load_output_rule(output_rules, style)
         self.class_rules = self.output_rules.get("LMSD_CLASSES", {})
-        self.mod_rules = self.output_rules.get("MODS", {}).get("MOD", {})
-        self.sum_mod_rules = self.output_rules.get("MODS", {}).get("SUM_MODS", {})
-        self.residue_rules = self.output_rules.get("RESIDUES", {}).get("RESIDUE", {})
-        self.separator_levels = self.output_rules.get("SEPARATORS", {}).get(
+        self.mod_rules = self.output_rules.get("MOD", {}).get("MOD_INFO", {})
+        self.sum_mod_rules = self.output_rules.get("MOD", {}).get("MOD_INFO_SUM", {})
+        self.residue_rules = self.output_rules.get("RESIDUE", {}).get(
+            "RESIDUE_INFO_SUM", {}
+        )
+        self.separator_levels = self.output_rules.get("SEPARATOR", {}).get(
             "SEPARATOR_LEVELS", {}
         )
-        self.separators = self.output_rules.get("SEPARATORS", {})
-        self.extractor = Decoder(rules=input_rules, logger=logger)
+        self.separators = self.output_rules.get("SEPARATOR", {})
+        self.extractor = Decoder(input_style=self.input_rule, rules=input_rules, logger=logger)
         self.logger = logger
 
     def get_best_id(self, candidate: Dict[str, str]) -> str:
@@ -57,14 +61,16 @@ class Encoder(object):
         return c_max_str
 
     @staticmethod
-    def get_best_id_series(candidates: List[dict]) -> dict:
+    def get_best_id_series(candidates: List[dict]) -> [dict, str]:
         best_id_dct = {}
         num_lv = 0
         max_str = ""
         sum_db = 0
+        best_input_rule = ""
         for c_info_set in candidates:
             c_info = c_info_set.get("compiled_names", {})
             c_sum_db = c_info_set.get("sum_db", 0)
+            c_in_rule = c_info_set.get("input_rule", 0)
             for c in c_info:
                 c_lv_lst = natsorted(list(c_info[c].keys()))
                 c_num_lv = len(c_lv_lst)
@@ -74,6 +80,7 @@ class Encoder(object):
                     max_str = c_max_str
                     num_lv = c_num_lv
                     sum_db = c_sum_db
+                    best_input_rule = c_in_rule
                 else:
                     c_max_str = c_info[c].get(c_lv_lst[-1], "")
                     if len(c_max_str) > len(max_str):
@@ -81,6 +88,7 @@ class Encoder(object):
                         max_str = c_max_str
                         num_lv = c_num_lv
                         sum_db = c_sum_db
+                        best_input_rule = c_in_rule
                     else:
                         pass
 
@@ -115,7 +123,7 @@ class Encoder(object):
         if best_id_dct.get("M2") and not best_id_dct.get("B2"):
             best_id_dct["B2"] = best_id_dct["M2"]
 
-        return best_id_dct
+        return best_id_dct, best_input_rule
 
     # def check_rest(self, segment_text: str, segment_name: str, lmsd_class: str):
     #     patterns_dct = self.class_rules[lmsd_class].get(segment_name)
@@ -244,7 +252,7 @@ class Encoder(object):
                             for lv in sum_res_id_lv_dct:
                                 c_lv_segments = {
                                     "CLASS": c_seg,
-                                    "SUM_RESIDUES": sum_res_id_lv_dct[lv],
+                                    "RESIDUE_INFO_SUM": sum_res_id_lv_dct[lv],
                                 }
                                 if c_has_prefix:
                                     c_lv_segments["PREFIX"] = c_prefix_seg
@@ -277,7 +285,7 @@ class Encoder(object):
                     if c_seg in lv_seg_info:
                         lv_seg_lst.append(lv_seg_info[c_seg])
                     elif c_seg in self.separators and c_seg != "SEPARATOR_LEVELS":
-                        lv_seg_lst.append(self.separators[c_seg])
+                        lv_seg_lst.append(re.sub(r"\\", "", self.separators[c_seg]))
                     else:
                         if c_seg not in c_optional_seg:
                             self.logger.debug(
@@ -290,7 +298,7 @@ class Encoder(object):
 
         return comp_seg_dct
 
-    def export_all_levels(self, lipid_name: str) -> dict:
+    def export_all_levels(self, lipid_name: str) -> [dict, str]:
 
         extracted_info = self.extractor.extract(lipid_name)
         export_info = []
@@ -305,23 +313,38 @@ class Encoder(object):
                     res_info = r_info.get("residues", {}).get("residues_info", {})
                     sum_db = 0
                     for res in res_info:
-                        sum_db += res_info[res].get("NUM_DB", 0)
-                    export_info.append({"compiled_names": comp_dct, "sum_db": sum_db})
-            pre_best_export_dct = self.get_best_id_series(export_info)
+                        r_info = res_info[res].get("info", {})
+                        sum_db += r_info.get("c_count", 0)
+                    export_info.append(
+                        {
+                            "compiled_names": comp_dct,
+                            "sum_db": sum_db,
+                            "input_rule": in_r,
+                        }
+                    )
+            pre_best_export_dct, best_input_rule = self.get_best_id_series(export_info)
+            # sort dict by keys
             best_export_dct = {
                 k: pre_best_export_dct[k] for k in sorted(pre_best_export_dct)
             }
             self.logger.debug(f"Convert Lipid: {lipid_name} into:\n{best_export_dct}")
         else:
             best_export_dct = {}
+            best_input_rule = ""
 
-        return best_export_dct
+        return best_export_dct, best_input_rule
+
+    def get_best_rule(self, lipid_name: str) -> str:
+        pre_best_export_dct, best_input_rule = self.export_all_levels(
+            lipid_name
+        )
+        return best_input_rule
 
     def convert(self, lipid_name: str, level: str = None) -> str:
         if level in supported_levels:
             best_id = self.export_level(lipid_name, level=level)
         else:
-            all_lv_id_dct = self.export_all_levels(lipid_name)
+            all_lv_id_dct, best_in_rule = self.export_all_levels(lipid_name)
             best_id = ""
             if all_lv_id_dct:
                 best_id = self.get_best_id(all_lv_id_dct)
@@ -336,7 +359,7 @@ class Encoder(object):
     ):
 
         lv_id = ""
-        all_lv_id_dct = self.export_all_levels(lipid_name)
+        all_lv_id_dct, best_in_rule = self.export_all_levels(lipid_name)
         if level in supported_levels:
             if level in all_lv_id_dct:
                 lv_id = all_lv_id_dct[level]
@@ -368,7 +391,7 @@ class Encoder(object):
         if levels is None:
             levels = ["B0"]
         lv_id_dct = {}
-        all_lv_id_dct = self.export_all_levels(lipid_name)
+        all_lv_id_dct, best_in_rule = self.export_all_levels(lipid_name)
         for level in levels:
             if level in supported_levels:
                 if level in all_lv_id_dct:

@@ -25,7 +25,7 @@ from lynx.models.defaults import (
     core_schema_path,
     default_output_rules,
     lynx_schema_cfg,
-    mod_level_lst
+    mod_level_lst,
 )
 from lynx.utils.basics import get_abs_path
 from lynx.utils.cfg_reader import api_version
@@ -58,6 +58,18 @@ class Modification(object):
                 f"Cannot find output rule for 'MODS' from nomenclature: {nomenclature}."
             )
         self.info = mod_info_sum.get("info", {})
+        if not self.info:
+            self.info = {
+                "1.01_Delta": {
+                    "count": 0,
+                    "cv": "",
+                    "level": 1,
+                    "order": 1.01,
+                    "site": [],
+                    "site_info": [],
+                    "verbose": {"elements": {}, "mass_shift": 0},
+                }
+            }
         self.schema = schema
         self.type = "Modification"
         self.level = str(mod_info_sum.get("level", 0))
@@ -73,6 +85,7 @@ class Modification(object):
         self.details = self.to_dict()
         self.id = self.details.get("id", "")
         self.linked_ids = self.details.get("linked_ids", {})
+        self.linked_levels = self.details.get("linked_levels", [])
 
     def __str__(self):
         return self.to_json()
@@ -313,7 +326,7 @@ class Modification(object):
     def to_dict(self):
         linked_ids = self.to_all_levels()
         mod_id = linked_ids.get(self.level, "")
-        if float(self.level) > 0:
+        if float(self.level) >= 0:
             sum_mod_info_dct = {
                 "api_version": api_version,
                 "type": self.type,
@@ -323,8 +336,6 @@ class Modification(object):
                 "linked_levels": natsorted(list(linked_ids.keys())),
                 "info": self.info,
             }
-        elif float(self.level) == 0:
-            sum_mod_info_dct = {}
         else:
             raise ValueError(
                 f"Cannot format_mods modification code to level {self.level} "
@@ -445,12 +456,14 @@ if __name__ == "__main__":
     }
     usr_mod_obj1 = Modification(usr_mod1)
     usr_mod_obj2 = Modification(usr_mod2)
+    usr_mod_obj3 = Modification({})
     app_logger.debug(usr_mod_obj1.level)
     app_logger.debug(usr_mod_obj1.info)
     app_logger.debug(usr_mod_obj2.level)
     app_logger.debug(usr_mod_obj2.info)
     mod_dct = usr_mod_obj1.to_dict()
     mod_json = usr_mod_obj1.to_json()
+    mod3_json = usr_mod_obj3.to_json()
 
     usr_sum_mods_obj = merge_mods([usr_mod1, usr_mod2])
 

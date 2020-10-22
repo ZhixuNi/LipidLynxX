@@ -41,7 +41,7 @@ class Residue(object):
     def __init__(
         self,
         residue_info: dict,
-        schema: str = "lynx_residues",
+        schema: str = "lynx_residue",
         output_rules: dict = default_output_rules,
         nomenclature: str = "LipidLynxX",
         logger=app_logger,
@@ -68,7 +68,7 @@ class Residue(object):
             self.is_modified = False
 
         self.schema = schema
-        self.type = "FattyAcid"
+        self.type = "Residue"
         resolver = RefResolver(
             referrer=res_schema, base_uri=f"file://{os.path.dirname(res_schema_path)}/"
         )
@@ -213,7 +213,7 @@ class Residue(object):
                             if o == "MOD_INFO_SUM":
                                 mod_seg = o_info.get(main_lv, "")
                                 if mod_seg:
-                                    res_str += f'{mod_left}{mod_seg}{mod_right}'
+                                    res_str += f"{mod_left}{mod_seg}{mod_right}"
                             else:
                                 res_str += o_info.get(sub_lv, "")
 
@@ -225,10 +225,10 @@ class Residue(object):
         return res_str_dct
 
     def __str__(self):
-        return self.to_json()
+        return json.dumps(self.to_dict())
 
     def __repr__(self):
-        return self.to_json()
+        return json.dumps(self.to_dict())
 
     def to_dict(self):
         res_id = self.linked_ids.get(self.level, "")
@@ -250,12 +250,12 @@ class Residue(object):
 
         return sum_res_info_dct
 
+    # Todo (zhixu.ni@uni-leipzig.de): Update json schema and re enable this func
     # def to_json(self):
-    #     fa_lite_info_dct = self.fa_info_dct
-    #     fa_lite_info_dct.pop("mod_obj", None)
-    #     fa_json_str = json.dumps(fa_lite_info_dct)
-    #     if check_json(self.validator, json.loads(fa_json_str, logger=self.logger)):
-    #         return fa_json_str
+    #     res_obj_dct = self.to_dict()
+    #     res_obj_json = json.dumps(res_obj_dct)
+    #     if check_json(self.validator, json.loads(res_obj_json), logger=self.logger):
+    #         return res_obj_json
     #     else:
     #         raise Exception(f"JSON Schema check FAILED. Schema {self.schema}")
 
@@ -263,7 +263,7 @@ class Residue(object):
 def merge_residues(
     residues_order: list,
     residues_info: dict,
-    schema: str = "lynx_residues",
+    schema: str = "lynx_residue",
     output_rules: dict = default_output_rules,
     nomenclature: str = "LipidLynxX",
 ) -> Residue:
@@ -283,39 +283,72 @@ def merge_residues(
     ]
     sum_mods_obj = merge_mods(all_mod_lst)
 
+    sum_res_info_dct = {}
     for res in residues_order:
-        res_info = residues_info.get(res, {})
-        link = res_info.get("LINK")
+        res_info = residues_info.get(res, {}).get("info", {})
+        link = res_info.get("link")
         if res.upper().startswith("P-") and link == "P-":
-            res_info["LINK"] = "O-"
-            res_info["DB_COUNT"] = res_info.get("DB_COUNT") + 1
+            res_info["link"] = "O-"
+            res_info["db_count"] = res_info.get("db_count") + 1
         for res_seg in res_info:
-            if re.search(r"MOD", res_seg):
+            if re.match(r".*_info_sum$", res_seg):
                 pass
             else:
-                if res_seg not in sum_res_dct:
-                    sum_res_dct[res_seg] = res_info[res_seg]
+                if res_seg not in sum_res_info_dct:
+                    sum_res_info_dct[res_seg] = res_info[res_seg]
                 else:
-                    existed_count = sum_res_dct.get(res_seg, None)
+                    existed_count = sum_res_info_dct.get(res_seg, None)
                     res_seg_count = res_info.get(res_seg, None)
                     if res_seg_count:
                         if isinstance(existed_count, int) and isinstance(
                             res_seg_count, int
                         ):
-                            sum_res_dct[res_seg] = res_seg_count + existed_count
+                            sum_res_info_dct[res_seg] = res_seg_count + existed_count
                         elif isinstance(existed_count, str) and isinstance(
                             res_seg_count, str
                         ):
-                            sum_res_dct[res_seg] = res_seg_count + existed_count
+                            sum_res_info_dct[res_seg] = res_seg_count + existed_count
                         else:
                             raise TypeError
                     else:
                         pass
 
-    sum_res_dct["MOD"] = {
-        "MOD_LEVEL": sum_mods_obj.level,
-        "MOD_INFO": sum_mods_obj.info,
+    sum_res_info_dct["mod_info_sum"] = {
+        "level": int(sum_mods_obj.level),
+        "info": sum_mods_obj.info,
     }
+    db_count = sum_res_info_dct.get("db_count", 0)
+    if db_count > 0:
+        sum_res_info_dct["db_info_sum"] = {
+            "level": 0,
+            "info": {
+                "0.01_DB": {
+                    "count": db_count,
+                    "cv": "",
+                    "level": 0,
+                    "order": 0.01,
+                    "site": [],
+                    "site_info": [],
+                },
+            },
+        }
+    sp_o_count = sum_res_info_dct.get("sp_o_count", 0)
+    if sp_o_count > 0:
+        sum_res_info_dct["sp_o_info_sum"] = {
+            "level": 0,
+            "info": {
+                "0.02_SP_O": {
+                    "count": sp_o_count,
+                    "cv": "O",
+                    "level": 0,
+                    "order": 0.02,
+                    "site": [],
+                    "site_info": [],
+                },
+            },
+        }
+
+    sum_res_dct = {"level": sum_mods_obj.level, "info": sum_res_info_dct}
 
     sum_res_obj = Residue(sum_res_dct, schema, output_rules, nomenclature)
 
@@ -448,7 +481,10 @@ if __name__ == "__main__":
     #     # usr_res_json = res_obj.to_json()
 
     # usr_res_obj = merge_residues(usr_res_info)
-    usr_res_obj = Residue(usr_res_info)
+    usr_res_obj = Residue(usr_res_info, logger=app_logger)
     app_logger.debug(usr_res_obj.linked_ids)
-    # usr_res_json = res_obj.to_json()
+    usr_res_dict = usr_res_obj.to_dict()
+    app_logger.info(usr_res_dict)
+    # usr_res_json = usr_res_obj.to_json()
+    # app_logger.info(usr_res_json)
     app_logger.info("FINISHED")

@@ -53,6 +53,15 @@ class DB(object):
                 f"Cannot find output rule for 'DB_SITES' from nomenclature: {nomenclature}."
             )
         self.info = db_info_sum.get("info", {}).get("0.01_DB", {})
+        if not self.info:
+            self.info = {
+                "count": 0,
+                "cv": "",
+                "level": 0,
+                "order": 0.01,
+                "site": [],
+                "site_info": [],
+            }
         self.schema = schema
         self.type = "DB"
         self.level = str(db_info_sum.get("level", 0))
@@ -70,6 +79,8 @@ class DB(object):
         self.site = natsorted(self.info.get("site", []))
         self.site_info = natsorted(self.info.get("site_info", []))
         self.details = self.to_dict()
+        self.linked_ids = self.details.get("linked_ids", {})
+        self.linked_levels = self.details.get("linked_levels", [])
 
     def __str__(self):
         return self.to_json()
@@ -92,7 +103,7 @@ class DB(object):
         try:
             level_f = float(level)
         except ValueError:
-            self.logger.warning(f'Cannot process db.level: {level}')
+            self.logger.warning(f"Cannot process db.level: {level}")
             level_f = 0.0
         if level_f > 0:
             db_sites_lst = natsorted(self.info.get("site", []))
@@ -131,7 +142,7 @@ class DB(object):
     def to_dict(self):
         linked_ids = self.to_all_levels()
         db_id = linked_ids.get(self.level, "")
-        if float(self.level) > 0:
+        if float(self.level) >= 0:
             sum_db_info_dct = {
                 "api_version": api_version,
                 "type": self.type,
@@ -177,5 +188,8 @@ if __name__ == "__main__":
         },
     }
 
-    db_obj = DB(db_info_sum=usr_db)
-    print(db_obj.to_json())
+    # db_obj = DB(db_info_sum=usr_db)
+    # print(db_obj.to_json())
+
+    db_obj2 = DB(db_info_sum={})
+    print(db_obj2.to_json())

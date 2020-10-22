@@ -94,7 +94,12 @@ class Formatter(object):
             else:
                 pass
             if o_count > 0:
-                o_site_info_dct = self.format_site_info(info.get("SP_O_SITE", [""])[0])
+                o_site_str_lst = info.get("SP_O_SITE", [])
+                if o_site_str_lst:
+                    o_site_str = o_site_str_lst[0]
+                else:
+                    o_site_str = ""
+                o_site_info_dct = self.format_site_info(o_site_str)
                 o_site_lst = natsorted(o_site_info_dct.get("site", []))
                 o_site_info_lst = natsorted(o_site_info_dct.get("site_info", []))
                 if re.match(r".*OH.*", o_str):
@@ -130,7 +135,12 @@ class Formatter(object):
         if db_info_lst:
             db_count = int(db_info_lst[0])
             if db_count > 0:
-                db_site_info_dct = self.format_site_info(info.get("DB_SITE", [""])[0])
+                db_site_str_lst = info.get("DB_SITE", [])
+                if db_site_str_lst:
+                    db_site_str = db_site_str_lst[0]
+                else:
+                    db_site_str = ""
+                db_site_info_dct = self.format_site_info(db_site_str)
                 db_site_lst = natsorted(db_site_info_dct.get("site", []))
                 db_site_info_lst = natsorted(db_site_info_dct.get("site_info", []))
                 if db_site_info_lst:
@@ -152,6 +162,24 @@ class Formatter(object):
         }
 
         return db_info
+
+    @staticmethod
+    def format_link(info: dict) -> str:
+        link = ""
+        link_lst = info.get("LINK", [""])
+        if link_lst:
+            link = link_lst[0]
+            link = link.strip(' ')
+            if re.match(r'^O[-]?$', link, re.IGNORECASE) or link == 'e':
+                link = "O-"
+            elif re.match(r'^P[-]?$', link, re.IGNORECASE) or link == 'p':
+                link = "P-"
+            else:
+                pass
+        else:
+            pass
+
+        return link
 
     def format_mod(self, info: dict) -> dict:
         formatted_mod_lst = []
@@ -347,11 +375,7 @@ class Formatter(object):
 
     def format_residue(self, info: dict) -> dict:
 
-        link_lst = info.get("LINK", [""])
-        if link_lst:
-            link = link_lst[0]
-        else:
-            link = ""
+        link = self.format_link(info)
         c_count = int(info.get("C_COUNT", ["0"])[0])
         db_info = self.format_db(info)
         db_info_sum = {"level": db_info.get("level", 0), "info": {"0.01_DB": db_info}}

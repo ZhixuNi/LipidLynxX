@@ -20,7 +20,7 @@
     "id": {
       "description": "The LipidLynxX id",
       "type": "string",
-      "minLength": 1,
+      "minLength": 0,
       "maxLength": 384
     },
     "type": {
