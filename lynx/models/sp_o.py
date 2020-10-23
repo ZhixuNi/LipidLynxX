@@ -49,7 +49,7 @@ class SP_O(object):
         self.sp_o_sites_rule = self.export_rule.get("SITE", None)
         self.sp_o_separators = self.export_rule.get("SEPARATOR", {})
         if not self.sp_o_sites_rule:
-            raise ValueError(
+            self.logger.info(
                 f"Cannot find output rule for 'O_SITES' from nomenclature: {nomenclature}."
             )
         self.info = sp_o_info_sum.get("info", {}).get("0.02_SP_O", {})

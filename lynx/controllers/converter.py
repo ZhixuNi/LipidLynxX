@@ -183,20 +183,22 @@ if __name__ == "__main__":
         # "SM d18:1/24:0",
         # "DHA",
         # "PC(18:1{9Z}/18:2{9Z,11E}<OH{12}>)",
-        "SM(18:1{4E};2OH{1R,3S}<2OH{8S,18R},oxo{10}>/18:2{8E,11E}<2OH{7S,18R},oxo{12}>)",
+        "SM(18:0;2OH{1R,3S}/18:2{8E,11E})",
+        # "SM(18:1{4E};2OH{1R,3S}<2OH{8S,18R},oxo{10}>/18:2{8E,11E}<2OH{7S,18R},oxo{12}>)",
     ]
-    lv = "M1"
+    lv = "B0"
     # test_out_rule = "COMP_DB"
-    test_out_rule = "LipidLynxX"
+    # test_out_rule = "LipidLynxX"
+    test_out_rule = "BioPAN"
     # test_out_rule = "BracketsShorthand"
     lynx_converter = Converter(style=test_out_rule, logger=app_logger)
     for t_in in t_in_lst:
-        t1_out = lynx_converter.convert(t_in, level="M1")
+        t1_out = lynx_converter.convert(t_in, level=lv)
         app_logger.info(f"Input: {t_in} -> Best Output: {t1_out}")
 
-    t2_out = lynx_converter.convert(t_in_lst)
-    app_logger.info(f"Input: {t_in_lst} -> Best Output: {t2_out}")
-    app_logger.info(t2_out)
+    # t2_out = lynx_converter.convert(t_in_lst)
+    # app_logger.info(f"Input: {t_in_lst} -> Best Output: {t2_out}")
+    # app_logger.info(t2_out)
     #
     # t3_out = lynx_converter.convert({"1": t_in_lst})
     # logger.info(f"Input: {t_in_lst} -> Best Output: {t3_out}")

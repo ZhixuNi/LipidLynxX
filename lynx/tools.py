@@ -323,7 +323,13 @@ def convert_file(
                 input_list=lipid_lst, level=level
             )
             converted_names = converted_obj.output
-            converted_dct = {f"Converted_{lipid_col_name}": converted_names}
+            filled_converted_names = []
+            for c_n in converted_names:
+                if c_n:
+                    filled_converted_names.append(c_n)
+                else:
+                    filled_converted_names.append("UNPROCESSED")
+            converted_dct = {f"Converted_{lipid_col_name}": filled_converted_names}
             converted_dct.update(raw_table_dct)
         else:
             if mode.lower() == "fixed":

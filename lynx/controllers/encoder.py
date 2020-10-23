@@ -160,7 +160,7 @@ class Encoder(object):
         res_lv_dct = {}
         sum_lv_lst = []
         for res_abbr in residues_info:
-            res_obj = Residue(residues_info[res_abbr], nomenclature=self.export_style)
+            res_obj = Residue(residues_info[res_abbr])
             res_lv_id_dct[res_abbr] = res_obj.linked_ids
             res_lv_dct[res_abbr] = list(res_obj.linked_ids.keys())
             sum_lv_lst.extend(res_lv_dct[res_abbr])
@@ -199,11 +199,17 @@ class Encoder(object):
         for sep_lv in sum_res_sep_lv_lst:
             if sep_lv == "B":
                 # prepare bulk level
-                merged_res_obj = merge_residues(
-                    residues_order, residues_info, nomenclature=self.export_style
-                )
-                merged_res_linked_ids = merged_res_obj.linked_ids
-                merged_res_lv_lst = list(merged_res_obj.linked_ids.keys())
+                if len(residues_order) > 1:
+                    merged_res_obj = merge_residues(residues_order, residues_info)
+                    merged_res_linked_ids = merged_res_obj.linked_ids
+                    merged_res_lv_lst = list(merged_res_obj.linked_ids.keys())
+                elif len(residues_order) == 1:
+                    merged_res_obj = Residue(residues_info.get(residues_order[0]))
+                    merged_res_linked_ids = merged_res_obj.linked_ids
+                    merged_res_lv_lst = list(merged_res_obj.linked_ids.keys())
+                else:
+                    merged_res_linked_ids = []
+                    merged_res_lv_lst = []
                 for merged_res_lv in merged_res_lv_lst:
                     sum_res_id_lv_dct[f"B{merged_res_lv}"] = merged_res_linked_ids[
                         merged_res_lv
@@ -218,12 +224,67 @@ class Encoder(object):
 
         return sum_res_id_lv_dct
 
+    @staticmethod
+    def check_sp_biopan(lmsd_classes: list, c_prefix_lst: list, residues: dict):
+
+        is_sp_class = False
+        for c in lmsd_classes:
+            if c.upper().startswith("SP"):
+                is_sp_class = True
+                break
+
+        if is_sp_class:
+            residues_order = residues.get("residues_order", [])
+            residues_info = residues.get("residues_info", {})
+            is_modified = False
+            for res in residues_order:
+                mod_level = residues_info.get(res, {}).get("info", 0).get("mod_info_sum", {}).get("level", 0)
+                if float(mod_level) > 0:
+                    is_modified = True
+
+            if is_modified:
+                residues = {}
+            else:
+                for res in residues_order:
+                    res_info = residues_info.get(res, {}).get("info", 0)
+                    res_sp_o_count = res_info.get("sp_o_count", 0)
+                    residues_separator_level = residues_info.get("residues_separator_level", "B")
+                    res_link = res_info.get("link", "")
+                    if (
+                        res_sp_o_count == 2
+                        or res_link == "d"
+                        or res.lower().startswith("d")
+                    ):
+                        res_c_count = res_info.get("c_count", 0)
+                        res_db_count = res_info.get("db_count", 0)
+                        if res_c_count == 18 and res_db_count in [0, 1]:
+                            residues_order.remove(res)
+                            del residues_info[res]
+                            residues = {
+                                "residues_order": residues_order,
+                                "residues_info": residues_info,
+                                "residues_separator_level": residues_separator_level
+                            }
+                            if res_db_count == 0:
+                                c_prefix_lst.append('dh')
+                        else:
+                            residues = {}
+
+                    else:
+                        residues = {}
+        else:
+            pass
+
+        return c_prefix_lst, residues
+
     def check_segments(self, parsed_info: dict):
         segments_dct = {}
         lmsd_classes = parsed_info.get("lmsd_classes", [])
         segments = parsed_info["segments"]
         c_prefix_lst = segments.get("PREFIX", [])
         c_suffix_lst = segments.get("SUFFIX", [])
+        residues = parsed_info.get("residues", {})
+        c_prefix_lst, residues = self.check_sp_biopan(lmsd_classes, c_prefix_lst, residues)
         c_has_prefix = False
         if len(c_prefix_lst) == 1 and c_prefix_lst[0]:
             c_prefix_seg = c_prefix_lst[0]
@@ -236,39 +297,41 @@ class Encoder(object):
             c_has_suffix = True
         else:
             c_suffix_seg = ""
-        residues = parsed_info.get("residues", {})
-        sum_res_id_lv_dct = self.get_residues(residues)
-        obs_c_seg_lst = segments.get("CLASS", [])
-        c_seg = ""
-        if obs_c_seg_lst and len(obs_c_seg_lst) == 1:
-            obs_c_seg = obs_c_seg_lst[0]
-            for c in lmsd_classes:
-                c_segments_dct = {}
-                c_orders = []
-                if c in self.class_rules:
-                    c_orders = self.class_rules[c].get("ORDER", [])
-                    c_identifier_dct = self.class_rules[c].get("CLASS", {})
-                    for c_identifier in c_identifier_dct:
-                        if c_identifier.match(obs_c_seg):
-                            c_seg = c_identifier_dct.get(c_identifier, "")
-                            for lv in sum_res_id_lv_dct:
-                                c_lv_segments = {
-                                    "CLASS": c_seg,
-                                    "RESIDUE_INFO_SUM": sum_res_id_lv_dct[lv],
-                                }
-                                if c_has_prefix:
-                                    c_lv_segments["PREFIX"] = c_prefix_seg
-                                if c_has_suffix:
-                                    c_lv_segments["SUFFIX"] = c_suffix_seg
-                                c_segments_dct[lv] = c_lv_segments
-                        else:
-                            pass
-                else:
-                    pass
-                if c_segments_dct and c_orders:
-                    segments_dct[c] = {"ORDER": c_orders, "INFO": c_segments_dct}
+        if residues:
+            sum_res_id_lv_dct = self.get_residues(residues)
+            obs_c_seg_lst = segments.get("CLASS", [])
+            c_seg = ""
+            if obs_c_seg_lst and len(obs_c_seg_lst) == 1:
+                obs_c_seg = obs_c_seg_lst[0]
+                for c in lmsd_classes:
+                    c_segments_dct = {}
+                    c_orders = []
+                    if c in self.class_rules:
+                        c_orders = self.class_rules[c].get("ORDER", [])
+                        c_identifier_dct = self.class_rules[c].get("CLASS", {})
+                        for c_identifier in c_identifier_dct:
+                            if c_identifier.match(obs_c_seg):
+                                c_seg = c_identifier_dct.get(c_identifier, "")
+                                for lv in sum_res_id_lv_dct:
+                                    c_lv_segments = {
+                                        "CLASS": c_seg,
+                                        "RESIDUE_INFO_SUM": sum_res_id_lv_dct[lv],
+                                    }
+                                    if c_has_prefix:
+                                        c_lv_segments["PREFIX"] = c_prefix_seg
+                                    if c_has_suffix:
+                                        c_lv_segments["SUFFIX"] = c_suffix_seg
+                                    c_segments_dct[lv] = c_lv_segments
+                            else:
+                                pass
+                    else:
+                        pass
+                    if c_segments_dct and c_orders:
+                        segments_dct[c] = {"ORDER": c_orders, "INFO": c_segments_dct}
+            else:
+                self.logger.warning(f"No Class identified!")
         else:
-            self.logger.warning(f"No Class identified!")
+            segments_dct = {}
 
         return segments_dct
 
@@ -311,19 +374,22 @@ class Encoder(object):
                 for in_r in p_info:
                     r_info = p_info[in_r]  # type: dict
                     checked_seg_info = self.check_segments(r_info)
-                    comp_dct = self.compile_segments(checked_seg_info)
-                    res_info = r_info.get("residues", {}).get("residues_info", {})
-                    sum_db = 0
-                    for res in res_info:
-                        r_info = res_info[res].get("info", {})
-                        sum_db += r_info.get("c_count", 0)
-                    export_info.append(
-                        {
-                            "compiled_names": comp_dct,
-                            "sum_db": sum_db,
-                            "input_rule": in_r,
-                        }
-                    )
+                    if checked_seg_info:
+                        comp_dct = self.compile_segments(checked_seg_info)
+                        res_info = r_info.get("residues", {}).get("residues_info", {})
+                        sum_db = 0
+                        for res in res_info:
+                            r_info = res_info[res].get("info", {})
+                            sum_db += r_info.get("c_count", 0)
+                        export_info.append(
+                            {
+                                "compiled_names": comp_dct,
+                                "sum_db": sum_db,
+                                "input_rule": in_r,
+                            }
+                        )
+                    else:
+                        pass
             pre_best_export_dct, best_input_rule = self.get_best_id_series(export_info)
             # sort dict by keys
             best_export_dct = {

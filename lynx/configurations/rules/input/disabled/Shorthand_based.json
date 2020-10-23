@@ -12,104 +12,159 @@
     "MetFrag",
     "MZmine2"
   ],
-  "SEPARATORS": {
+  "SEPARATOR": {
     "RESIDUE_SEPARATOR": "_|/",
     "MOD_SEPARATOR": "-",
     "SPACE": "\\s",
     "COLON": ":",
     "SEMICOLON": ";",
-    "BRACKET_LEFT": "\\(",
-    "BRACKET_RIGHT": "\\)",
+    "RESIDUE_BRACKET_LEFT": "\\(",
+    "RESIDUE_BRACKET_RIGHT": "\\)",
+    "MOD_BRACKET_LEFT": "\\(",
+    "MOD_BRACKET_RIGHT": "\\)",
+    "SITE_BRACKET_LEFT": "\\(",
+    "SITE_BRACKET_RIGHT": "\\)",
+    "SQUARE_BRACKET_LEFT": "\\[",
+    "SQUARE_BRACKET_RIGHT": "\\]",
     "SEPARATOR_LEVELS": {
       "B": "",
       "M": "_",
       "S": "/"
     }
   },
-  "MODS": {
-    "MOD": {
+  "SITE": {
+    "SITE_INFO": {
       "ORDER": [
-        "MOD_SITE",
-        "MOD_SITE_INFO",
-        "MOD_SEPARATOR",
-        "MOD_TYPE"
+        "SITE",
+        "SITE_SUFFIX"
       ],
       "OPTIONAL": [
-        "MOD_SITE_INFO",
-        "MOD_SEPARATOR",
-        "MOD_TYPE"
+        "SITE_SUFFIX"
       ],
-      "MOD_SITE": "(\\s?,)?([0-9]{1,2})",
-      "MOD_SITE_INFO": "([EZRS])?",
-      "MOD_SEPARATOR": "$.SEPARATORS.MOD_SEPARATOR.0",
-      "MOD_TYPE": "([+-]?[a-zA-Z]+[-0-9a-zA-Z]*)",
+      "SITE": "(\\s?,)?([0-9]{1,2})",
+      "SITE_SUFFIX": "([EZ])?",
       "EXAMPLES": [
-        "9",
-        "9Z",
-        "9OH",
-        "9S-OH"
-      ]
-    },
-    "SUM_MODS": {
-      "ORDER": [
-        "BRACKET_LEFT",
-        "MOD",
-        "BRACKET_RIGHT"
-      ],
-      "REPEAT": {
-        "MOD": [1, 10]
-      },
-      "BRACKET_LEFT": "$.SEPARATORS.BRACKET_LEFT.0",
-      "MOD": "$.MODS.MOD.0",
-      "BRACKET_RIGHT": "$.SEPARATORS.BRACKET_RIGHT.0",
-      "EXAMPLES": [
-        "(9Z)",
-        "(9Z,12Z)",
-        "(9OH,12OH)"
+        "12",
+        "12Z"
       ]
     }
   },
-  "RESIDUES": {
-    "RESIDUE": {
+  "DB": {
+    "DB_INFO_SUM": {
+      "ORDER": [
+        "SITE_BRACKET_LEFT",
+        "DB_SITE",
+        "SITE_BRACKET_RIGHT"
+      ],
+      "REPEAT": {
+        "SITE_INFO": [1, 10]
+      },
+      "DB_SITE": "{{SITE.SITE_INFO}}",
+      "EXAMPLES": [
+        "(12)",
+        "(9,12)",
+        "(9Z,12Z)"
+      ]
+    }
+  },
+  "SP_O": {
+    "SP_O_INFO_SUM": {
+      "ORDER": [
+        "SP_O_SITE"
+      ],
+      "SP_O_SITE": "{{SITE.SITE_INFO_SUM}}",
+      "EXAMPLES": [
+        "(1)",
+        "(1,3)",
+        "(1R,3R)"
+      ]
+    }
+  },
+  "MOD": {
+    "MOD_INFO": {
+      "ORDER": [
+        "MOD_SEPARATOR",
+        "MOD_COUNT",
+        "MOD_TYPE",
+        "MOD_SITE"
+      ],
+      "OPTIONAL": [
+        "MOD_SEPARATOR",
+        "MOD_COUNT",
+        "MOD_SITE"
+      ],
+      "MOD_SEPARATOR": "{{SEPARATOR.COMMA}}",
+      "MOD_COUNT":  "[+-]?(\\s?,)?([0-9]{1,2})?",
+      "MOD_TYPE": "([a-zA-Z]*[-0-9a-zA-Z]+)",
+      "MOD_SITE": "{{SITE.SITE_INFO_SUM}}",
+      "EXAMPLES": [
+        "+O",
+        "OH{9}",
+        ",2OH{9R,12S}"
+      ]
+    },
+    "MOD_INFO_SUM": {
+      "ORDER": [
+        "MOD_BRACKET_LEFT",
+        "MOD_INFO",
+        "MOD_BRACKET_RIGHT"
+      ],
+      "REPEAT": {
+        "MOD_INFO": [1, 10]
+      },
+      "MOD_BRACKET_LEFT": "{{SEPARATOR.MOD_BRACKET_LEFT}}",
+      "MOD_INFO": "{{MOD.MOD_INFO}}",
+      "MOD_BRACKET_RIGHT": "{{SEPARATOR.MOD_BRACKET_RIGHT}}",
+      "EXAMPLES": [
+        "(9OH,12OH)",
+        "<2OH{9R,12S)"
+      ]
+    }
+  },
+  "RESIDUE": {
+    "RESIDUE_INFO": {
       "ORDER": [
         "RESIDUE_SEPARATOR",
         "LINK",
-        "NUM_C",
+        "C_COUNT",
         "DB_SEPARATOR",
-        "DB",
-        "O_SEPARATOR",
-        "NUM_O",
-        "SUM_MODS"
+        "DB_COUNT",
+        "DB_INFO_SUM",
+        "SP_O_SEPARATOR",
+        "SP_O_COUNT",
+        "SP_O_INFO_SUM",
+        "MOD_INFO_SUM"
       ],
       "OPTIONAL": [
         "RESIDUE_SEPARATOR",
         "LINK",
-        "DB",
-        "O_SEPARATOR",
-        "NUM_O",
-        "SUM_MODS"
+        "DB_COUNT",
+        "DB_INFO_SUM",
+        "SP_O_SEPARATOR",
+        "SP_O_COUNT",
+        "SP_O_INFO_SUM",
+        "MOD_INFO_SUM"
       ],
-      "REPEAT": {
-        "SUM_MODS": [0, 10]
-      },
-      "RESIDUE_SEPARATOR": "$.SEPARATORS.RESIDUE_SEPARATOR.0",
-      "LINK": "[OP]-|C|[mdt]|h",
-      "NUM_C": "[0-9]{1,2}",
-      "DB_SEPARATOR": "$.SEPARATORS.COLON.0",
-      "DB": "[1,2]?[0-9]",
-      "O_SEPARATOR": "$.SEPARATORS.SEMICOLON.0",
-      "NUM_O": "[2-9]?O[2-9]?",
-      "SUM_MODS": "$.MODS.SUM_MODS.0",
+      "RESIDUE_SEPARATOR": "{{SEPARATOR.RESIDUE_SEPARATOR}}",
+      "LINK": "[OP]-",
+      "C_COUNT": "[0-9]{1,2}",
+      "DB_SEPARATOR": "{{SEPARATOR.COLON}}",
+      "DB_COUNT": "[1,2]?[0-9]",
+      "DB_INFO_SUM": "{{DB.DB_INFO_SUM}}",
+      "SP_O_SEPARATOR": "{{SEPARATOR.SEMICOLON}}",
+      "SP_O_COUNT": "[2-9]?OH?",
+      "SP_O_INFO_SUM": "{{SP_O.SP_O_INFO_SUM}}",
+      "MOD_INFO_SUM": "{{MOD.MOD_INFO_SUM}}",
       "EXAMPLES": [
-        "18:2;3O",
-        "18:2;O",
+        "18:2;1",
         "18:2",
-        "9:0",
-        "26:0;(2OH)",
-        "34:1;2O(FA 16:0)",
-        "18:2(9Z,12Z)",
-        "_18:2(9Z,12Z)",
-        "/18:2(9Z,12Z)"
+        "18:2{9Z,11E}<OH{12R}>",
+        "9:0<oxo{9}>",
+        "26:0<OH{3}>",
+        "34:1;2<FA16:0>",
+        "34:1<+14>",
+        "34:1<+O>",
+        "34:1<+O,-2H>"
       ]
     },
     "RESIDUE_ALIAS": {
@@ -120,45 +175,29 @@
       "OPTIONAL": [
         "RESIDUE_SEPARATOR"
       ],
-      "RESIDUE_SEPARATOR": "$.SEPARATORS.RESIDUE_SEPARATOR.0",
+      "RESIDUE_SEPARATOR": "{{SEPARATOR.RESIDUE_SEPARATOR}}",
       "ALIAS": "[-,0-9a-zA-Z\\s]{3,}",
       "EXAMPLES": [
         "HETE",
         "/HDoTE"
       ]
     },
-    "SUM_RESIDUES": {
+    "RESIDUE_INFO_SUM": {
       "ORDER": [
         "RESIDUE"
       ],
+      "RESIDUE": "({{RESIDUE.RESIDUE_INFO}})|({{RESIDUE.RESIDUE_ALIAS}})",
       "REPEAT": {
         "RESIDUE": [1, 4]
       },
-      "RESIDUE": "($.RESIDUES.RESIDUE.0)|($.SEPARATORS.RESIDUE_ALIAS.0)",
       "EXAMPLES": [
-        "18:2;O",
-        "18:2;O2",
+        "18:2;1",
         "18:2",
-        "9:0",
-        "26:0;(2OH)",
-        "18:2;3O/18:2",
-        "18:2;O_18:2",
-        "18:0/20:4",
-        "18:0_20:4",
-        "18:0_9:0",
-        "18:0_26:0;(2OH)"
-      ]
-    },
-    "SUM_RESIDUES_CL": {
-      "ORDER": [
-        "RESIDUE_CL"
-      ],
-      "REPEAT": {
-        "RESIDUE_CL": [1, 2]
-      },
-      "RESIDUE_CL": "((?P<CL_SUB_POS_LEFT>,?[13]'-\\[)(?P<RESIDUE>$.RESIDUES.RESIDUE.0)(/)(?P<RESIDUE>$.RESIDUES.RESIDUE.0)?(?P<CL_SUB_POS_RIGHT>\\]))",
-      "EXAMPLES": [
-        "1'-[18:1(9Z)/18:2(9Z,12Z)],3'-[18:2(9Z,12Z)/18:2(9Z,12Z)]"
+        "9:0<oxo{9}>",
+        "34:1;2<FA16:0>",
+        "34:1<+14>",
+        "34:1<+O>",
+        "34:1<+O,-2H>"
       ]
     }
   },

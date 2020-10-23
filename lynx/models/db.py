@@ -49,7 +49,7 @@ class DB(object):
         self.db_sites_rule = self.export_rule.get("SITE", None)
         self.db_separators = self.export_rule.get("SEPARATOR", {})
         if not self.db_sites_rule:
-            raise ValueError(
+            self.logger.info(
                 f"Cannot find output rule for 'DB_SITES' from nomenclature: {nomenclature}."
             )
         self.info = db_info_sum.get("info", {}).get("0.01_DB", {})

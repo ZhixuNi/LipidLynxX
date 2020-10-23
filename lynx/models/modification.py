@@ -54,7 +54,7 @@ class Modification(object):
         self.mod_seg_rule_orders = self.mod_seg_rule.get("ORDER", {})
         self.mod_separators = self.export_rule.get("SEPARATOR", {})
         if not self.mod_rule:
-            raise ValueError(
+            self.logger.info(
                 f"Cannot find output rule for 'MODS' from nomenclature: {nomenclature}."
             )
         self.info = mod_info_sum.get("info", {})

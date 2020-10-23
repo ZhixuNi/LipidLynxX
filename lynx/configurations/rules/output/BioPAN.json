@@ -1,5 +1,5 @@
 {
-  "_DATE": 20200731,
+  "_DATE": 20201023,
   "_AUTHORS": [
     "zhixu.ni@uni-leipzig.de"
   ],
@@ -8,75 +8,25 @@
     "B0"
   ],
   "SUPPORT_MODIFICATION": 0,
-  "SEPARATORS": {
+  "SEPARATOR": {
     "DB_SEPARATOR": ":",
-    "O_SEPARATOR": ";",
     "RESIDUE_SEPARATOR": " ",
-    "SQUARE_BRACKET_LEFT": "[",
-    "SQUARE_BRACKET_RIGHT": "]",
     "SEPARATOR_LEVELS": {
       "B": "",
       "M": "_",
       "S": "/"
     }
   },
-  "MODS": {
-    "MOD": {
-      "ORDER": [
-        "SEMICOLON",
-        "MOD_CV",
-        "MOD_COUNT"
-      ],
-      "OPTIONAL": [
-        "SEMICOLON",
-        "MOD_COUNT"
-      ],
-      "REPEAT": {
-        "MOD": [
-          1,
-          10
-        ]
-      },
-      "SEMICOLON": ";",
-      "MOD_CV": "([a-zA-Z]*[-0-9a-zA-Z]*)",
-      "MOD_COUNT": "\\d?\\d?",
-      "EXAMPLES": [
-        ";O",
-        ";O2"
-      ]
-    },
-    "SUM_MODS": {
-      "ORDER": [
-        "MOD"
-      ],
-      "REPEAT": {
-        "MOD": [
-          1,
-          10
-        ]
-      },
-      "MOD": "$.MODS.MOD.0",
-      "EXAMPLES": [
-        ";O2;H2"
-      ]
-    }
-  },
   "RESIDUES": {
     "RESIDUE": {
       "ORDER": [
         "LINK",
-        "NUM_C",
+        "C_COUNT",
         "DB_SEPARATOR",
-        "NUM_DB",
-        "O_SEPARATOR",
-        "NUM_O"
+        "DB_COUNT"
       ],
       "OPTIONAL": [
-        "LINK",
-        "DB",
-        "O_SEPARATOR",
-        "NUM_O",
-        "SUM_MODS"
+        "LINK"
       ],
       "REPEAT": {
         "SUM_MODS": [
@@ -85,12 +35,9 @@
         ]
       },
       "LINK": "[OP]-|C|[mdt]|h",
-      "NUM_C": "[0-9]{1,2}",
+      "C_COUNT": "[0-9]{1,2}",
       "DB_SEPARATOR": ":",
-      "NUM_DB": "[1,2]?[0-9]",
-      "O_SEPARATOR": ";",
-      "NUM_O": "O[2-3]?",
-      "SUM_MODS": "$.MODS.SUM_MODS.0"
+      "DB_COUNT": "[1,2]?[0-9]"
     },
     "EXCEPTIONS": {
       "PREFIX": "TEST"
@@ -101,7 +48,7 @@
       "ORDER": [
         "CLASS",
         "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "MAX_RESIDUES": 1,
       "CLASS": {
@@ -115,7 +62,7 @@
       "ORDER": [
         "CLASS",
         "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "MAX_RESIDUES": 1,
       "CLASS": {
@@ -129,7 +76,7 @@
       "ORDER": [
         "CLASS",
         "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "MAX_RESIDUES": 1,
       "CLASS": {
@@ -143,7 +90,7 @@
       "ORDER": [
         "CLASS",
         "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "MAX_RESIDUES": 1,
       "CLASS": {
@@ -157,7 +104,7 @@
       "ORDER": [
         "CLASS",
         "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "MAX_RESIDUES": 1,
       "CLASS": {
@@ -172,7 +119,7 @@
       "ORDER": [
         "CLASS",
         "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "MAX_RESIDUES": 1,
       "CLASS": {
@@ -187,7 +134,7 @@
       "ORDER": [
         "CLASS",
         "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "MAX_RESIDUES": 2,
       "CLASS": {
@@ -202,7 +149,7 @@
       "ORDER": [
         "CLASS",
         "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "OPTIONAL": [
         "PREFIX",
@@ -223,7 +170,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "OPTIONAL": [
         "PREFIX",
@@ -250,7 +197,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "OPTIONAL": [
         "PREFIX",
@@ -277,7 +224,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "OPTIONAL": [
         "PREFIX",
@@ -304,7 +251,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "OPTIONAL": [
         "PREFIX",
@@ -331,7 +278,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "OPTIONAL": [
         "PREFIX",
@@ -360,7 +307,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "OPTIONAL": [
         "PREFIX",
@@ -387,7 +334,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "OPTIONAL": [
         "PREFIX",
@@ -414,7 +361,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "OPTIONAL": [
         "PREFIX",
@@ -441,7 +388,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "OPTIONAL": [
         "PREFIX",
@@ -468,7 +415,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "MAX_RESIDUES": 2,
       "PREFIX": {
@@ -495,7 +442,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "OPTIONAL": [
         "PREFIX",
@@ -522,7 +469,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "OPTIONAL": [
         "PREFIX",
@@ -549,7 +496,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "OPTIONAL": [
         "PREFIX",
@@ -576,7 +523,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "MAX_RESIDUES": 1,
       "CLASS": {
@@ -592,7 +539,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "MAX_RESIDUES": 1,
       "CLASS": {
@@ -608,7 +555,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "OPTIONAL": [
         "PREFIX",
@@ -641,7 +588,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "OPTIONAL": [
         "PREFIX",
@@ -668,7 +615,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "OPTIONAL": [
         "PREFIX",
@@ -698,7 +645,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "OPTIONAL": [
         "PREFIX",
@@ -724,7 +671,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "OPTIONAL": [
         "PREFIX",

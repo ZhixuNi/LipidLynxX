@@ -137,7 +137,8 @@ class Residue(object):
 
         if max_level != self.level:
             max_lv = max(float(max_level), float(self.level))
-            self.level = f"{max_lv:.1f}"
+            max_lv_str = re.sub(r"\.0", "", f"{max_lv:.1f}")
+            self.level = max_lv_str
         else:
             pass
         sub_lvs = list(set(db_lvs + sp_o_lvs))
@@ -145,7 +146,7 @@ class Residue(object):
         for main_lv in mod_lvs:
             for sub_lv in sub_lvs:
                 linked_lv = int(main_lv) + float(sub_lv)
-                linked_lvs.append(f"{linked_lv:.1f}")
+                linked_lvs.append(re.sub(r"\.0", "", f"{linked_lv:.1f}"))
         linked_lvs = natsorted(list(set(linked_lvs)))
         return linked_lvs
 
