@@ -1,5 +1,5 @@
 {
-  "_DATE": 20201023,
+  "_DATE": 20201025,
   "_AUTHORS": [
     "zhixu.ni@uni-leipzig.de"
   ],
@@ -115,11 +115,32 @@
         ]
       }
     },
-    "GL01": {
+    "FA0707": {
       "ORDER": [
         "CLASS",
         "RESIDUE_SEPARATOR",
         "RESIDUE_INFO_SUM"
+      ],
+      "MAX_RESIDUES": 1,
+      "CLASS": {
+        "OUTPUT": "FaCN",
+        "INPUT": [
+          "FaCN",
+          "FACN"
+        ]
+      }
+    },
+    "GL01": {
+      "ORDER": [
+        "PREFIX",
+        "CLASS",
+        "SUFFIX",
+        "RESIDUE_SEPARATOR",
+        "RESIDUE_INFO_SUM"
+      ],
+      "OPTIONAL": [
+        "PREFIX",
+        "SUFFIX"
       ],
       "MAX_RESIDUES": 1,
       "CLASS": {
@@ -132,9 +153,15 @@
     },
     "GL02": {
       "ORDER": [
+        "PREFIX",
         "CLASS",
+        "SUFFIX",
         "RESIDUE_SEPARATOR",
         "RESIDUE_INFO_SUM"
+      ],
+      "OPTIONAL": [
+        "PREFIX",
+        "SUFFIX"
       ],
       "MAX_RESIDUES": 2,
       "CLASS": {
@@ -147,7 +174,9 @@
     },
     "GL03": {
       "ORDER": [
+        "PREFIX",
         "CLASS",
+        "SUFFIX",
         "RESIDUE_SEPARATOR",
         "RESIDUE_INFO_SUM"
       ],

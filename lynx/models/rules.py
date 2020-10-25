@@ -76,7 +76,7 @@ class InputRules(object):
             pass
         else:
             raise ValueError(
-                "Cannot find valid sections for key [SOURCE, RESIDUES, LIPID_CLASSES]"
+                "Cannot find valid sections for key [SOURCE, RESIDUE, LIPID_CLASSES]"
             )
         self.rules = self.build()
         self.is_validated = self.validate()

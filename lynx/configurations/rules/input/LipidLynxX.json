@@ -1,5 +1,5 @@
 {
-  "_DATE": 20201013,
+  "_DATE": 20201025,
   "_AUTHORS": [
     "zhixu.ni@uni-leipzig.de"
   ],
@@ -191,11 +191,11 @@
     },
     "RESIDUE_INFO_SUM": {
       "ORDER": [
-        "RESIDUE"
+        "RESIDUE_INFO"
       ],
-      "RESIDUE": "({{RESIDUE.RESIDUE_INFO}})|({{RESIDUE.RESIDUE_ALIAS}})",
+      "RESIDUE_INFO": "({{RESIDUE.RESIDUE_INFO}})|({{RESIDUE.RESIDUE_ALIAS}})",
       "REPEAT": {
-        "RESIDUE": [1, 4]
+        "RESIDUE_INFO": [1, 4]
       },
       "EXAMPLES": [
         "18:2;1",

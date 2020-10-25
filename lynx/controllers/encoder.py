@@ -225,53 +225,122 @@ class Encoder(object):
         return sum_res_id_lv_dct
 
     @staticmethod
-    def check_sp_biopan(lmsd_classes: list, c_prefix_lst: list, residues: dict):
+    def check_head_seg(head_segments):
+        has_segments = False
+        head_seg = ""
+        if len(head_segments) == 1 and head_segments[0]:
+            head_seg = head_segments[0]
+            has_segments = True
+        elif len(head_segments) > 1:
+            head_seg = "".join(list(set(head_segments)))
+            if head_seg == "LO-":
+                head_seg = "O-L"
+            elif head_seg == "LP-":
+                head_seg = "P-L"
+            has_segments = True
 
+        return has_segments, head_seg
+
+    @staticmethod
+    def check_biopan(lmsd_classes: list, c_prefix_lst: list, residues: dict):
         is_sp_class = False
+        is_gl_class = False
+        is_gp_class = False
         for c in lmsd_classes:
-            if c.upper().startswith("SP"):
+            if c.upper().startswith("GL"):
+                is_gl_class = True
+                break
+            elif c.upper().startswith("GP"):
+                is_gp_class = True
+                break
+            elif c.upper().startswith("SP"):
                 is_sp_class = True
                 break
 
-        if is_sp_class:
+        if is_gl_class or is_gp_class or is_sp_class:
             residues_order = residues.get("residues_order", [])
             residues_info = residues.get("residues_info", {})
             is_modified = False
             for res in residues_order:
-                mod_level = residues_info.get(res, {}).get("info", 0).get("mod_info_sum", {}).get("level", 0)
+                mod_level = (
+                    residues_info.get(res, {})
+                    .get("info", 0)
+                    .get("mod_info_sum", {})
+                    .get("level", 0)
+                )
                 if float(mod_level) > 0:
                     is_modified = True
 
             if is_modified:
                 residues = {}
             else:
-                for res in residues_order:
-                    res_info = residues_info.get(res, {}).get("info", 0)
-                    res_sp_o_count = res_info.get("sp_o_count", 0)
-                    residues_separator_level = residues_info.get("residues_separator_level", "B")
-                    res_link = res_info.get("link", "")
-                    if (
-                        res_sp_o_count == 2
-                        or res_link == "d"
-                        or res.lower().startswith("d")
-                    ):
+                if is_gl_class or is_gp_class:
+                    for res in residues_order:
+                        res_info = residues_info.get(res, {}).get("info", 0)
+                        res_link = res_info.get("link", "")
+                        residues_separator_level = residues_info.get(
+                            "residues_separator_level", "B"
+                        )
+                        if res_link == "O-":
+                            c_prefix_lst.append("O-")
+                            residues_info[res]["info"]["link"] = ""
+                        elif res_link == "P-":
+                            c_prefix_lst.append("O-")
+                            residues_info[res]["info"]["link"] = ""
+                            residues_info[res]["info"]["db_count"] = (
+                                1 + residues_info[res]["info"]["db_count"]
+                            )
+                            residues_info[res]["info"]["db_info_sum"]["info"][
+                                "0.01_DB"
+                            ]["count"] = residues_info[res]["info"]["db_count"]
+                            residues_info[res]["info"]["db_info_sum"]["info"][
+                                "0.01_DB"
+                            ]["site"] = []
+                            residues_info[res]["info"]["db_info_sum"]["info"][
+                                "0.01_DB"
+                            ]["site_info"] = []
+                        residues = {
+                            "residues_order": residues_order,
+                            "residues_info": residues_info,
+                            "residues_separator_level": residues_separator_level,
+                        }
+                elif is_sp_class:
+                    for res in residues_order:
+                        res_info = residues_info.get(res, {}).get("info", 0)
                         res_c_count = res_info.get("c_count", 0)
-                        res_db_count = res_info.get("db_count", 0)
-                        if res_c_count == 18 and res_db_count in [0, 1]:
-                            residues_order.remove(res)
-                            del residues_info[res]
+                        res_sp_o_count = res_info.get("sp_o_count", 0)
+                        residues_separator_level = residues_info.get(
+                            "residues_separator_level", "B"
+                        )
+                        res_link = res_info.get("link", "")
+                        if (
+                            res_sp_o_count == 2
+                            or res_link == "d"
+                            or res.lower().startswith("d")
+                        ):
+                            res_db_count = res_info.get("db_count", 0)
+                            if res_c_count == 18 and res_db_count in [0, 1]:
+                                residues_order.remove(res)
+                                del residues_info[res]
+                                residues = {
+                                    "residues_order": residues_order,
+                                    "residues_info": residues_info,
+                                    "residues_separator_level": residues_separator_level,
+                                }
+                                if res_db_count == 0:
+                                    c_prefix_lst.append("dh")
+                            else:
+                                residues = {}
+                        elif (
+                            res_sp_o_count == 0 and res_c_count < 27 and len(residues_order) == 1
+                        ):
                             residues = {
                                 "residues_order": residues_order,
                                 "residues_info": residues_info,
-                                "residues_separator_level": residues_separator_level
+                                "residues_separator_level": "B",
                             }
-                            if res_db_count == 0:
-                                c_prefix_lst.append('dh')
                         else:
                             residues = {}
-
-                    else:
-                        residues = {}
         else:
             pass
 
@@ -284,19 +353,12 @@ class Encoder(object):
         c_prefix_lst = segments.get("PREFIX", [])
         c_suffix_lst = segments.get("SUFFIX", [])
         residues = parsed_info.get("residues", {})
-        c_prefix_lst, residues = self.check_sp_biopan(lmsd_classes, c_prefix_lst, residues)
-        c_has_prefix = False
-        if len(c_prefix_lst) == 1 and c_prefix_lst[0]:
-            c_prefix_seg = c_prefix_lst[0]
-            c_has_prefix = True
-        else:
-            c_prefix_seg = ""
-        c_has_suffix = False
-        if len(c_suffix_lst) == 1 and c_suffix_lst[0]:
-            c_suffix_seg = c_suffix_lst[0]
-            c_has_suffix = True
-        else:
-            c_suffix_seg = ""
+        if re.match(r"BioPAN", self.export_style, re.IGNORECASE):
+            c_prefix_lst, residues = self.check_biopan(
+                lmsd_classes, c_prefix_lst, residues
+            )
+        c_has_prefix, c_prefix_seg = self.check_head_seg(c_prefix_lst)
+        c_has_suffix, c_suffix_seg = self.check_head_seg(c_suffix_lst)
         if residues:
             sum_res_id_lv_dct = self.get_residues(residues)
             obs_c_seg_lst = segments.get("CLASS", [])

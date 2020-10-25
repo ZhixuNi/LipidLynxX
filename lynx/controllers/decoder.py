@@ -78,9 +78,10 @@ class Decoder(object):
                 re.search(r"mod", c, re.IGNORECASE),
             ]
         ):
+            residues_count = 0
             pass
         else:
-            residues_count = len(matched_info_dct.get("RESIDUE", []))
+            residues_count = len(matched_info_dct.get("RESIDUE_INFO", []))
             residues_separator_count = len(
                 matched_info_dct.get("RESIDUE_SEPARATOR", [])
             )
@@ -126,7 +127,55 @@ class Decoder(object):
             else:
                 pass
         else:
-            pass
+            prefix = matched_info_dct.get("PREFIX", "")
+            if prefix:
+                if isinstance(prefix, str) and isinstance(links, str):
+                    if re.match(r"(O|plasmanyl)[-]?$", prefix, re.IGNORECASE):
+                        matched_info_dct["LINK"] = "O-"
+                        matched_info_dct["PREFIX"] = ""
+                        if residues_count > 0:
+                            matched_info_dct["RESIDUE_INFO"] = "O-" + matched_info_dct["RESIDUE_INFO"]
+                    elif re.match(r"(P|plasmenyl)[-]?$", prefix, re.IGNORECASE):
+                        matched_info_dct["LINK"] = "P-"
+                        matched_info_dct["PREFIX"] = ""
+                        if residues_count > 0:
+                            matched_info_dct["RESIDUE_INFO"] = "P-" + matched_info_dct["RESIDUE_INFO"]
+                    elif re.match(r"((O|plasmanyl)[-]?)L?$", prefix, re.IGNORECASE):
+                        matched_info_dct["LINK"] = "O-"
+                        matched_info_dct["PREFIX"] = "L"
+                        if residues_count > 0:
+                            matched_info_dct["RESIDUE_INFO"] = "O-" + matched_info_dct["RESIDUE_INFO"]
+                    elif re.match(r"((P|plasmenyl)[-]?)L?$", prefix, re.IGNORECASE):
+                        matched_info_dct["LINK"] = "P-"
+                        matched_info_dct["PREFIX"] = "L"
+                        if residues_count > 0:
+                            matched_info_dct["RESIDUE_INFO"] = "P-" + matched_info_dct["RESIDUE_INFO"]
+                elif isinstance(prefix, list) and isinstance(links, list):
+                    std_links = []
+                    for px in prefix:
+                        if re.match(r"(O|plasmanyl)[-]?$", px, re.IGNORECASE):
+                            std_links.append("O-")
+                            if residues_count > 0:
+                                matched_info_dct["RESIDUE_INFO"][0] = "O-" + matched_info_dct["RESIDUE_INFO"][0]
+                                matched_info_dct["PREFIX"] = []
+                        elif re.match(r"(P|plasmenyl)[-]?$", px, re.IGNORECASE):
+                            std_links.append("P-")
+                            if residues_count > 0:
+                                matched_info_dct["RESIDUE_INFO"][0] = "P-" + matched_info_dct["RESIDUE_INFO"][0]
+                                matched_info_dct["PREFIX"] = []
+                        elif re.match(r"((O|plasmanyl)[-]?)L?$", px, re.IGNORECASE):
+                            std_links.append("O-")
+                            if residues_count > 0:
+                                matched_info_dct["RESIDUE_INFO"][0] = "O-" + matched_info_dct["RESIDUE_INFO"][0]
+                                matched_info_dct["PREFIX"] = ["L"]
+                        elif re.match(r"((P|plasmenyl)[-]?)L?$", px, re.IGNORECASE):
+                            std_links.append("P-")
+                            if residues_count > 0:
+                                matched_info_dct["RESIDUE_INFO"][0] = "P-" + matched_info_dct["RESIDUE_INFO"][0]
+                                matched_info_dct["PREFIX"] = ["L"]
+                    if std_links:
+                        matched_info_dct["LINK"] = std_links
+
         return matched_info_dct
 
     def check_alias(self, alias: str, alias_type: str = "RESIDUE") -> str:
@@ -182,8 +231,10 @@ class Decoder(object):
             for lv in separator_levels:
                 if res_sep == separator_levels[lv]:
                     res_sep_levels.append(lv)
-
-        lv_min = natsorted(res_sep_levels)[0]
+        if res_sep_levels:
+            lv_min = natsorted(res_sep_levels)[0]
+        else:
+            lv_min = "B"
 
         out_res_dct = {}
         out_res_lst = []
@@ -272,7 +323,7 @@ class Decoder(object):
         for r in use_c_rules:
             matched_dct = self.check_segments(lipid_name, c, r)
             sum_residues_lst = matched_dct.get("RESIDUE_INFO_SUM", [])
-            obs_residues_lst = matched_dct.get("RESIDUE", [])
+            obs_residues_lst = matched_dct.get("RESIDUE_INFO", [])
             alias_lst: list = matched_dct.get("ALIAS", [])
             if sum_residues_lst and len(sum_residues_lst) == 1 and obs_residues_lst:
                 residues_dct = self.check_residues(
