@@ -190,9 +190,11 @@ if __name__ == "__main__":
         # "DG P-34:2",
         # "P-DG 34:2",
         # "P-LPC 18:2",
-        "SM 18:2",
-        "dhCer 18:2",
-        "FaCN 18:2",
+        # "SM 18:2",
+        # "dhCer 18:2",
+        # "FaCN 18:2",
+        # "PE(O-16:0/18:2(9Z,12Z))",
+        "PE P-16:0/18:2(9Z,12Z)",
     ]
     lv = "B0"
     # test_out_rule = "COMP_DB"

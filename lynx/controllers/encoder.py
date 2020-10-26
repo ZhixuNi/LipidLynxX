@@ -67,11 +67,11 @@ class Encoder(object):
         best_id_dct = {}
         num_lv = 0
         max_str = ""
-        sum_db = 0
+        max_sum_c_count = 0
         best_input_rule = ""
         for c_info_set in candidates:
             c_info = c_info_set.get("compiled_names", {})
-            c_sum_db = c_info_set.get("sum_db", 0)
+            c_sum_c = c_info_set.get("sum_c", 0)
             c_in_rule = c_info_set.get("input_rule", 0)
             for c in c_info:
                 c_lv_lst = natsorted(list(c_info[c].keys()))
@@ -81,7 +81,7 @@ class Encoder(object):
                     best_id_dct = c_info[c]
                     max_str = c_max_str
                     num_lv = c_num_lv
-                    sum_db = c_sum_db
+                    max_sum_c_count = max(c_sum_c, max_sum_c_count)
                     best_input_rule = c_in_rule
                 else:
                     c_max_str = c_info[c].get(c_lv_lst[-1], "")
@@ -89,10 +89,17 @@ class Encoder(object):
                         best_id_dct = c_info[c]
                         max_str = c_max_str
                         num_lv = c_num_lv
-                        sum_db = c_sum_db
+                        max_sum_c_count = max(c_sum_c, max_sum_c_count)
                         best_input_rule = c_in_rule
                     else:
-                        pass
+                        if c_sum_c >= max_sum_c_count:
+                            best_id_dct = c_info[c]
+                            max_str = c_max_str
+                            num_lv = c_num_lv
+                            max_sum_c_count = c_sum_c
+                            best_input_rule = c_in_rule
+                        else:
+                            pass
 
         # add levels for B0, D0, S0 lipids
         if best_id_dct and all(
@@ -106,7 +113,7 @@ class Encoder(object):
         updated_best_id_dct = {}
         if (
             best_id_dct
-            and sum_db == 0
+            and max_sum_c_count == 0
             and all([re.match(r"^[BMS][0-5]$", lv) for lv in best_id_dct])
         ):
             for from_lv in best_id_dct:
@@ -275,12 +282,13 @@ class Encoder(object):
                 residues = {}
             else:
                 if is_gl_class or is_gp_class:
+                    residues_separator_level = residues_info.get(
+                        "residues_separator_level", "B"
+                    )
                     for res in residues_order:
                         res_info = residues_info.get(res, {}).get("info", 0)
                         res_link = res_info.get("link", "")
-                        residues_separator_level = residues_info.get(
-                            "residues_separator_level", "B"
-                        )
+
                         if res_link == "O-":
                             c_prefix_lst.append("O-")
                             residues_info[res]["info"]["link"] = ""
@@ -299,11 +307,11 @@ class Encoder(object):
                             residues_info[res]["info"]["db_info_sum"]["info"][
                                 "0.01_DB"
                             ]["site_info"] = []
-                        residues = {
-                            "residues_order": residues_order,
-                            "residues_info": residues_info,
-                            "residues_separator_level": residues_separator_level,
-                        }
+                    residues = {
+                        "residues_order": residues_order,
+                        "residues_info": residues_info,
+                        "residues_separator_level": residues_separator_level,
+                    }
                 elif is_sp_class:
                     for res in residues_order:
                         res_info = residues_info.get(res, {}).get("info", 0)
@@ -439,14 +447,14 @@ class Encoder(object):
                     if checked_seg_info:
                         comp_dct = self.compile_segments(checked_seg_info)
                         res_info = r_info.get("residues", {}).get("residues_info", {})
-                        sum_db = 0
+                        sum_c = 0
                         for res in res_info:
                             r_info = res_info[res].get("info", {})
-                            sum_db += r_info.get("c_count", 0)
+                            sum_c += r_info.get("c_count", 0)
                         export_info.append(
                             {
                                 "compiled_names": comp_dct,
-                                "sum_db": sum_db,
+                                "sum_c": sum_c,
                                 "input_rule": in_r,
                             }
                         )
