@@ -1,5 +1,5 @@
 {
-  "_DATE": 20201025,
+  "_DATE": 20201026,
   "_AUTHORS": [
     "zhixu.ni@uni-leipzig.de"
   ],
@@ -556,7 +556,7 @@
       ],
       "MAX_RESIDUES": 1,
       "CLASS": {
-        "OUTPUT": "SG",
+        "OUTPUT": "SPB",
         "INPUT": [
           "SPB",
           "[Ss]phingosine"
@@ -572,7 +572,7 @@
       ],
       "MAX_RESIDUES": 1,
       "CLASS": {
-        "OUTPUT": "SGP",
+        "OUTPUT": "SPB1P",
         "INPUT": [
           "SPBP"
         ]
@@ -605,9 +605,9 @@
         ]
       },
       "SUFFIX": {
-        "OUTPUT": "P",
+        "OUTPUT": "1P",
         "INPUT": [
-          "P"
+          "P", "1P"
         ]
       }
     },
