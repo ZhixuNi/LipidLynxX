@@ -1,16 +1,13 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2016-2020  SysMedOs_team @ AG Bioanalytik, University of Leipzig:
-# SysMedOs_team: Zhixu Ni, Georgia Angelidou, Mike Lange, Maria Fedorova
 #
-# LipidLynxX is Dual-licensed
-#   For academic and non-commercial use: GPLv2 License:
-#   For commercial use: please contact the SysMedOs team by email.
+# LipidLynxX is using GPL V3 License
 #
 # Please cite our publication in an appropriate form.
 #   LipidLynxX preprint on bioRxiv.org
 #   Zhixu Ni, Maria Fedorova.
-#   "LipidLynxX: lipid annotations converter for large scale lipidomics and epilipidomics datasets"
+#   "LipidLynxX: a data transfer hub to support integration of large scale lipidomics datasets"
 #   DOI: 10.1101/2020.04.09.033894
 #
 # For more info please contact:
@@ -20,8 +17,8 @@ from typing import Union
 
 import regex as re
 
-from lynx.utils.log import logger
 from lynx.utils.file_handler import get_json
+from lynx.utils.log import app_logger
 
 
 class InputRules(object):
@@ -29,28 +26,49 @@ class InputRules(object):
     Read input rules from json file and build corresponding regular expressions
     """
 
-    def __init__(self, rules: Union[str, dict]):
+    def __init__(self, rules: Union[str, dict], logger=app_logger):
         if isinstance(rules, dict):
             pass
         elif isinstance(rules, str):
             rules = get_json(rules)
         else:
             raise TypeError
+        self.logger = logger
         self.raw_rules = rules
         self.sources = self.raw_rules["SOURCES"]
         self.date = self.raw_rules.get("_DATE", 20200214)
         self.authors = self.raw_rules.get("_AUTHORS", ["example@uni-example.de"])
-        mods = self.raw_rules.get("MODS", {})
+        site = self.raw_rules.get("SITE", {})
+        if site:
+            self.supported_site = list(site.keys())
+        else:
+            self.supported_site = []
+        db = self.raw_rules.get("DB", {})
+        if db:
+            self.supported_db = list(db.keys())
+        else:
+            self.supported_db = []
+        sp_o = self.raw_rules.get("SP_O", {})
+        if sp_o:
+            self.supported_o = list(sp_o.keys())
+        else:
+            self.supported_o = []
+        mods = self.raw_rules.get("MOD", {})
         if mods:
             self.supported_mods = list(mods.keys())
         else:
             self.supported_mods = []
-        self.supported_residues = list(self.raw_rules["RESIDUES"].keys())
+        self.supported_residues = list(self.raw_rules["RESIDUE"].keys())
         self.supported_classes = list(self.raw_rules["LIPID_CLASSES"].keys())
         self.supported_keys = (
-            self.supported_mods + self.supported_residues + self.supported_classes
+            self.supported_site
+            + self.supported_db
+            + self.supported_o
+            + self.supported_mods
+            + self.supported_residues
+            + self.supported_classes
         )
-        self.separators = self.raw_rules["SEPARATORS"]
+        self.separators = self.raw_rules["SEPARATOR"]
         self.rules = {}
         self.is_structure_valid = self.__check__()
 
@@ -58,30 +76,32 @@ class InputRules(object):
             pass
         else:
             raise ValueError(
-                "Cannot find valid sections for key [SOURCE, RESIDUES, LIPID_CLASSES]"
+                "Cannot find valid sections for key [SOURCE, RESIDUE, LIPID_CLASSES]"
             )
         self.rules = self.build()
         self.is_validated = self.validate()
-        logger.info(
-            f"Load input rule: {self.sources}\n"
-            f"Last modified: {self.date}\n"
-            f"Authors: {self.authors}"
-        )
+
+        # self.logger.debug(
+        #     f"Load input rule: {self.sources}\n"
+        #     f"Last modified: {self.date}\n"
+        #     f"Authors: {self.authors}"
+        # )
 
     def __replace_refs__(self, rules: dict):
-        ref_rgx = re.compile(r"(\$)((\.[A-Z_]{1,99})+)(\.0)")
+        ref_rgx = re.compile(r"\{\{([A-Z_]{1,99})\.?([A-Z_]{1,99})*\}\}")
         for rule in rules:
             rule_dct = rules[rule]
             pattern = rule_dct["PATTERN"]
-            logger.debug(f"Pattern: {pattern}")
+            # self.logger.debug(f"Pattern: {pattern}")
             ref_lst = re.findall(ref_rgx, pattern)
             ref_replace_dct = {}
-            if ref_lst:
-                logger.info(f"Found Refs: {ref_lst}")
+            has_ref = bool(ref_lst)
+            while has_ref is True:
+                self.logger.debug(f"Found Refs: {ref_lst}")
                 for ref_tpl in ref_lst:
                     ref_seg_dct = {}
                     if len(ref_tpl) >= 2:
-                        ref_seg_lst = ref_tpl[1].split(".")
+                        ref_seg_lst = list(ref_tpl)
                         ref_seg_lst = [s for s in ref_seg_lst if s != "" and s != " "]
                         if ref_seg_lst:
                             ref_pattern_lst = []
@@ -91,40 +111,55 @@ class InputRules(object):
                                     if ref in rules:
                                         ref_info = rules[ref]["PATTERN"]
                                         if ref_info and isinstance(ref_info, str):
-                                            logger.info(f"Found Ref Pattern: {ref_lst}")
+                                            self.logger.debug(
+                                                f"Found Ref Pattern: {ref_lst}"
+                                            )
                                             ref_patt = (
-                                                r"\$\."
+                                                r"\{\{"
                                                 + "\\.".join(ref_seg_lst)
-                                                + r"\.0"
+                                                + r"\}\}"
                                             )
                                             ref_replace_dct[ref_patt] = ref_info
                                             break
                                     else:
                                         if ref in self.raw_rules:
                                             ref_seg_dct = self.raw_rules[ref]
-                                            ref_pattern_lst.append(r"\." + ref)
+                                            ref_pattern_lst.append(ref)
                                 else:
                                     if ref in rules:
                                         ref_info = rules[ref]["PATTERN"]
                                         if ref_info and isinstance(ref_info, str):
-                                            logger.info(f"Found Ref Pattern: {ref_lst}")
+                                            self.logger.debug(
+                                                f"Found Ref Pattern: {ref_lst}"
+                                            )
                                             ref_patt = (
-                                                r"\$\." + "\\.".join(ref_seg_lst) + ".0"
+                                                r"\{\{"
+                                                + "\\.".join(ref_seg_lst)
+                                                + r"\}\}"
                                             )
                                             ref_replace_dct[ref_patt] = ref_info
                                             break
                                     elif ref in ref_seg_dct:
-                                        ref_info = ref_seg_dct[ref]
+                                        ref_info = ref_seg_dct.get(ref)
                                         if isinstance(ref_info, str):
-                                            ref_pattern_lst.append(r"\." + ref)
+                                            ref_pattern_lst.append(ref)
                                             ref_pattern = (
-                                                r"\$" + "".join(ref_pattern_lst) + ".0"
+                                                r"\{\{"
+                                                + "\\.".join(ref_pattern_lst)
+                                                + r"\}\}"
                                             )
                                             ref_replace_dct[ref_pattern] = ref_info
-                                            logger.info(f"Found Ref Pattern: {ref_lst}")
+                                            self.logger.debug(
+                                                f"Found Ref Pattern: {ref_lst}"
+                                            )
                                             break
                                         elif isinstance(ref_info, dict):
-                                            ref_seg_dct = ref_info
+                                            ref_pattern = (
+                                                r"\{\{"
+                                                + "\\.".join(ref_seg_lst)
+                                                + r"\}\}"
+                                            )
+                                            ref_replace_dct[ref_pattern] = ref_info
                                         else:
                                             raise KeyError
                                     else:
@@ -133,21 +168,25 @@ class InputRules(object):
                             raise ValueError
                     else:
                         raise ValueError
-                logger.info(f"Replace Refs: {ref_replace_dct}")
+                self.logger.debug(f"Replace Refs: {ref_replace_dct}")
                 replace_match = False
-                for ref_replace in ref_replace_dct:
+                for ref_info_holder in ref_replace_dct:
                     replaced_pattern = re.sub(
-                        ref_replace,
-                        str(ref_replace_dct[ref_replace]),
+                        ref_info_holder,
+                        str(ref_replace_dct[ref_info_holder]),
                         rule_dct["PATTERN"],
                     )
                     rule_dct["PATTERN"] = replaced_pattern
-                    logger.info(
-                        f"Replaced pattern to {replaced_pattern} by {ref_replace}"
+                    self.logger.debug(
+                        f"Replaced pattern to {replaced_pattern} by {ref_info_holder}"
                     )
                     replace_match = True
                 if replace_match:
                     rule_dct["MATCH"] = re.compile(rule_dct["PATTERN"])
+                print(rule_dct["PATTERN"])
+                ref_lst = re.findall(ref_rgx, rule_dct["PATTERN"])
+                has_ref = bool(ref_lst)
+
         return rules
 
     def __check__(self):
@@ -250,10 +289,14 @@ class InputRules(object):
         return rules
 
     def build(self) -> dict:
-        sum_rules = self.__build__(self.supported_mods, "MODS")
-        sum_rules.update(self.__build__(self.supported_residues, "RESIDUES"))
+        sum_rules = self.__build__(self.supported_site, "SITE")
+        sum_rules.update(self.__build__(self.supported_db, "DB"))
+        sum_rules.update(self.__build__(self.supported_o, "SP_O"))
+        sum_rules.update(self.__build__(self.supported_mods, "MOD"))
+        sum_rules.update(self.__build__(self.supported_residues, "RESIDUE"))
         # sum_rules = self.__replace_refs__(sum_rules)
         sum_rules.update(self.__build__(self.supported_classes, "LIPID_CLASSES"))
+        sum_rules = self.__replace_refs__(sum_rules)
         sum_rules = self.__replace_refs__(sum_rules)
         self.rules = sum_rules
         return sum_rules
@@ -275,11 +318,11 @@ class InputRules(object):
         for c in self.supported_keys:
 
             if c in self.supported_mods:
-                temp_c_dct = self.raw_rules.get("MODS", {}).get(c, {})
-                seg_typ = "MODS"
+                temp_c_dct = self.raw_rules.get("MOD", {}).get(c, {})
+                seg_typ = "MOD"
             elif c in self.supported_residues:
-                temp_c_dct = self.raw_rules.get("RESIDUES", {}).get(c, {})
-                seg_typ = "RESIDUES"
+                temp_c_dct = self.raw_rules.get("RESIDUE", {}).get(c, {})
+                seg_typ = "RESIDUE"
             elif c in self.supported_classes:
                 temp_c_dct = self.raw_rules.get("LIPID_CLASSES", {}).get(c, {})
                 seg_typ = "LIPID_CLASSES"
@@ -294,7 +337,7 @@ class InputRules(object):
             if pattern_str and temp_c_dct:
 
                 max_res_count = self.raw_rules[seg_typ][c].get("MAX_RESIDUES", 1)
-                logger.debug(f"Validating {c} pattern: {pattern_str}")
+                # self.logger.debug(f"Validating {c} pattern: {pattern_str}")
                 c_pattern = re.compile(pattern_str)
                 test_lst = temp_c_dct.get("EXAMPLE", [])
                 test_dct = {}
@@ -302,17 +345,16 @@ class InputRules(object):
                     fit_class = False
                     class_rgx = re.compile(pattern_dct["CLASS"])
                     class_search = class_rgx.search(test_str)
-                    if class_search:
-                        logger.debug(f"{test_str} fit to class {c}")
-                    else:
-                        logger.error(f"{test_str} NOT fit to class {c}")
+                    # if class_search:
+                    #     self.logger.debug(f"{test_str} fit to class {c}")
+                    # else:
+                    #     self.logger.error(f"{test_str} NOT fit to class {c}")
                     c_match = c_pattern.match(test_str)
                     if c_match:
                         c_matched_res_dct = c_match.groupdict()
-                        print(f"Check: {test_str}")
-                        logger.debug(c_matched_res_dct)
-                        if "SUM_RESIDUES" in c_matched_res_dct:
-                            c_sum_res = c_matched_res_dct["SUM_RESIDUES"]
+                        # self.logger.debug(c_matched_res_dct)
+                        if "RESIDUE_INFO_SUM" in c_matched_res_dct:
+                            c_sum_res = c_matched_res_dct["RESIDUE_INFO_SUM"]
                             c_sum_res_lst = re.split(
                                 self.separators.get("RESIDUES_SEPARATOR", "_|/"),
                                 c_sum_res,
@@ -326,12 +368,14 @@ class InputRules(object):
                                     if res_pat.match(res):
                                         valid_lst.append(True)
                                         test_dct[f"{test_str} # {res}"] = "passed"
-                                        logger.debug(f"Check: {test_str} # {res}")
-                                        logger.debug(res_pat.match(res).groupdict())
+                                        self.logger.debug(f"Check: {test_str} # {res}")
+                                        self.logger.debug(
+                                            res_pat.match(res).groupdict()
+                                        )
                                     else:
                                         valid_lst.append(False)
                                         test_dct[f"{test_str} # {res}"] = "failed"
-                                        logger.error(f"{test_str} # {res} failed")
+                                        self.logger.error(f"{test_str} # {res} failed")
                             else:
                                 raise ValueError(
                                     f"Number of residues exceed the defined limit: "
@@ -343,8 +387,8 @@ class InputRules(object):
                     else:
                         valid_lst.append(False)
                         test_dct[test_str] = "failed"
-                        logger.error(f"{test_str} failed")
-                logger.debug(test_dct)
+                        self.logger.error(f"{test_str} failed")
+
                 valid_dct[c] = test_dct
 
         if False in valid_lst:
@@ -372,16 +416,19 @@ class OutputRules(object):
         self.authors = self.raw_rules.get("_AUTHORS", ["example@uni-example.de"])
         self.nomenclature = self.raw_rules.get("NOMENCLATURE", "LipidLynxX")
         self.supported_lmsd_classes = list(self.raw_rules["LMSD_CLASSES"].keys())
-        self.separators = self.raw_rules["SEPARATORS"]
-        self.mods = self.raw_rules.get("MODS", {})
-        self.residues = self.raw_rules.get("RESIDUES", {})
+        self.separators = self.raw_rules["SEPARATOR"]
+        self.sites = self.raw_rules.get("SITE", {})
+        self.db = self.raw_rules.get("DB", {})
+        self.sp_o = self.raw_rules.get("SP_O", {})
+        self.mods = self.raw_rules.get("MOD", {})
+        self.residues = self.raw_rules.get("RESIDUE", {})
         self.rules = self.build()
         self.is_structure_valid = self.__check__()
-        logger.info(
-            f"Load rules for nomenclature {self.nomenclature}\n"
-            f"Last modified: {self.date}\n"
-            f"Authors: {self.authors}"
-        )
+        # self.logger.debug(
+        #     f"Load rules for nomenclature {self.nomenclature}\n"
+        #     f"Last modified: {self.date}\n"
+        #     f"Authors: {self.authors}"
+        # )
 
     def __check__(self):
         is_structure_valid = False
@@ -397,9 +444,12 @@ class OutputRules(object):
     def build(self):
         rules = {
             "LMSD_CLASSES": {},
-            "RESIDUES": self.residues,
-            "MODS": self.mods,
-            "SEPARATORS": self.separators,
+            "SEPARATOR": self.separators,
+            "SITE": self.sites,
+            "DB": self.db,
+            "SP_O": self.sp_o,
+            "MOD": self.mods,
+            "RESIDUE": self.residues,
         }
         n_rules = self.raw_rules["LMSD_CLASSES"]
         for c in self.supported_lmsd_classes:

@@ -1,16 +1,13 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2016-2020  SysMedOs_team @ AG Bioanalytik, University of Leipzig:
-# SysMedOs_team: Zhixu Ni, Georgia Angelidou, Mike Lange, Maria Fedorova
 #
-# LipidLynxX is Dual-licensed
-#   For academic and non-commercial use: GPLv2 License:
-#   For commercial use: please contact the SysMedOs team by email.
+# LipidLynxX is using GPL V3 License
 #
 # Please cite our publication in an appropriate form.
 #   LipidLynxX preprint on bioRxiv.org
 #   Zhixu Ni, Maria Fedorova.
-#   "LipidLynxX: lipid annotations converter for large scale lipidomics and epilipidomics datasets"
+#   "LipidLynxX: a data transfer hub to support integration of large scale lipidomics datasets"
 #   DOI: 10.1101/2020.04.09.033894
 #
 # For more info please contact:
@@ -30,12 +27,12 @@ def lynx2sdf(abbr_lst, save_sdf):
     if isinstance(abbr_lst, str):
         try:
             if os.path.isfile(abbr_lst):
-                logger.info(f"Try to open file: {abbr_lst}")
+                logger.details(f"Try to open file: {abbr_lst}")
                 with open(abbr_lst, "r") as infile_obj:
                     abbr_lst = infile_obj.readlines()
             else:
                 logger.error(f"Can NOT __load__ input: {abbr_lst}")
-                logger.info("!! END PROCESSING !!")
+                logger.details("!! END PROCESSING !!")
                 exit()
         except Exception as e:
             logger.error(f"Can NOT __load__ input: {abbr_lst}")
@@ -47,17 +44,17 @@ def lynx2sdf(abbr_lst, save_sdf):
     info_dct = {}
 
     for abbr in abbr_lst:
-        logger.info(abbr)
+        logger.details(abbr)
         if fa_decoder.is_fa(abbr):
             smi = fa_decoder.get_smi_fa(abbr)
-            logger.info(abbr + ": " + smi)
+            logger.details(abbr + ": " + smi)
             info_dct[abbr] = smi
         elif pl_decoder.is_pl(abbr):
             smi = pl_decoder.get_smi_pl(abbr)
-            logger.info(abbr + ": " + smi)
+            logger.details(abbr + ": " + smi)
             info_dct[abbr] = smi
         else:
-            logger.info(f"Can NOT parse abbreviation: {abbr}")
+            logger.details(f"Can NOT parse abbreviation: {abbr}")
 
     sdf_writer = Chem.SDWriter(open(save_sdf, mode="w"))
 
@@ -95,4 +92,4 @@ if __name__ == "__main__":
     lynx2sdf(test_file, output_file)
     lynx2sdf(input_lst, output_file)
 
-    logger.info("FINISHED!")
+    logger.details("FINISHED!")

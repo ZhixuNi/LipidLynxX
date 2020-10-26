@@ -1,16 +1,13 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2016-2020  SysMedOs_team @ AG Bioanalytik, University of Leipzig:
-# SysMedOs_team: Zhixu Ni, Georgia Angelidou, Mike Lange, Maria Fedorova
 #
-# LipidLynxX is Dual-licensed
-#   For academic and non-commercial use: GPLv2 License:
-#   For commercial use: please contact the SysMedOs team by email.
+# LipidLynxX is using GPL V3 License
 #
 # Please cite our publication in an appropriate form.
 #   LipidLynxX preprint on bioRxiv.org
 #   Zhixu Ni, Maria Fedorova.
-#   "LipidLynxX: lipid annotations converter for large scale lipidomics and epilipidomics datasets"
+#   "LipidLynxX: a data transfer hub to support integration of large scale lipidomics datasets"
 #   DOI: 10.1101/2020.04.09.033894
 #
 # For more info please contact:
@@ -158,7 +155,7 @@ class ParserFA:
                     }
                 ]
 
-            logger.info(fa_info_dct["MOD"])
+            logger.details(fa_info_dct["MOD"])
 
             for _mod in fa_info_dct["MOD"]:
                 _mod_code = _mod["MOD"]
@@ -185,14 +182,14 @@ class ParserFA:
                         c_shift = 3
                         if c_shift * _mod_count > int(fa_info_dct["NUM_C"]) - 2:
                             c_shift = (
-                                2
-                            )  # if more C=C in chain and no bis-allylic position
-                            logger.info(
+                                2  # if more C=C in chain and no bis-allylic position
+                            )
+                            logger.details(
                                 "Too many C=C, try to remove bis-allylic positions"
                             )
                         while _counter <= _mod_count:
                             if c_mod_idx in c_idx_lst and c_mod_idx + 1 in c_idx_lst:
-                                logger.info(c_mod_idx)
+                                logger.details(c_mod_idx)
                                 c_chain_lst[c_mod_idx] = site_code
                                 c_chain_lst[c_mod_idx + 1] = site_post_code
                                 _used_idx_lst.extend([c_mod_idx, c_mod_idx + 1])
@@ -414,12 +411,12 @@ if __name__ == "__main__":
 
     for _abbr in fa_lst:
         fa = fa_decoder.decode_fa(_abbr)
-        logger.info(fa)
+        logger.details(fa)
         _smi = fa_decoder.get_smi_fa(_abbr)
-        logger.info(_abbr + " -> " + _smi)
+        logger.details(_abbr + " -> " + _smi)
         _fa_obj = fa_decoder.export(_abbr)  # type: FA
-        logger.info(asdict(_fa_obj))
-        logger.info(type(_fa_obj))
+        logger.details(asdict(_fa_obj))
+        logger.details(type(_fa_obj))
 
     pl_lst = [
         r"PC(O-16:0/18:1)",
@@ -431,9 +428,9 @@ if __name__ == "__main__":
     ]
 
     for _abbr in pl_lst:
-        logger.info(_abbr)
+        logger.details(_abbr)
         pl = pl_decoder.decode_pl(_abbr)
-        logger.info(pl)
+        logger.details(pl)
         _smi = pl_decoder.get_smi_pl(_abbr)
-        logger.info(_abbr)
-        logger.info(_smi)
+        logger.details(_abbr)
+        logger.details(_smi)

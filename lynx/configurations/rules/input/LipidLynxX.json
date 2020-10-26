@@ -1,17 +1,20 @@
 {
-  "_DATE": 20200304,
+  "_DATE": 20201025,
   "_AUTHORS": [
     "zhixu.ni@uni-leipzig.de"
   ],
   "SOURCES": [
     "LipidLynxX"
   ],
-  "SEPARATORS": {
+  "SEPARATOR": {
+    "MOD_SEPARATOR": ",",
     "RESIDUE_SEPARATOR": "_|/",
     "SPACE": "\\s",
     "COLON": ":",
     "SEMICOLON": ";",
     "COMMA": ",",
+    "BRACKET_LEFT": "\\(",
+    "BRACKET_RIGHT": "\\)",
     "RESIDUE_BRACKET_LEFT": "\\(",
     "RESIDUE_BRACKET_RIGHT": "\\)",
     "MOD_BRACKET_LEFT": "\\<",
@@ -22,117 +25,149 @@
     "SQUARE_BRACKET_RIGHT": "\\]",
     "SEPARATOR_LEVELS": {
       "B": "",
-      "D": "_",
+      "M": "_",
       "S": "/"
     }
   },
-  "MODS": {
-    "MOD_SITES": {
+  "SITE": {
+    "SITE_INFO": {
       "ORDER": [
-        "MOD_SITE",
-        "MOD_SITE_INFO"
+        "SITE",
+        "SITE_SUFFIX"
       ],
       "OPTIONAL": [
-        "MOD_SITE_INFO"
+        "SITE_SUFFIX"
       ],
-      "MOD_SITE": "(\\s?,)?([0-9]{1,2})",
-      "MOD_SITE_INFO": "[EZRS]",
+      "SITE": "(\\s?,)?([0-9]{1,2})",
+      "SITE_SUFFIX": "([EZRS])?",
       "EXAMPLES": [
-        "9,12",
-        "9Z,11E",
-        "9Z",
-        "8R",
-        "8S,12R"
+        "12",
+        "12Z"
       ]
     },
-    "MOD": {
+    "SITE_INFO_SUM": {
+      "ORDER": [
+        "SITE_BRACKET_LEFT",
+        "SITE_INFO",
+        "SITE_BRACKET_RIGHT"
+      ],
+      "REPEAT": {
+        "SITE_INFO": [1, 10]
+      },
+      "SITE_BRACKET_LEFT": "{{SEPARATOR.SITE_BRACKET_LEFT}}",
+      "SITE_INFO": "{{SITE.SITE_INFO}}",
+      "SITE_BRACKET_RIGHT": "{{SEPARATOR.SITE_BRACKET_RIGHT}}",
+      "EXAMPLES": [
+        "{9Z,12Z}"
+      ]
+    }
+  },
+  "DB": {
+    "DB_INFO_SUM": {
+      "ORDER": [
+        "DB_SITE"
+      ],
+      "DB_SITE": "{{SITE.SITE_INFO_SUM}}",
+      "EXAMPLES": [
+        "{12}",
+        "{9,12}",
+        "{9Z,12Z}"
+      ]
+    }
+  },
+  "SP_O": {
+    "SP_O_INFO_SUM": {
+      "ORDER": [
+        "SP_O_SITE"
+      ],
+      "SP_O_SITE": "{{SITE.SITE_INFO_SUM}}",
+      "EXAMPLES": [
+        "{1}",
+        "{1,3}",
+        "{1R,3R}"
+      ]
+    }
+  },
+  "MOD": {
+    "MOD_INFO": {
       "ORDER": [
         "MOD_SEPARATOR",
         "MOD_COUNT",
         "MOD_TYPE",
-        "SITE_BRACKET_LEFT",
-        "MOD_SITES",
-        "SITE_BRACKET_RIGHT"
+        "MOD_SITE"
       ],
-      "REPEAT": {
-        "MOD_SITES": [
-          0,
-          20
-        ]},
       "OPTIONAL": [
         "MOD_SEPARATOR",
         "MOD_COUNT",
-        "SITE_BRACKET_LEFT",
-        "MOD_SITES",
-        "SITE_BRACKET_RIGHT"
+        "MOD_SITE"
       ],
-      "MOD_SEPARATOR": "$.SEPARATORS.COMMA.0",
+      "MOD_SEPARATOR": "{{SEPARATOR.COMMA}}",
       "MOD_COUNT":  "[+-]?(\\s?,)?([0-9]{1,2})?",
-      "MOD_TYPE": "([a-zA-Z]*[-0-9a-zA-Z]*)",
-      "SITE_BRACKET_LEFT": "$.SEPARATORS.SITE_BRACKET_LEFT.0",
-      "MOD_SITES": "$.MODS.MOD_SITES.0",
-      "SITE_BRACKET_RIGHT": "$.SEPARATORS.SITE_BRACKET_RIGHT.0",
+      "MOD_TYPE": "([a-zA-Z]*[-0-9a-zA-Z]+)",
+      "MOD_SITE": "{{SITE.SITE_INFO_SUM}}",
       "EXAMPLES": [
         "+O",
         "OH{9}",
-        ",2OH{9R,12S}",
-        "{9E,12Z}"
+        ",2OH{9R,12S}"
       ]
     },
-    "SUM_MODS": {
+    "MOD_INFO_SUM": {
       "ORDER": [
         "MOD_BRACKET_LEFT",
-        "MOD",
+        "MOD_INFO",
         "MOD_BRACKET_RIGHT"
       ],
       "REPEAT": {
-        "MOD": [1, 10]
+        "MOD_INFO": [1, 10]
       },
-      "MOD_BRACKET_LEFT": "$.SEPARATORS.MOD_BRACKET_LEFT.0",
-      "MOD": "$.MODS.MOD.0",
-      "MOD_BRACKET_RIGHT": "$.SEPARATORS.MOD_BRACKET_RIGHT.0",
+      "MOD_BRACKET_LEFT": "{{SEPARATOR.MOD_BRACKET_LEFT}}",
+      "MOD_INFO": "{{MOD.MOD_INFO}}",
+      "MOD_BRACKET_RIGHT": "{{SEPARATOR.MOD_BRACKET_RIGHT}}",
       "EXAMPLES": [
-        "<{9E,12Z}>",
         "<2OH{9,12}>",
         "<2OH{9R,12S}>",
-        "<{9E,12Z},2OH{9R,12S}>"
+        "<2OH{9R,12S},oxo{4}>"
       ]
     }
   },
-  "RESIDUES": {
-    "RESIDUE": {
+  "RESIDUE": {
+    "RESIDUE_INFO": {
       "ORDER": [
         "RESIDUE_SEPARATOR",
         "LINK",
-        "NUM_C",
+        "C_COUNT",
         "DB_SEPARATOR",
-        "DB",
-        "O_SEPARATOR",
-        "NUM_O",
-        "SUM_MODS"
+        "DB_COUNT",
+        "DB_INFO_SUM",
+        "SP_O_SEPARATOR",
+        "SP_O_COUNT",
+        "SP_O_INFO_SUM",
+        "MOD_INFO_SUM"
       ],
       "OPTIONAL": [
         "RESIDUE_SEPARATOR",
         "LINK",
-        "DB",
-        "O_SEPARATOR",
-        "NUM_O",
-        "SUM_MODS"
+        "DB_COUNT",
+        "DB_INFO_SUM",
+        "SP_O_SEPARATOR",
+        "SP_O_COUNT",
+        "SP_O_INFO_SUM",
+        "MOD_INFO_SUM"
       ],
-      "REPEAT": {
-        "SUM_MODS": [0, 10]
-      },
-      "RESIDUE_SEPARATOR": "$.SEPARATORS.RESIDUE_SEPARATOR.0",
+      "RESIDUE_SEPARATOR": "{{SEPARATOR.RESIDUE_SEPARATOR}}",
       "LINK": "[OP]-",
-      "NUM_C": "[0-9]{1,2}",
-      "DB_SEPARATOR": "$.SEPARATORS.COLON.0",
-      "DB": "[1,2]?[0-9]",
-      "O_SEPARATOR": "$.SEPARATORS.SEMICOLON.0",
-      "NUM_O": "[1-3]?",
-      "SUM_MODS": "$.MODS.SUM_MODS.0",
+      "C_COUNT": "[0-9]{1,2}",
+      "DB_SEPARATOR": "{{SEPARATOR.COLON}}",
+      "DB_COUNT": "[1,2]?[0-9]",
+      "DB_INFO_SUM": "{{DB.DB_INFO_SUM}}",
+      "SP_O_SEPARATOR": "{{SEPARATOR.SEMICOLON}}",
+      "SP_O_COUNT": "[2-9]?OH?",
+      "SP_O_INFO_SUM": "{{SP_O.SP_O_INFO_SUM}}",
+      "MOD_INFO_SUM": "{{MOD.MOD_INFO_SUM}}",
       "EXAMPLES": [
         "18:2;1",
         "18:2",
+        "18:2{9Z,11E}<OH{12R}>",
         "9:0<oxo{9}>",
         "26:0<OH{3}>",
         "34:1;2<FA16:0>",
@@ -149,20 +184,20 @@
       "OPTIONAL": [
         "RESIDUE_SEPARATOR"
       ],
-      "RESIDUE_SEPARATOR": "$.SEPARATORS.RESIDUE_SEPARATOR.0",
+      "RESIDUE_SEPARATOR": "{{SEPARATOR.RESIDUE_SEPARATOR}}",
       "ALIAS": "[-,0-9a-zA-Z\\s]{3,}",
       "EXAMPLES": [
         "HETE",
         "/HDoTE"
       ]
     },
-    "SUM_RESIDUES": {
+    "RESIDUE_INFO_SUM": {
       "ORDER": [
-        "RESIDUE"
+        "RESIDUE_INFO"
       ],
-      "RESIDUE": "($.RESIDUES.RESIDUE.0)|($.SEPARATORS.RESIDUE_ALIAS.0)",
+      "RESIDUE_INFO": "({{RESIDUE.RESIDUE_INFO}})|({{RESIDUE.RESIDUE_ALIAS}})",
       "REPEAT": {
-        "RESIDUE": [1, 4]
+        "RESIDUE_INFO": [1, 4]
       },
       "EXAMPLES": [
         "18:2;1",
@@ -187,7 +222,7 @@
       "ORDER": [
         "PREFIX",
         "CLASS",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "OPTIONAL": [
         "PREFIX",
@@ -196,7 +231,7 @@
       "MAX_RESIDUES": 1,
       "PREFIX": "Acylcarnitine[\\s]?",
       "CLASS":  "",
-      "SUM_RESIDUES": "$.RESIDUES.SUM_RESIDUES.0",
+      "RESIDUE_INFO_SUM": "{{RESIDUE.RESIDUE_INFO_SUM}}",
       "EXAMPLES": [
         "Palmitic acid"
       ]
@@ -210,13 +245,13 @@
       ],
       "ORDER": [
         "CLASS",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "OPTIONAL": ["LIPID_CLASS_SEPARATOR"],
       "MAX_RESIDUES": 1,
       "CLASS": "FA",
-      "LIPID_CLASS_SEPARATOR": "$.SEPARATORS.SPACE.0",
-      "SUM_RESIDUES": "$.RESIDUES.SUM_RESIDUES.0",
+      "LIPID_CLASS_SEPARATOR": "{{SEPARATOR.SPACE}}",
+      "RESIDUE_INFO_SUM": "{{RESIDUE.RESIDUE_INFO_SUM}}",
       "EXAMPLES": [
         "FA18:2;1",
         "FA18:2",
@@ -237,16 +272,16 @@
         "CLASS",
         "LIPID_CLASS_SEPARATOR",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": ["LIPID_CLASS_SEPARATOR"],
       "MAX_RESIDUES": 3,
       "CLASS": "TG|DG|MG",
-      "LIPID_CLASS_SEPARATOR": "$.SEPARATORS.SPACE.0",
-      "RESIDUE_BRACKET_LEFT": "$.SEPARATORS.RESIDUE_BRACKET_LEFT.0",
-      "SUM_RESIDUES": "$.RESIDUES.SUM_RESIDUES.0",
-      "RESIDUE_BRACKET_RIGHT": "$.SEPARATORS.RESIDUE_BRACKET_RIGHT.0",
+      "LIPID_CLASS_SEPARATOR": "{{SEPARATOR.SPACE}}",
+      "RESIDUE_BRACKET_LEFT": "{{SEPARATOR.RESIDUE_BRACKET_LEFT}}",
+      "RESIDUE_INFO_SUM": "{{RESIDUE.RESIDUE_INFO_SUM}}",
+      "RESIDUE_BRACKET_RIGHT": "{{SEPARATOR.RESIDUE_BRACKET_RIGHT}}",
       "EXAMPLES": [
         "MG(16:0)",
         "MG(0:0/0:0/16:0)",
@@ -290,7 +325,7 @@
         "SUFFIX",
         "LIPID_CLASS_SEPARATOR",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -302,10 +337,10 @@
       "PREFIX": "L",
       "CLASS": "P[ACEDGSI]|PIP|PIP[2-6]",
       "SUFFIX": "tOH",
-      "LIPID_CLASS_SEPARATOR": "$.SEPARATORS.SPACE.0",
-      "RESIDUE_BRACKET_LEFT": "$.SEPARATORS.RESIDUE_BRACKET_LEFT.0",
-      "SUM_RESIDUES": "$.RESIDUES.SUM_RESIDUES.0",
-      "RESIDUE_BRACKET_RIGHT": "$.SEPARATORS.RESIDUE_BRACKET_RIGHT.0",
+      "LIPID_CLASS_SEPARATOR": "{{SEPARATOR.SPACE}}",
+      "RESIDUE_BRACKET_LEFT": "{{SEPARATOR.RESIDUE_BRACKET_LEFT}}",
+      "RESIDUE_INFO_SUM": "{{RESIDUE.RESIDUE_INFO_SUM}}",
+      "RESIDUE_BRACKET_RIGHT": "{{SEPARATOR.RESIDUE_BRACKET_RIGHT}}",
       "EXAMPLES": [
         "LPE(16:0)",
         "LPE(16:0/0:0)",
@@ -354,7 +389,7 @@
         "SUFFIX",
         "LIPID_CLASS_SEPARATOR",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -365,10 +400,10 @@
       "MAX_RESIDUES": 2,
       "PREFIX": "L",
       "CLASS": "BMP|BPA",
-      "LIPID_CLASS_SEPARATOR": "$.SEPARATORS.SPACE.0",
-      "RESIDUE_BRACKET_LEFT": "$.SEPARATORS.RESIDUE_BRACKET_LEFT.0",
-      "SUM_RESIDUES": "$.RESIDUES.SUM_RESIDUES.0",
-      "RESIDUE_BRACKET_RIGHT": "$.SEPARATORS.RESIDUE_BRACKET_RIGHT.0",
+      "LIPID_CLASS_SEPARATOR": "{{SEPARATOR.SPACE}}",
+      "RESIDUE_BRACKET_LEFT": "{{SEPARATOR.RESIDUE_BRACKET_LEFT}}",
+      "RESIDUE_INFO_SUM": "{{RESIDUE.RESIDUE_INFO_SUM}}",
+      "RESIDUE_BRACKET_RIGHT": "{{SEPARATOR.RESIDUE_BRACKET_RIGHT}}",
       "EXAMPLES": [
         "BMP(34:1)",
         "BMP(16:0_18:1)",
@@ -384,7 +419,7 @@
         "CLASS",
         "LIPID_CLASS_SEPARATOR",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -394,10 +429,10 @@
       "MAX_RESIDUES": 4,
       "PREFIX": "ML|DL",
       "CLASS": "CL",
-      "LIPID_CLASS_SEPARATOR": "$.SEPARATORS.SPACE.0",
-      "RESIDUE_BRACKET_LEFT": "$.SEPARATORS.RESIDUE_BRACKET_LEFT.0",
-      "SUM_RESIDUES": "$.RESIDUES.SUM_RESIDUES.0",
-      "RESIDUE_BRACKET_RIGHT": "$.SEPARATORS.RESIDUE_BRACKET_RIGHT.0",
+      "LIPID_CLASS_SEPARATOR": "{{SEPARATOR.SPACE}}",
+      "RESIDUE_BRACKET_LEFT": "{{SEPARATOR.RESIDUE_BRACKET_LEFT}}",
+      "RESIDUE_INFO_SUM": "{{RESIDUE.RESIDUE_INFO_SUM}}",
+      "RESIDUE_BRACKET_RIGHT": "{{SEPARATOR.RESIDUE_BRACKET_RIGHT}}",
       "EXAMPLES": [
         "CL(72:7)",
         "CL(36:3_36:4)",
@@ -417,14 +452,14 @@
       "ORDER": [
         "CLASS",
         "SUFFIX",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "OPTIONAL": ["LIPID_CLASS_SEPARATOR", "SUFFIX"],
       "MAX_RESIDUES": 1,
       "CLASS": "SPB",
       "SUFFIX": "P",
-      "LIPID_CLASS_SEPARATOR": "$.SEPARATORS.SPACE.0",
-      "SUM_RESIDUES": "$.RESIDUES.SUM_RESIDUES.0",
+      "LIPID_CLASS_SEPARATOR": "{{SEPARATOR.SPACE}}",
+      "RESIDUE_INFO_SUM": "{{RESIDUE.RESIDUE_INFO_SUM}}",
       "EXAMPLES": [
         "SPB18:2;1",
         "SPBP18:2;1",
@@ -444,22 +479,25 @@
       "ORDER": [
         "PREFIX",
         "CLASS",
+        "SUFFIX",
         "LIPID_CLASS_SEPARATOR",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
         "PREFIX",
+        "SUFFIX",
         "LIPID_CLASS_SEPARATOR"
       ],
       "MAX_RESIDUES": 2,
       "PREFIX": "[AS]?Hex[1-6]?|PE-",
-      "CLASS": "Cer[P]?|SPB|SM|GM[1-3]?",
-      "LIPID_CLASS_SEPARATOR": "$.SEPARATORS.SPACE.0",
-      "RESIDUE_BRACKET_LEFT": "$.SEPARATORS.RESIDUE_BRACKET_LEFT.0",
-      "SUM_RESIDUES": "$.RESIDUES.SUM_RESIDUES.0",
-      "RESIDUE_BRACKET_RIGHT": "$.SEPARATORS.RESIDUE_BRACKET_RIGHT.0",
+      "CLASS": "Cer|SPB|SM|GM[1-3]?",
+      "SUFFIX": "P",
+      "LIPID_CLASS_SEPARATOR": "{{SEPARATOR.SPACE}}",
+      "RESIDUE_BRACKET_LEFT": "{{SEPARATOR.RESIDUE_BRACKET_LEFT}}",
+      "RESIDUE_INFO_SUM": "{{RESIDUE.RESIDUE_INFO_SUM}}",
+      "RESIDUE_BRACKET_RIGHT": "{{SEPARATOR.RESIDUE_BRACKET_RIGHT}}",
       "EXAMPLES": [
         "PE-Cer(32:1;2)",
         "PE-Cer(16:1;2/16:0)",
@@ -499,7 +537,7 @@
         "CLASS",
         "LIPID_CLASS_SEPARATOR",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -509,10 +547,10 @@
       "MAX_RESIDUES": 2,
       "PREFIX": "ST|SI|CA|BR",
       "CLASS": "CE|SE|ST",
-      "LIPID_CLASS_SEPARATOR": "$.SEPARATORS.SPACE.0",
-      "RESIDUE_BRACKET_LEFT": "$.SEPARATORS.RESIDUE_BRACKET_LEFT.0",
-      "SUM_RESIDUES": "$.RESIDUES.SUM_RESIDUES.0",
-      "RESIDUE_BRACKET_RIGHT": "$.SEPARATORS.RESIDUE_BRACKET_RIGHT.0",
+      "LIPID_CLASS_SEPARATOR": "{{SEPARATOR.SPACE}}",
+      "RESIDUE_BRACKET_LEFT": "{{SEPARATOR.RESIDUE_BRACKET_LEFT}}",
+      "RESIDUE_INFO_SUM": "{{RESIDUE.RESIDUE_INFO_SUM}}",
+      "RESIDUE_BRACKET_RIGHT": "{{SEPARATOR.RESIDUE_BRACKET_RIGHT}}",
       "EXAMPLES": [
         "CE(18:1)",
         "SE(27:1/18:1)",
