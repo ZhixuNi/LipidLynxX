@@ -15,6 +15,7 @@
 
 import asyncio
 import json
+from multiprocessing import Manager, Pool
 import os
 import re
 from pathlib import Path
@@ -249,6 +250,12 @@ def convert_file(
         "-m",
         help="Select between different convert mode: active, dynamic, fixed",
     ),
+    worker: int = typer.Option(
+        4,
+        "--worker",
+        "-w",
+        help="Number of worker for multipeocessing",
+    ),
 ):
     """
     Convert one .csv /.tsv / .xlsx FILE containing lipid names into supported levels
@@ -312,25 +319,67 @@ def convert_file(
                 bottom_input_style = detect_style(lipid_lst[-1])
                 if top_input_style == bottom_input_style:
                     fixed_input_style = top_input_style
-            lynx_converter = Converter(
-                style=style,
-                input_rules=default_input_rules,
-                output_rules=default_output_rules,
-                logger=cli_logger,
-                input_style=fixed_input_style,
-            )
-            converted_obj = lynx_converter.convert_list(
-                input_list=lipid_lst, level=level
-            )
-            converted_names = converted_obj.output
-            filled_converted_names = []
-            for c_n in converted_names:
-                if c_n:
-                    filled_converted_names.append(c_n)
+
+            if isinstance(worker, int):
+                if worker > len(lipid_lst):
+                    worker = len(lipid_lst)
                 else:
-                    filled_converted_names.append("UNPROCESSED")
-            converted_dct = {f"Converted_{lipid_col_name}": filled_converted_names}
-            converted_dct.update(raw_table_dct)
+                    worker = min(len(lipid_lst), worker)
+                    if worker > 8:
+                        worker = 8
+            if worker > 1:
+                # queue = Manager().Queue()
+                pool = Pool(processes=worker)
+                result_lst = []
+                params = {
+                    "style": style,
+                    "input_rules": default_input_rules,
+                    "output_rules": default_output_rules,
+                    "logger": cli_logger,
+                    "input_style": fixed_input_style,
+                    "level": level
+                }
+                for input_name in lipid_lst:
+                    r = pool.apply_async(task_worker, args=(input_name, params))
+                    result_lst.append(r)
+                pool.close()
+                pool.join()
+
+                final_r_dct = {}
+                for rl in result_lst:
+                    if isinstance(rl, dict):
+                        rx = rl
+                    else:
+                        try:
+                            rx = rl.get()
+                        except (KeyError, SystemError, ValueError):
+                            cli_logger.warning(f'Cannot load results from multiprocessing...{rx}')
+                    final_r_dct.update(rx)
+                final_r_lst = []
+                for n_lipid in lipid_lst:
+                    final_r_lst.append(final_r_dct.get(n_lipid, "UNPROCESSED"))
+                converted_dct = {f"Converted_{lipid_col_name}": final_r_lst}
+                converted_dct.update(raw_table_dct)
+            else:
+                lynx_converter = Converter(
+                    style=style,
+                    input_rules=default_input_rules,
+                    output_rules=default_output_rules,
+                    logger=cli_logger,
+                    input_style=fixed_input_style,
+                )
+                converted_obj = lynx_converter.convert_list(
+                    input_list=lipid_lst, level=level
+                )
+                converted_names = converted_obj.output
+                filled_converted_names = []
+                for c_n in converted_names:
+                    if c_n:
+                        filled_converted_names.append(c_n)
+                    else:
+                        filled_converted_names.append("UNPROCESSED")
+                converted_dct = {f"Converted_{lipid_col_name}": filled_converted_names}
+                converted_dct.update(raw_table_dct)
         else:
             if mode.lower() == "fixed":
                 converted_dct = {}
@@ -480,6 +529,27 @@ def convert(
             fg=typer.colors.YELLOW,
         )
         typer.echo(convert.__doc__)
+
+
+def task_worker(input_name: str, params: dict, ) -> dict:
+
+    # task = queue.get(True)
+
+    lynx_converter = Converter(
+        style=params.get("style"),
+        input_rules=params.get("input_rules"),
+        output_rules=params.get("output_rules"),
+        logger=params.get("logger"),
+        input_style=params.get("input_style"),
+    )
+    converted_obj = lynx_converter.convert_str(input_str=input_name, level=params.get("level"))
+    converted_name = converted_obj.output
+    if converted_name:
+        filled_converted_name = converted_name
+    else:
+        filled_converted_name = "UNPROCESSED"
+    print(f"PID:{os.getpid()} input_name# {input_name}", '->', filled_converted_name)
+    return {input_name: filled_converted_name}
 
 
 @cli_app.command(name="equalize")
