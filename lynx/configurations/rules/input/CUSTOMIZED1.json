@@ -4,11 +4,11 @@
     "zhixu.ni@uni-leipzig.de"
   ],
   "SOURCES": [
-    "ShothandNotation"
+    "COSTOMIZED#1"
   ],
   "SEPARATOR": {
-    "MOD_SEPARATOR": ",",
-    "RESIDUE_SEPARATOR": "_|/",
+    "MOD_SEPARATOR": "_",
+    "RESIDUE_SEPARATOR": "[/]",
     "SPACE": "\\s",
     "COLON": ":",
     "SEMICOLON": ";",
@@ -38,7 +38,7 @@
       "OPTIONAL": [
         "SITE_SUFFIX"
       ],
-      "SITE": "(\\s?,)?([0-9]{1,2})",
+      "SITE": "(\\s?_)?([0-9]{1,2})",
       "SITE_SUFFIX": "([EZRS])?",
       "EXAMPLES": [
         "12",
@@ -47,16 +47,12 @@
     },
     "SITE_INFO_SUM": {
       "ORDER": [
-        "SITE_BRACKET_LEFT",
-        "SITE_INFO",
-        "SITE_BRACKET_RIGHT"
+        "SITE_INFO"
       ],
       "REPEAT": {
         "SITE_INFO": [1, 10]
       },
-      "SITE_BRACKET_LEFT": "{{SEPARATOR.SITE_BRACKET_LEFT}}",
       "SITE_INFO": "{{SITE.SITE_INFO}}",
-      "SITE_BRACKET_RIGHT": "{{SEPARATOR.SITE_BRACKET_RIGHT}}",
       "EXAMPLES": [
         "(9Z,12Z)"
       ]
@@ -67,7 +63,7 @@
       "ORDER": [
         "DB_SITE"
       ],
-      "DB_SITE": "{{SITE.SITE_INFO_SUM}}",
+      "DB_SITE": "\\s{{SITE.SITE_INFO_SUM}}",
       "EXAMPLES": [
         "(1)",
         "(9,12)",
@@ -96,11 +92,13 @@
         "MOD_TYPE"
       ],
       "OPTIONAL": [
-        "MOD_SEPARATOR"
+        "MOD_SEPARATOR",
+        "MOD_SITE",
+        "MOD_COUNT"
       ],
       "MOD_SEPARATOR": "{{SEPARATOR.COMMA}}",
-      "MOD_SITE": "{{SITE.SITE_INFO}}",
       "MOD_TYPE": "([a-zA-Z]*[-0-9a-zA-Z]+)",
+      "MOD_SITE": "{{SITE.SITE_INFO_SUM}}",
       "EXAMPLES": [
         "+O",
         "OH",
@@ -153,7 +151,7 @@
         "MOD_INFO_SUM": [0, 10]
       },
       "RESIDUE_SEPARATOR": "{{SEPARATOR.RESIDUE_SEPARATOR}}",
-      "LINK": "[OP]-",
+      "LINK": "[OP]-|C|[mdt]|h",
       "C_COUNT": "[0-9]{1,2}",
       "DB_SEPARATOR": "{{SEPARATOR.COLON}}",
       "DB_COUNT": "[1,2]?[0-9]",

@@ -62,17 +62,20 @@ class Encoder(object):
         c_max_str = candidate.get(c_lv_lst[-1], "")
         return c_max_str
 
-    @staticmethod
-    def get_best_id_series(candidates: List[dict]) -> [dict, str]:
+    def get_best_id_series(self, candidates: List[dict]) -> [dict, str]:
         best_id_dct = {}
         num_lv = 0
         max_str = ""
         max_sum_c_count = 0
         best_input_rule = ""
+        is_modified = False
         for c_info_set in candidates:
             c_info = c_info_set.get("compiled_names", {})
             c_sum_c = c_info_set.get("sum_c", 0)
             c_in_rule = c_info_set.get("input_rule", 0)
+            c_is_modified = c_info_set.get("is_modified", False)
+            if c_is_modified:
+                is_modified = True
             for c in c_info:
                 c_lv_lst = natsorted(list(c_info[c].keys()))
                 c_num_lv = len(c_lv_lst)
@@ -100,7 +103,8 @@ class Encoder(object):
                             best_input_rule = c_in_rule
                         else:
                             pass
-
+        if re.match(r"BioPAN", self.export_style, re.IGNORECASE) and is_modified:
+            return {}, {}
         # add levels for B0, D0, S0 lipids
         if best_id_dct and all(
             [re.match(r"^[BMS]0(.[12])?$", lv) for lv in best_id_dct]
@@ -253,6 +257,7 @@ class Encoder(object):
         is_sp_class = False
         is_gl_class = False
         is_gp_class = False
+        is_modified = False
         for c in lmsd_classes:
             if c.upper().startswith("GL"):
                 is_gl_class = True
@@ -267,19 +272,26 @@ class Encoder(object):
         if is_gl_class or is_gp_class or is_sp_class:
             residues_order = residues.get("residues_order", [])
             residues_info = residues.get("residues_info", {})
-            is_modified = False
-            for res in residues_order:
-                mod_level = (
-                    residues_info.get(res, {})
-                    .get("info", 0)
-                    .get("mod_info_sum", {})
-                    .get("level", 0)
-                )
-                if float(mod_level) > 0:
-                    is_modified = True
+            # is_modified = False
+            # for res in residues_order:
+            #     mod_level = (
+            #         residues_info.get(res, {})
+            #         .get("info", 0)
+            #         .get("mod_info_sum", {})
+            #         .get("level", 0)
+            #     )
+            #     mod_info = (
+            #         residues_info.get(res, {})
+            #         .get("info", 0)
+            #         .get("mod_info_sum", {})
+            #         .get("info", {})
+            #     )
+            #     if float(mod_level) > 0 or mod_info:
+            #         is_modified = True
 
             if is_modified:
-                residues = {}
+                # residues = {}
+                pass
             else:
                 if is_gl_class or is_gp_class:
                     residues_separator_level = residues_info.get(
@@ -340,7 +352,9 @@ class Encoder(object):
                             else:
                                 residues = {}
                         elif (
-                            res_sp_o_count == 0 and res_c_count < 27 and len(residues_order) == 1
+                            res_sp_o_count == 0
+                            and res_c_count < 27
+                            and len(residues_order) == 1
                         ):
                             residues = {
                                 "residues_order": residues_order,
@@ -350,9 +364,29 @@ class Encoder(object):
                         else:
                             residues = {}
         else:
+            # residues_order = residues.get("residues_order", [])
+            # residues_info = residues.get("residues_info", {})
+            # is_modified = False
+            # for res in residues_order:
+            #     mod_level = (
+            #         residues_info.get(res, {})
+            #         .get("info", 0)
+            #         .get("mod_info_sum", {})
+            #         .get("level", 0)
+            #     )
+            #     mod_info = (
+            #         residues_info.get(res, {})
+            #         .get("info", 0)
+            #         .get("mod_info_sum", {})
+            #         .get("info", {})
+            #     )
+            #     if float(mod_level) > 0 or mod_info:
+            #         is_modified = True
+            #
+            # if is_modified:
+            #     residues = {}
             pass
-
-        return c_prefix_lst, residues
+        return c_prefix_lst, residues, is_modified
 
     def check_segments(self, parsed_info: dict):
         segments_dct = {}
@@ -362,7 +396,7 @@ class Encoder(object):
         c_suffix_lst = segments.get("SUFFIX", [])
         residues = parsed_info.get("residues", {})
         if re.match(r"BioPAN", self.export_style, re.IGNORECASE):
-            c_prefix_lst, residues = self.check_biopan(
+            c_prefix_lst, residues, is_modified = self.check_biopan(
                 lmsd_classes, c_prefix_lst, residues
             )
         c_has_prefix, c_prefix_seg = self.check_head_seg(c_prefix_lst)
@@ -448,14 +482,21 @@ class Encoder(object):
                         comp_dct = self.compile_segments(checked_seg_info)
                         res_info = r_info.get("residues", {}).get("residues_info", {})
                         sum_c = 0
+                        is_modified = False
                         for res in res_info:
                             r_info = res_info[res].get("info", {})
                             sum_c += r_info.get("c_count", 0)
+                            mod_info_sum = r_info.get("mod_info_sum", {})
+                            mod_level = mod_info_sum.get("level", 0)
+                            mod_info = mod_info_sum.get("info", {})
+                            if float(mod_level) > 0 or mod_info:
+                                is_modified = True
                         export_info.append(
                             {
                                 "compiled_names": comp_dct,
                                 "sum_c": sum_c,
                                 "input_rule": in_r,
+                                "is_modified": is_modified,
                             }
                         )
                     else:

@@ -60,7 +60,8 @@ class Formatter(object):
                 site_lst.append(site_seg)
                 site_info_lst.append(site_seg)
             else:
-                self.logger.warning(f"Can NOT decode site: {site_seg} in {info}")
+                if info:
+                    self.logger.debug(f"Can NOT decode site: {site_seg} in {info}")
         chk_site_info_lst = [
             si for si in site_info_lst if re.match(r"^\d{1,2}[EZRS]$", si)
         ]
@@ -271,7 +272,7 @@ class Formatter(object):
             )
         else:
             if 0 < len(mod_site_lst) < mod_type_count:
-                self.logger.warning(
+                self.logger.debug(
                     f"mod_site_lst: {mod_site_lst} | formatted_mod_type_lst: {formatted_mod_type_lst}"
                 )
                 formatted_mod_lst = []

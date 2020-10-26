@@ -101,12 +101,11 @@
       ],
       "OPTIONAL": [
         "MOD_SEPARATOR",
-        "MOD_SITE",
-        "MOD_COUNT"
+        "MOD_SITE"
       ],
       "MOD_SEPARATOR": "{{SEPARATOR.COMMA}}",
       "MOD_TYPE": "([a-zA-Z]*[-0-9a-zA-Z]+)",
-      "MOD_SITE": "{{SITE.SITE_INFO_SUM}}",
+      "MOD_SITE": "{{SITE.SITE_INFO}}",
       "EXAMPLES": [
         "+O",
         "OH",
@@ -159,7 +158,7 @@
         "MOD_INFO_SUM": [0, 10]
       },
       "RESIDUE_SEPARATOR": "{{SEPARATOR.RESIDUE_SEPARATOR}}",
-      "LINK": "[OP]-",
+      "LINK": "[OP]-?|C|[mdt]|h",
       "C_COUNT": "[0-9]{1,2}",
       "DB_SEPARATOR": "{{SEPARATOR.COLON}}",
       "DB_COUNT": "[1,2]?[0-9]",
