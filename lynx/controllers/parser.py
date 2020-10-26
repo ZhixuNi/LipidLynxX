@@ -70,12 +70,12 @@ def detect_style(lipid_name: str) -> str:
 
 
 if __name__ == "__main__":
-    # ls = (
-    #     "SM(18:1{4E};2OH{1R,3S}<2OH{8S,18R},oxo{10}>/18:2{8E,11E}<2OH{7S,18R},oxo{12}>)"
-    # )
     ls = (
-        "SM 16:0"
+        "SM(18:1{4E};2OH{1R,3S}<2OH{8S,18R},oxo{10}>/18:2{8E,11E}<2OH{7S,18R},oxo{12}>)"
     )
+    # ls = (
+    #     "SM(18:0;2OH{1R,3S}/18:2{9Z,12Z})"
+    # )
     exp = parse_lipid(ls)
     print(exp)
 
