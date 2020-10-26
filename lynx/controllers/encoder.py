@@ -67,13 +67,17 @@ class Encoder(object):
         num_lv = 0
         max_str = ""
         max_sum_c_count = 0
+        max_sum_sp_o_count = 0
         best_input_rule = ""
         is_modified = False
         for c_info_set in candidates:
             c_info = c_info_set.get("compiled_names", {})
             c_sum_c = c_info_set.get("sum_c", 0)
+            c_sum_sp_o = c_info_set.get("sp_o_count", 0)
             c_in_rule = c_info_set.get("input_rule", 0)
             c_is_modified = c_info_set.get("is_modified", False)
+            lmsd_classes = c_info_set.get("lmsd_classes", False)
+            update_best_rule = False
             if c_is_modified:
                 is_modified = True
             for c in c_info:
@@ -85,7 +89,8 @@ class Encoder(object):
                     max_str = c_max_str
                     num_lv = c_num_lv
                     max_sum_c_count = max(c_sum_c, max_sum_c_count)
-                    best_input_rule = c_in_rule
+                    max_sum_sp_o_count = max(c_sum_sp_o, max_sum_sp_o_count)
+                    update_best_rule = True
                 else:
                     c_max_str = c_info[c].get(c_lv_lst[-1], "")
                     if len(c_max_str) > len(max_str):
@@ -93,18 +98,36 @@ class Encoder(object):
                         max_str = c_max_str
                         num_lv = c_num_lv
                         max_sum_c_count = max(c_sum_c, max_sum_c_count)
-                        best_input_rule = c_in_rule
+                        max_sum_sp_o_count = max(c_sum_sp_o, max_sum_sp_o_count)
+                        update_best_rule = True
                     else:
                         if c_sum_c >= max_sum_c_count:
                             best_id_dct = c_info[c]
                             max_str = c_max_str
                             num_lv = c_num_lv
                             max_sum_c_count = c_sum_c
-                            best_input_rule = c_in_rule
+                            max_sum_sp_o_count = c_sum_sp_o
+                            update_best_rule = True
                         else:
                             pass
-        if re.match(r"BioPAN", self.export_style, re.IGNORECASE) and is_modified:
-            return {}, {}
+                        if c_sum_sp_o >= max_sum_sp_o_count:
+                            max_sum_sp_o_count = c_sum_sp_o
+                        else:
+                            pass
+            if re.match(r"BioPAN", self.export_style, re.IGNORECASE):
+                if is_modified:
+                    return {}, {}
+            else:
+                is_sp_class = False
+                for lmsd in lmsd_classes:
+                    if re.match(r'^SP.*$', lmsd, re.IGNORECASE):
+                        is_sp_class = True
+                if is_sp_class and max_sum_sp_o_count > 0:
+                    update_best_rule = True
+
+            if update_best_rule:
+                best_input_rule = c_in_rule
+
         # add levels for B0, D0, S0 lipids
         if best_id_dct and all(
             [re.match(r"^[BMS]0(.[12])?$", lv) for lv in best_id_dct]
@@ -391,7 +414,7 @@ class Encoder(object):
     def check_segments(self, parsed_info: dict):
         segments_dct = {}
         lmsd_classes = parsed_info.get("lmsd_classes", [])
-        segments = parsed_info["segments"]
+        segments = parsed_info.get("segments", {})
         c_prefix_lst = segments.get("PREFIX", [])
         c_suffix_lst = segments.get("SUFFIX", [])
         residues = parsed_info.get("residues", {})
@@ -482,11 +505,13 @@ class Encoder(object):
                         comp_dct = self.compile_segments(checked_seg_info)
                         res_info = r_info.get("residues", {}).get("residues_info", {})
                         sum_c = 0
+                        sum_sp_o = 0
                         is_modified = False
                         for res in res_info:
-                            r_info = res_info[res].get("info", {})
-                            sum_c += r_info.get("c_count", 0)
-                            mod_info_sum = r_info.get("mod_info_sum", {})
+                            r_info_dct = res_info[res].get("info", {})
+                            sum_c += r_info_dct.get("c_count", 0)
+                            sum_sp_o += r_info_dct.get("sp_o_count", 0)
+                            mod_info_sum = r_info_dct.get("mod_info_sum", {})
                             mod_level = mod_info_sum.get("level", 0)
                             mod_info = mod_info_sum.get("info", {})
                             if float(mod_level) > 0 or mod_info:
@@ -495,8 +520,11 @@ class Encoder(object):
                             {
                                 "compiled_names": comp_dct,
                                 "sum_c": sum_c,
+                                "sp_o_count": sum_sp_o,
                                 "input_rule": in_r,
                                 "is_modified": is_modified,
+                                "segments": r_info.get("segments", {}),
+                                "lmsd_classes": r_info.get("lmsd_classes", {}),
                             }
                         )
                     else:

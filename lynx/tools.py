@@ -575,4 +575,5 @@ def link_lipid(
 
 if __name__ == "__main__":
     cli_app()
-    # python cli_lynx.py convert-file test/test_input/test_biopan_lite.csv --column 0 --output test/test_output/test_biopan_lite.xlsx --mode fixed --style BioPAN
+    # python cli_lynx.py convert-file test/test_input/test_biopan_lite.csv --column 0 --output test/test_output/test_biopan_lite.csv --style BioPAN
+    # python cli_lynx.py convert-file test/test_input/test_biopan_demo.csv --column 0 --output test/test_output/test_biopan_demo.csv --style BioPAN --mode fixed
