@@ -307,11 +307,12 @@ class Decoder(object):
         self, lipid_name: str, c: str, lynx_rule_idx: str = "LipidLynxX.json#LipidLynxX"
     ) -> dict:
         c_lmsd_classes = self.rules[c].get("LMSD_CLASSES", None)
-        c_max_res = self.rules[c].get("MAX_RESIDUES", 1)
+
         res_sep = self.rules[c].get("RESIDUES_SEPARATOR", None)  # type: str
         sep_levels = self.rules[c].get("SEPARATOR_LEVELS", {})  # type: dict
         # c_rules = self.rules[c].get("MATCH", {})
         c_rules = self.rules[c].get("MATCH", {})
+
         matched_info_dct = {}
         for lr in c_rules:
             if re.search(r"Lynx", lr, re.IGNORECASE):
@@ -325,6 +326,7 @@ class Decoder(object):
             sum_residues_lst = matched_dct.get("RESIDUE_INFO_SUM", [])
             obs_residues_lst = matched_dct.get("RESIDUE_INFO", [])
             alias_lst: list = matched_dct.get("ALIAS", [])
+            c_max_res = c_rules[r].get("MAX_RESIDUES", 1)
             if sum_residues_lst and len(sum_residues_lst) == 1 and obs_residues_lst:
                 residues_dct = self.check_residues(
                     r,
