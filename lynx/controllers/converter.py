@@ -200,7 +200,12 @@ if __name__ == "__main__":
         # "Cer1P 24:1",
         # "SM(18:0;2OH{1R,3S}/18:2{9Z,12Z})",
         # "PLPC",
-        "Sphinganine",
+        # "SPB 18:0",
+        # "SPB1P 18:0",
+        # "Cer(18:0;2OH{1R,3S}<2OH{8S,18R},oxo{10}>/18:2{9Z,12Z})",
+        # "PS 18:1(9Z)_18:2(9Z,11E)(10OH)",
+        "DG(O-34:2)",
+        # "TG 18:1(9Z)/16:0/18:2(9Z,11E)(10OH)",
     ]
     lv = "B0"
     # test_out_rule = "COMP_DB"

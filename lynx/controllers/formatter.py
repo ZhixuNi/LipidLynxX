@@ -113,7 +113,7 @@ class Formatter(object):
                         else:
                             o_lv = 0.0
                 elif re.match(r"^\d{0,2}O\d{0,2}$", o_str):
-                    o_lv = 2
+                    o_lv = 0
         info_sum_o_count = 0
         if len(o_info_sum_lst) == 1:
             info_sum = o_info_sum_lst[0]
@@ -204,22 +204,22 @@ class Formatter(object):
         formatted_mod_lst = []
         raw_mod_type_lst = info.get("MOD_TYPE", [])
         unique_raw_mod_type_lst = raw_mod_type_lst
-        # unique_raw_mod_type_lst = list(set(raw_mod_type_lst))
         mod_type_lst = []
-        if unique_raw_mod_type_lst and len(unique_raw_mod_type_lst) > 1:
-            if unique_raw_mod_type_lst[0] not in ["DB", ""]:
-                mod_type_lst.append(unique_raw_mod_type_lst[0])
-                for idx in range(1, len(mod_type_lst) + 1):
-                    if unique_raw_mod_type_lst[idx] not in ["DB", ""]:
-                        mod_type_lst.append(unique_raw_mod_type_lst[idx])
-            else:
-                mod_type_lst = unique_raw_mod_type_lst
+        if raw_mod_type_lst:
+            unique_raw_mod_type_lst = list(set(raw_mod_type_lst))
+            for raw_mod in raw_mod_type_lst:
+                if re.match(r".*(DB|[EZ]).*", raw_mod, re.IGNORECASE):
+                    pass
+                else:
+                    if raw_mod:
+                        mod_type_lst.append(raw_mod)
         else:
             mod_type_lst = unique_raw_mod_type_lst
         mod_count_lst = info.get("MOD_COUNT", [])
         mod_site_seg_sum_lst = info.get("MOD_SITE", [""])
         mod_site_lst = []
         mod_site_info_lst = []
+        mod_site_info_dct = {}
         for mod_site_seg in mod_site_seg_sum_lst:
             mod_site_info_dct = self.format_site_info(mod_site_seg)
             mod_site_lst.append(mod_site_info_dct.get("site", []))
@@ -294,21 +294,22 @@ class Formatter(object):
                     f"mod_site_lst: {mod_site_lst} | formatted_mod_type_lst: {formatted_mod_type_lst}"
                 )
                 formatted_mod_lst = []
-            # elif 0 < mod_type_count < len(mod_site_lst):
-            #     if list(set(formatted_mod_type_lst)) == ["DB"]:
-            #         formatted_mod_type_lst = ["DB"] * len(mod_site_lst)
-            #         if not mod_site_info_lst:
-            #             mod_site_info_lst = [""] * len(mod_site_lst)
-            #         else:
-            #             mod_site_info_lst = mod_site_info_lst + [""] * (
-            #                 len(mod_site_lst) - len(mod_site_lst)
-            #             )
-            #         formatted_mod_lst = zip(
-            #             mod_count_lst,
-            #             formatted_mod_type_lst,
-            #             mod_site_lst,
-            #             mod_site_info_lst,
-            #         )
+            elif 0 < mod_type_count < len(mod_site_lst):
+                mod_site_lst = mod_site_info_dct.get("site", [])
+                mod_site_info_lst = mod_site_info_dct.get("site_info", [])
+                if mod_site_lst and not mod_site_info_lst:
+                    mod_site_info_lst = [""] * len(mod_site_lst)
+                if (
+                    len(mod_count_lst) == len(formatted_mod_type_lst)
+                    and len(mod_count_lst) == len(mod_site_lst)
+                    and len(mod_count_lst) == len(mod_site_info_lst)
+                ):
+                    formatted_mod_lst = zip(
+                        mod_count_lst,
+                        formatted_mod_type_lst,
+                        mod_site_lst,
+                        mod_site_info_lst,
+                    )
             else:
                 formatted_mod_lst = []
 
@@ -390,6 +391,8 @@ class Formatter(object):
             max_mod_level = 0
         # mod_info_dct["MOD_LEVEL"] = max_mod_level
 
+        if max_mod_level == 0 and mod_type_lst:
+            max_mod_level = 1
         return {"level": max_mod_level, "info": mod_info_dct}
 
     def format_residue(self, info: dict) -> dict:

@@ -570,7 +570,7 @@
       "CLASS": {
         "OUTPUT": "SPBP",
         "INPUT": [
-          "SPBP"
+          "SPBP", "SPB1P"
         ]
       }
     },

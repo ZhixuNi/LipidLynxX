@@ -21,70 +21,70 @@
   "LIPID_CLASSES": {
     "FA01": {
       "FA2:0": [
-        "^ethanoic\\s*acid",
-        "^acetic\\s*acid"
+        "ethanoic\\s*acid",
+        "acetic\\s*acid"
       ],
       "FA3:0": [
-        "^propanoic\\s*acid"
+        "propanoic\\s*acid"
       ],
       "FA4:0": [
-        "^butanoic\\s*acid",
-        "^butyric\\s*acid"
+        "butanoic\\s*acid",
+        "butyric\\s*acid"
       ],
       "FA5:0": [
-        "^pentanoic\\s*acid",
-        "^valeric\\s*acid"
+        "pentanoic\\s*acid",
+        "valeric\\s*acid"
       ],
       "FA9:0<{2E},OH{4},oxo{@1}>": [
-        "^4-[Hh]ydroxy\\s*nonenal",
-        "^(4-)?hne",
-        "^(4-)?HNE"
+        "4-[Hh]ydroxy\\s*nonenal",
+        "(4-)?hne",
+        "(4-)?HNE"
       ],
       "FA16:0": [
-        "^PA\\s*$",
+        "PA\\s*",
         "hexadecanoic\\s*acid",
         "palmitic\\s*acid"
       ],
       "FA16:1": [
-        "^[Pp]almitoleic\\s*acid"
+        "[Pp]almitoleic\\s*acid"
       ],
       "FA18:0": [
-        "^SA\\s*$",
-        "^bassinic\\s*acid",
-        "^cetylacetic\\s*acid",
-        "^lactaric\\s*acid",
-        "^octadecanoic\\s*acid",
-        "^stearic\\s*acid",
-        "^stearophanic\\s*acid",
-        "^talgic\\s*acid"
+        "SA\\s*",
+        "bassinic\\s*acid",
+        "cetylacetic\\s*acid",
+        "lactaric\\s*acid",
+        "octadecanoic\\s*acid",
+        "stearic\\s*acid",
+        "stearophanic\\s*acid",
+        "talgic\\s*acid"
       ],
       "FA18:1{9Z}": [
-        "^OA\\s*$",
-        "^elaic\\s*acid",
-        "^elaidoic\\s*acid",
-        "^octadecenoic\\s*acid",
-        "^oleic\\s*acid",
-        "^octadecylenic\\s*acid",
-        "^rapinic\\s*acid"
+        "OA\\s*",
+        "elaic\\s*acid",
+        "elaidoic\\s*acid",
+        "octadecenoic\\s*acid",
+        "oleic\\s*acid",
+        "octadecylenic\\s*acid",
+        "rapinic\\s*acid"
       ],
       "FA18:2{9Z,12Z}": [
-        "^LA\\s*$",
-        "^octadecadienoic\\s*acid",
-        "^linoleic\\s*acid",
-        "^telfairic\\s*acid"
+        "LA\\s*",
+        "octadecadienoic\\s*acid",
+        "linoleic\\s*acid",
+        "telfairic\\s*acid"
       ],
       "FA20:4{5Z,8Z,11Z,14Z}": [
         "(\\d\\d?([eEzZrRsS]|[iI]so),?){0,4}\\s*-?\\s*AA",
         "(\\d\\d?([eEzZrRsS]|[iI]so),?){0,4}\\s*-?\\s*ARA",
-        "^Arachidonate",
-        "^eicosatetraenoic\\s*acid",
-        "^icosatetraenoic\\s*acid",
-        "^Eicosatetraenoic acid"
+        "Arachidonate",
+        "eicosatetraenoic\\s*acid",
+        "icosatetraenoic\\s*acid",
+        "Eicosatetraenoic acid"
       ],
       "FA22:6{4Z,7Z,10Z,13Z,16Z,19Z}": [
-        "^DHA\\s*$",
-        "^Cervonic\\s*acid",
-        "^Docosahexaenoic\\s*acid"
+        "DHA\\s*",
+        "Cervonic\\s*acid",
+        "Docosahexaenoic\\s*acid"
       ],
       "FA17:3<OH>": [
         "(\\d\\d?([eEzZrRsS]|[iI]so),?){0,1}\\s*-?\\s*HH(T[rR])?E"
@@ -602,22 +602,29 @@
     },
     "SP01": {
       "SPB18:0;O2": [
-        "[Ss]phinganine",
+        "([Dd][Hd])?SPB(\\s*-?\\s*1\\s*-?\\s*)?\\s+18:0\\s*([,;:\\-]\\s*(2O|O2))?",
+        "[Ss]phinganine\\s*",
         "[Dd]ihydro\\s*[Ss]phingosine",
         "[Oo]ctadeca\\s*[Ss]phinganine"
       ],
       "SPB18:1;O2": [
-        "[Ss]phingosine",
+        "SPB(\\s*-?\\s*1\\s*-?\\s*)?\\s+18:1\\s*([,;:\\-]\\s*(2O|O2))?",
+        "[Ss]phingosine\\s*",
+        "[Ss]phingenine\\s*",
         "(4\\s*-\\s*trans\\s*-\\s*)?[Ss]phingenine",
         "[Oo]ctadeca\\s*[Ss]phingenine"
       ],
       "SPBP18:0;O2": [
-        "[Ss]phinganine(\\s*-\\s*1)?\\s*-\\s*[pP](hosphate)?",
-        "[Dd]ihydro\\s*[Ss]phingosine(\\s*-\\s*1)?\\s*-\\s*[pP](hosphate)?",
+        "([Dd][Hd])?SPB(\\s*-?\\s*1\\s*-?\\s*)?P\\s+18:0\\s*([,;:\\-]\\s*(2O|O2))?",
+        "[Ss]phinganine(\\s*-?\\s*1)?\\s*-?\\s*[pP](hosphate)?",
+        "[Dd]ihydro\\s*[Ss]phingosine(\\s*-?\\s*1)?\\s*-?\\s*[pP](hosphate)?",
+        "[Dd]ihydro\\s*[Ss]phingenine(\\s*-?\\s*1)?\\s*-?\\s*[pP](hosphate)?",
         "[Oo]ctadeca\\s*[Ss]phinganine(\\s*-\\s*1)?\\s*-\\s*[pP](hosphate)?"
       ],
       "SPBP18:1;O2": [
-        "[Ss]phingosine(\\s*-\\s*1)?\\s*-\\s*[pP](hosphate)?",
+        "SPB(\\s*-?\\s*1\\s*-?\\s*)?P\\s+18:1\\s*([,;:\\-]\\s*(2O|O2))?",
+        "[Ss]phingosine(\\s*-?\\s*1)?\\s*-?\\s*[pP](hosphate)?",
+        "[Ss]phingenine(\\s*-?\\s*1)?\\s*-?\\s*[pP](hosphate)?",
         "(4\\s*-\\s*trans\\s*-\\s*)?Sphingenine(\\s*-\\s*1)?\\s*-\\s*[pP](hosphate)?",
         "[Oo]ctadeca\\s*[Ss]phingenine(\\s*-\\s*1)?\\s*-\\s*[pP](hosphate)?"
       ]

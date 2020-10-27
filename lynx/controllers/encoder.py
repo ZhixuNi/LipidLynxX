@@ -295,26 +295,25 @@ class Encoder(object):
         if is_gl_class or is_gp_class or is_sp_class:
             residues_order = residues.get("residues_order", [])
             residues_info = residues.get("residues_info", {})
-            # is_modified = False
-            # for res in residues_order:
-            #     mod_level = (
-            #         residues_info.get(res, {})
-            #         .get("info", 0)
-            #         .get("mod_info_sum", {})
-            #         .get("level", 0)
-            #     )
-            #     mod_info = (
-            #         residues_info.get(res, {})
-            #         .get("info", 0)
-            #         .get("mod_info_sum", {})
-            #         .get("info", {})
-            #     )
-            #     if float(mod_level) > 0 or mod_info:
-            #         is_modified = True
+            for res in residues_order:
+                mod_level = (
+                    residues_info.get(res, {})
+                    .get("info", 0)
+                    .get("mod_info_sum", {})
+                    .get("level", 0)
+                )
+                mod_info = (
+                    residues_info.get(res, {})
+                    .get("info", 0)
+                    .get("mod_info_sum", {})
+                    .get("info", {})
+                )
+                if float(mod_level) > 0 or mod_info:
+                    is_modified = True
 
             if is_modified:
-                # residues = {}
-                pass
+                if len(residues_order) > 1:
+                    residues = {}
             else:
                 if is_gl_class or is_gp_class:
                     residues_separator_level = residues_info.get(
@@ -363,8 +362,9 @@ class Encoder(object):
                         ):
                             res_db_count = res_info.get("db_count", 0)
                             if res_c_count == 18 and res_db_count in [0, 1]:
-                                residues_order.remove(res)
-                                del residues_info[res]
+                                if len(residues_order) == 2:
+                                    residues_order.remove(res)
+                                    del residues_info[res]
                                 residues = {
                                     "residues_order": residues_order,
                                     "residues_info": residues_info,

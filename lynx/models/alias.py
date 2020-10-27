@@ -43,6 +43,10 @@ class Alias(object):
                         pass
                     else:
                         alias += "\\s*$"
+                    if alias.startswith("^"):
+                        pass
+                    else:
+                        alias = "^\\s*" + alias
                     if re.match(r"[-_\dA-Z]{2,}", alias):  # if alias all uppercase
                         alias_abbr_info[re.compile(alias)] = abbr
                     else:

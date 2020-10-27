@@ -278,7 +278,7 @@ class InputRules(object):
                 rules[c] = {
                     "GROUPS": seg_lst,
                     "PATTERN": pattern_str,
-                    "MATCH": re.compile(pattern_str),
+                    # "MATCH": re.compile(pattern_str),
                     "CLASS": temp_c_dct.get("CLASS", c),
                     "LMSD_CLASSES": temp_c_dct.get("LMSD_CLASSES", [c]),
                     "MAX_RESIDUES": temp_c_dct.get("MAX_RESIDUES", 1),
@@ -298,7 +298,22 @@ class InputRules(object):
         sum_rules.update(self.__build__(self.supported_classes, "LIPID_CLASSES"))
         sum_rules = self.__replace_refs__(sum_rules)
         sum_rules = self.__replace_refs__(sum_rules)
-        self.rules = sum_rules
+        compiled_rules = {}
+        for rule in sum_rules:
+            rule_info = sum_rules[rule]
+            pattern_str = rule_info.get("PATTERN", "")
+            if pattern_str:
+                if pattern_str.startswith("^"):
+                    pass
+                else:
+                    pattern_str = '^\\s*' + pattern_str
+                if pattern_str.endswith("$"):
+                    pass
+                else:
+                    pattern_str + '\\s*$'
+                rule_info["MATCH"] = re.compile(pattern_str)
+                compiled_rules[rule] = rule_info
+        self.rules = compiled_rules
         return sum_rules
 
     def validate(self) -> bool:
