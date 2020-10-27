@@ -199,7 +199,8 @@ if __name__ == "__main__":
         # "PS 18:1(9Z)/18:2(9Z,11E)(10OH)",
         # "Cer1P 24:1",
         # "SM(18:0;2OH{1R,3S}/18:2{9Z,12Z})",
-        "PLPC",
+        # "PLPC",
+        "Sphinganine",
     ]
     lv = "B0"
     # test_out_rule = "COMP_DB"

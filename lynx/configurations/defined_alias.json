@@ -608,7 +608,7 @@
       ],
       "SPB18:1;O2": [
         "[Ss]phingosine",
-        "(4\\s*-\\s*trans\\s*-\\s*)?Sphingenine",
+        "(4\\s*-\\s*trans\\s*-\\s*)?[Ss]phingenine",
         "[Oo]ctadeca\\s*[Ss]phingenine"
       ],
       "SPBP18:0;O2": [

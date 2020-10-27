@@ -141,10 +141,10 @@ SM d18:0/20:4 5Z_8Z_10E_14Z,dhSM 20:4,124,30
 "Cer(18:0;2OH{1R,3S}<2OH{8S,18R},oxo{10}>/18:2{8E,11E}<2OH{7S,18R},oxo{12}>)",UNPROCESSED,140,14
 Cer1P 24:1,Cer1P 24:1,141,13
 CL 66:3,CL 66:3,142,12
-Sphingosine-1-phosphate,SPB1P 18:1,143,11
-Sphinganine,SPB 18:0,144,10
-Sphingenine,SPB 18:1,145,9
-Sphingosine,SPB 18:1,146,8
+Sphingosine-1-phosphate,SPBP,143,11
+Sphinganine,dhSPB,144,10
+Sphingenine,SPB,145,9
+Sphingosine,SPB,146,8
 Oleic Acid,FA 18:1,147,7
 linoleicacid,FA 18:2,148,6
 DHA,FA 22:6,149,5

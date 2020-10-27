@@ -80,6 +80,7 @@ class Formatter(object):
         o_site_lst = []
         o_site_info_lst = []
         o_info_lst = info.get("SP_O_COUNT", [])
+        o_info_sum_lst = info.get("SP_O_INFO_SUM", [])
         if o_info_lst:
             o_str = str(o_info_lst[0]).strip(" ").upper()
             if o_str:
@@ -113,6 +114,23 @@ class Formatter(object):
                             o_lv = 0.0
                 elif re.match(r"^\d{0,2}O\d{0,2}$", o_str):
                     o_lv = 2
+        info_sum_o_count = 0
+        if len(o_info_sum_lst) == 1:
+            info_sum = o_info_sum_lst[0]
+            if isinstance(info_sum, str) and len(info_sum) < 4:
+                info_sum_o_count_str = info_sum.strip(";")
+                info_sum_o_count_str = info_sum_o_count_str.strip("OH")
+                info_sum_o_count_str = info_sum_o_count_str.strip("O")
+                try:
+                    info_sum_o_count += int(info_sum_o_count_str)
+                except ValueError:
+                    pass
+        if 0 < info_sum_o_count < 3 and o_count in [0, 1]:
+            o_count = info_sum_o_count
+            o_lv = 0
+            o_site_lst = []
+            o_site_info_lst = []
+
         if o_lv > 0:
             sp_o_cv = "OH"
         else:
