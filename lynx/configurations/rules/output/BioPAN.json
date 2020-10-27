@@ -1,5 +1,5 @@
 {
-  "_DATE": 20201026,
+  "_DATE": 20201027,
   "_AUTHORS": [
     "zhixu.ni@uni-leipzig.de"
   ],
@@ -549,10 +549,8 @@
     },
     "SP01": {
       "ORDER": [
-        "CLASS",
-        "SUFFIX",
-        "RESIDUE_SEPARATOR",
-        "RESIDUE_INFO_SUM"
+        "PREFIX",
+        "CLASS"
       ],
       "MAX_RESIDUES": 1,
       "CLASS": {
@@ -565,16 +563,14 @@
     },
     "SP0105": {
       "ORDER": [
-        "CLASS",
-        "SUFFIX",
-        "RESIDUE_SEPARATOR",
-        "RESIDUE_INFO_SUM"
+        "PREFIX",
+        "CLASS"
       ],
       "MAX_RESIDUES": 1,
       "CLASS": {
-        "OUTPUT": "SPB1P",
+        "OUTPUT": "SPBP",
         "INPUT": [
-          "SPBP"
+          "SPBP", "SPB1P"
         ]
       }
     },

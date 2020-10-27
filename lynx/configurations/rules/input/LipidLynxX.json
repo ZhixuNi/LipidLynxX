@@ -161,7 +161,7 @@
       "DB_COUNT": "[1,2]?[0-9]",
       "DB_INFO_SUM": "{{DB.DB_INFO_SUM}}",
       "SP_O_SEPARATOR": "{{SEPARATOR.SEMICOLON}}",
-      "SP_O_COUNT": "[2-9]?OH?",
+      "SP_O_COUNT": "([2-9]?OH)|(O[2-9]?)",
       "SP_O_INFO_SUM": "{{SP_O.SP_O_INFO_SUM}}",
       "MOD_INFO_SUM": "{{MOD.MOD_INFO_SUM}}",
       "EXAMPLES": [
@@ -451,22 +451,36 @@
       ],
       "ORDER": [
         "CLASS",
-        "SUFFIX",
         "RESIDUE_INFO_SUM"
       ],
       "OPTIONAL": ["LIPID_CLASS_SEPARATOR", "SUFFIX"],
       "MAX_RESIDUES": 1,
       "CLASS": "SPB",
-      "SUFFIX": "P",
       "LIPID_CLASS_SEPARATOR": "{{SEPARATOR.SPACE}}",
       "RESIDUE_INFO_SUM": "{{RESIDUE.RESIDUE_INFO_SUM}}",
       "EXAMPLES": [
         "SPB18:2;1",
-        "SPBP18:2;1",
         "SPB9:0<oxo{9}>",
         "SPB18:1<+14>",
         "SPB18:1<+O>",
         "SPB18:1<+O,-2H>"
+      ]
+    },
+    "SPBP": {
+      "LMSD_CLASSES": [
+        "SP0105"
+      ],
+      "ORDER": [
+        "CLASS",
+        "RESIDUE_INFO_SUM"
+      ],
+      "OPTIONAL": ["LIPID_CLASS_SEPARATOR"],
+      "MAX_RESIDUES": 1,
+      "CLASS": "SPB[1-3]?P",
+      "LIPID_CLASS_SEPARATOR": "{{SEPARATOR.SPACE}}",
+      "RESIDUE_INFO_SUM": "{{RESIDUE.RESIDUE_INFO_SUM}}",
+      "EXAMPLES": [
+        "SPBP18:2;1"
       ]
     },
     "SP": {

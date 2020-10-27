@@ -42,6 +42,7 @@ class Decoder(object):
     def check_segments(self, lipid_name: str, rule_class: str, rule: str):
         c = rule_class
         matched_info_dct = {}
+        max_residues = 1
         is_this_class = False
         c_search_rgx = self.rules[c].get("SEARCH", None)
         if c_search_rgx.search(lipid_name):
@@ -62,6 +63,7 @@ class Decoder(object):
             if rule:
                 if rule in c_match_rgx_dct:
                     m_pattern = c_match_rgx_dct[rule]["MATCH"]
+                    max_residues = c_match_rgx_dct[rule].get("MAX_RESIDUES", 1)
                     # m_groups = c_match_rgx_dct[rule]["GROUPS"]  # type: list
                     m_match = m_pattern.match(lipid_name)
                     if m_match:
@@ -134,48 +136,75 @@ class Decoder(object):
                         matched_info_dct["LINK"] = "O-"
                         matched_info_dct["PREFIX"] = ""
                         if residues_count > 0:
-                            matched_info_dct["RESIDUE_INFO"] = "O-" + matched_info_dct["RESIDUE_INFO"]
+                            matched_info_dct["RESIDUE_INFO"] = (
+                                "O-" + matched_info_dct["RESIDUE_INFO"]
+                            )
                     elif re.match(r"(P|plasmenyl)[-]?$", prefix, re.IGNORECASE):
                         matched_info_dct["LINK"] = "P-"
                         matched_info_dct["PREFIX"] = ""
                         if residues_count > 0:
-                            matched_info_dct["RESIDUE_INFO"] = "P-" + matched_info_dct["RESIDUE_INFO"]
+                            matched_info_dct["RESIDUE_INFO"] = (
+                                "P-" + matched_info_dct["RESIDUE_INFO"]
+                            )
                     elif re.match(r"((O|plasmanyl)[-]?)L?$", prefix, re.IGNORECASE):
                         matched_info_dct["LINK"] = "O-"
                         matched_info_dct["PREFIX"] = "L"
                         if residues_count > 0:
-                            matched_info_dct["RESIDUE_INFO"] = "O-" + matched_info_dct["RESIDUE_INFO"]
+                            matched_info_dct["RESIDUE_INFO"] = (
+                                "O-" + matched_info_dct["RESIDUE_INFO"]
+                            )
                     elif re.match(r"((P|plasmenyl)[-]?)L?$", prefix, re.IGNORECASE):
                         matched_info_dct["LINK"] = "P-"
                         matched_info_dct["PREFIX"] = "L"
                         if residues_count > 0:
-                            matched_info_dct["RESIDUE_INFO"] = "P-" + matched_info_dct["RESIDUE_INFO"]
+                            matched_info_dct["RESIDUE_INFO"] = (
+                                "P-" + matched_info_dct["RESIDUE_INFO"]
+                            )
                 elif isinstance(prefix, list) and isinstance(links, list):
                     std_links = []
                     for px in prefix:
                         if re.match(r"(O|plasmanyl)[-]?$", px, re.IGNORECASE):
                             std_links.append("O-")
                             if residues_count > 0:
-                                matched_info_dct["RESIDUE_INFO"][0] = "O-" + matched_info_dct["RESIDUE_INFO"][0]
+                                matched_info_dct["RESIDUE_INFO"][0] = (
+                                    "O-" + matched_info_dct["RESIDUE_INFO"][0]
+                                )
                                 matched_info_dct["PREFIX"] = []
                         elif re.match(r"(P|plasmenyl)[-]?$", px, re.IGNORECASE):
                             std_links.append("P-")
                             if residues_count > 0:
-                                matched_info_dct["RESIDUE_INFO"][0] = "P-" + matched_info_dct["RESIDUE_INFO"][0]
+                                matched_info_dct["RESIDUE_INFO"][0] = (
+                                    "P-" + matched_info_dct["RESIDUE_INFO"][0]
+                                )
                                 matched_info_dct["PREFIX"] = []
                         elif re.match(r"((O|plasmanyl)[-]?)L?$", px, re.IGNORECASE):
                             std_links.append("O-")
                             if residues_count > 0:
-                                matched_info_dct["RESIDUE_INFO"][0] = "O-" + matched_info_dct["RESIDUE_INFO"][0]
+                                matched_info_dct["RESIDUE_INFO"][0] = (
+                                    "O-" + matched_info_dct["RESIDUE_INFO"][0]
+                                )
                                 matched_info_dct["PREFIX"] = ["L"]
                         elif re.match(r"((P|plasmenyl)[-]?)L?$", px, re.IGNORECASE):
                             std_links.append("P-")
                             if residues_count > 0:
-                                matched_info_dct["RESIDUE_INFO"][0] = "P-" + matched_info_dct["RESIDUE_INFO"][0]
+                                matched_info_dct["RESIDUE_INFO"][0] = (
+                                    "P-" + matched_info_dct["RESIDUE_INFO"][0]
+                                )
                                 matched_info_dct["PREFIX"] = ["L"]
                     if std_links:
                         matched_info_dct["LINK"] = std_links
 
+        # Check parsed lenth
+        rebuild_str_lst = []
+        if matched_info_dct:
+            for k in matched_info_dct:
+                if re.match(r".*((CLASS)|(FIX)|(SUM)|(COUNT)|(SEPARATOR)|(BRACKET)).*", k, re.IGNORECASE):
+                    ks = matched_info_dct[k]
+                    if ks:
+                        rebuild_str_lst.extend(ks)
+            rebuild_str = ''.join(rebuild_str_lst)
+            if len(rebuild_str) + 4 < len(lipid_name) and re.match(r".*[_|/].*", lipid_name, re.IGNORECASE):  # if more than 4 char not parsed, reject matching
+                matched_info_dct = {}
         return matched_info_dct
 
     def check_alias(self, alias: str, alias_type: str = "RESIDUE") -> str:
@@ -392,36 +421,57 @@ class Decoder(object):
         """
 
         extracted_info_dct = {}
-        obs_alias_lst = []
+        force_alias_check = False
+        if len(lipid_name) < 16 and re.match(r"^([DHSA])|(P[DLO]).*", lipid_name):
+            force_alias_check = True
 
         for c in self.rules:
-            matched_info_dct = {}
-            alias_matched_info_dct = {}
             if lipid_name:
                 matched_info_dct = self.extract_by_class_rule(lipid_name, c)
-                def_alias = self.check_alias(lipid_name, "LIPID")
-                if def_alias:
-                    obs_alias_lst.append(def_alias)
-                    alias_matched_info_dct = self.extract_by_class_rule(def_alias, c)
-                if alias_matched_info_dct:
+                is_c_count_lst = False
+                r_empty_key_lst = []
+                for r in matched_info_dct:
+                    r_info = matched_info_dct.get(r, {})
+                    c_count_lst = r_info.get("segments", {}).get("C_COUNT", [])
+                    if c_count_lst:
+                        is_c_count_lst = True
+                    else:
+                        r_empty_key_lst.append(r)
+                if r_empty_key_lst:
+                    for r_k in r_empty_key_lst:
+                        del matched_info_dct[r_k]
+                if is_c_count_lst and matched_info_dct:
                     extracted_info_dct[c] = matched_info_dct
             else:
                 self.logger.warning(
                     f"No lipid name is given. Please submit a lipid name."
                 )
 
-            if matched_info_dct and not alias_matched_info_dct:
-                extracted_info_dct[c] = matched_info_dct
-            elif not matched_info_dct and alias_matched_info_dct:
-                extracted_info_dct[c] = alias_matched_info_dct
-            elif matched_info_dct and alias_matched_info_dct:
-                extracted_info_dct[c] = alias_matched_info_dct
-            else:
-                pass
+        obs_alias_lst = []
+        if force_alias_check or not extracted_info_dct:
 
-        if not extracted_info_dct:
-            self.logger.error(f"Failed to decode Lipid: {lipid_name}")
-        obs_alias_lst = list(set(obs_alias_lst))
+            def_alias = self.check_alias(lipid_name, "LIPID")
+            if def_alias:
+                obs_alias_lst.append(def_alias)
+                for cx in self.rules:
+                    alias_matched_info_dct = self.extract_by_class_rule(def_alias, cx)
+                    is_x_c_count_lst = False
+                    rx_empty_key_lst = []
+                    for rx in alias_matched_info_dct:
+                        rx_info = alias_matched_info_dct.get(rx, {})
+                        alias_c_count_lst = rx_info.get("segments", {}).get(
+                            "C_COUNT", []
+                        )
+                        if alias_c_count_lst:
+                            is_x_c_count_lst = True
+                        else:
+                            rx_empty_key_lst.append(rx)
+                    if rx_empty_key_lst:
+                        for rx_k in rx_empty_key_lst:
+                            del alias_matched_info_dct[rx_k]
+                    if is_x_c_count_lst and alias_matched_info_dct:
+                        extracted_info_dct[cx] = alias_matched_info_dct
+            obs_alias_lst = list(set(obs_alias_lst))
         if obs_alias_lst:
             self.logger.debug(f"Using alias: {lipid_name} -> {obs_alias_lst}")
 
