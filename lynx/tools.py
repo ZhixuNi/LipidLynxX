@@ -251,7 +251,7 @@ def convert_file(
         help="Select between different convert mode: active, dynamic, fixed",
     ),
     worker: int = typer.Option(
-        4,
+        1,
         "--worker",
         "-w",
         help="Number of worker for multipeocessing",

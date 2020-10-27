@@ -392,36 +392,54 @@ class Decoder(object):
         """
 
         extracted_info_dct = {}
-        obs_alias_lst = []
 
         for c in self.rules:
-            matched_info_dct = {}
-            alias_matched_info_dct = {}
             if lipid_name:
                 matched_info_dct = self.extract_by_class_rule(lipid_name, c)
-                def_alias = self.check_alias(lipid_name, "LIPID")
-                if def_alias:
-                    obs_alias_lst.append(def_alias)
-                    alias_matched_info_dct = self.extract_by_class_rule(def_alias, c)
-                if alias_matched_info_dct:
+                is_c_count_lst = False
+                r_empty_key_lst = []
+                for r in matched_info_dct:
+                    r_info = matched_info_dct.get(r, {})
+                    c_count_lst = r_info.get("segments", {}).get("C_COUNT", [])
+                    if c_count_lst:
+                        is_c_count_lst = True
+                    else:
+                        r_empty_key_lst.append(r)
+                if r_empty_key_lst:
+                    for r_k in r_empty_key_lst:
+                        del matched_info_dct[r_k]
+                if is_c_count_lst and matched_info_dct:
                     extracted_info_dct[c] = matched_info_dct
             else:
                 self.logger.warning(
                     f"No lipid name is given. Please submit a lipid name."
                 )
 
-            if matched_info_dct and not alias_matched_info_dct:
-                extracted_info_dct[c] = matched_info_dct
-            elif not matched_info_dct and alias_matched_info_dct:
-                extracted_info_dct[c] = alias_matched_info_dct
-            elif matched_info_dct and alias_matched_info_dct:
-                extracted_info_dct[c] = alias_matched_info_dct
-            else:
-                pass
-
+        obs_alias_lst = []
         if not extracted_info_dct:
-            self.logger.error(f"Failed to decode Lipid: {lipid_name}")
-        obs_alias_lst = list(set(obs_alias_lst))
+
+            def_alias = self.check_alias(lipid_name, "LIPID")
+            if def_alias:
+                obs_alias_lst.append(def_alias)
+                for cx in self.rules:
+                    alias_matched_info_dct = self.extract_by_class_rule(def_alias, cx)
+                    is_x_c_count_lst = False
+                    rx_empty_key_lst = []
+                    for rx in alias_matched_info_dct:
+                        rx_info = alias_matched_info_dct.get(rx, {})
+                        alias_c_count_lst = rx_info.get("segments", {}).get("C_COUNT", [])
+                        if alias_c_count_lst:
+                            is_x_c_count_lst = True
+                        else:
+                            rx_empty_key_lst.append(rx)
+                    if rx_empty_key_lst:
+                        for rx_k in rx_empty_key_lst:
+                            del alias_matched_info_dct[rx_k]
+                    if is_x_c_count_lst and alias_matched_info_dct:
+                        extracted_info_dct[cx] = alias_matched_info_dct
+            else:
+                self.logger.error(f"Failed to decode Lipid: {lipid_name}")
+            obs_alias_lst = list(set(obs_alias_lst))
         if obs_alias_lst:
             self.logger.debug(f"Using alias: {lipid_name} -> {obs_alias_lst}")
 
