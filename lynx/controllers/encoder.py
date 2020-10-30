@@ -339,11 +339,11 @@ class Encoder(object):
                             c_prefix_lst.append("O-")
                             residues_info[res]["info"]["link"] = ""
                         elif res_link == "P-":
-                            c_prefix_lst.append("O-")
+                            c_prefix_lst.append("P-")
                             residues_info[res]["info"]["link"] = ""
-                            residues_info[res]["info"]["db_count"] = (
-                                1 + residues_info[res]["info"]["db_count"]
-                            )
+                            # residues_info[res]["info"]["db_count"] = (
+                            #     1 + residues_info[res]["info"]["db_count"]
+                            # )
                             residues_info[res]["info"]["db_info_sum"]["info"][
                                 "0.01_DB"
                             ]["count"] = residues_info[res]["info"]["db_count"]
