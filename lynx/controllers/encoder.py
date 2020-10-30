@@ -64,6 +64,7 @@ class Encoder(object):
 
     def get_best_id_series(self, candidates: List[dict]) -> [dict, str]:
         best_id_dct = {}
+        best_id_score_dct = {}
         num_lv = 0
         max_str = ""
         max_sum_c_count = 0
@@ -77,43 +78,55 @@ class Encoder(object):
             c_in_rule = c_info_set.get("input_rule", 0)
             c_is_modified = c_info_set.get("is_modified", False)
             lmsd_classes = c_info_set.get("lmsd_classes", False)
-            update_best_rule = False
+            best_rule_score = 0
             if c_is_modified:
                 is_modified = True
+            c_info_max_c_lv = ""
+            c_info_max_c = ""
+            for c_lv in c_info:
+                ci_lv_lst = natsorted(list(c_info[c_lv].keys()))
+                if len(c_info[c_lv].get(ci_lv_lst[-1], "")) >= len(c_info_max_c_lv) and len(c_lv) >= len(c_info_max_c):
+                    c_info_max_c_lv = c_lv
+                    c_info_max_c = c_lv
+            if c_info_max_c:
+                c_info = {c_info_max_c: c_info[c_info_max_c]}
             for c in c_info:
                 c_lv_lst = natsorted(list(c_info[c].keys()))
                 c_num_lv = len(c_lv_lst)
                 c_max_str = c_info[c].get(c_lv_lst[-1], "")
                 if c_num_lv > num_lv:
-                    best_id_dct = c_info[c]
                     max_str = c_max_str
                     num_lv = c_num_lv
                     max_sum_c_count = max(c_sum_c, max_sum_c_count)
                     max_sum_sp_o_count = max(c_sum_sp_o, max_sum_sp_o_count)
-                    update_best_rule = True
+                    best_rule_score = 5
                 else:
                     c_max_str = c_info[c].get(c_lv_lst[-1], "")
                     if len(c_max_str) > len(max_str):
-                        best_id_dct = c_info[c]
                         max_str = c_max_str
                         num_lv = c_num_lv
                         max_sum_c_count = max(c_sum_c, max_sum_c_count)
                         max_sum_sp_o_count = max(c_sum_sp_o, max_sum_sp_o_count)
-                        update_best_rule = True
+                        best_rule_score = 4
                     else:
-                        if c_sum_c >= max_sum_c_count:
-                            best_id_dct = c_info[c]
+                        if c_sum_c >= max_sum_c_count and c_sum_sp_o >= max_sum_sp_o_count:
                             max_str = c_max_str
                             num_lv = c_num_lv
                             max_sum_c_count = c_sum_c
                             max_sum_sp_o_count = c_sum_sp_o
-                            update_best_rule = True
-                        else:
-                            pass
-                        if c_sum_sp_o >= max_sum_sp_o_count:
+                            best_rule_score = 3
+                        elif c_sum_c >= max_sum_c_count and c_sum_sp_o < max_sum_sp_o_count:
+                            max_str = c_max_str
+                            num_lv = c_num_lv
+                            max_sum_c_count = c_sum_c
+                            best_rule_score = 2
+                        elif c_sum_c < max_sum_c_count and c_sum_sp_o >= max_sum_sp_o_count:
                             max_sum_sp_o_count = c_sum_sp_o
+                            best_rule_score = 1
                         else:
                             pass
+                if best_rule_score:
+                    best_id_score_dct[best_rule_score] = c_info[c]
             if re.match(r"BioPAN", self.export_style, re.IGNORECASE):
                 if is_modified:
                     return {}, {}
@@ -123,11 +136,10 @@ class Encoder(object):
                     if re.match(r'^SP.*$', lmsd, re.IGNORECASE):
                         is_sp_class = True
                 if is_sp_class and max_sum_sp_o_count > 0:
-                    update_best_rule = True
-
-            if update_best_rule:
-                best_input_rule = c_in_rule
-
+                    best_rule_score = 1
+        if best_id_score_dct:
+            max_best_score = max(list(best_id_score_dct.keys()))
+            best_id_dct = best_id_score_dct.get(max_best_score, {})
         # add levels for B0, D0, S0 lipids
         if best_id_dct and all(
             [re.match(r"^[BMS]0(.[12])?$", lv) for lv in best_id_dct]
