@@ -85,7 +85,9 @@ class Encoder(object):
             c_info_max_c = ""
             for c_lv in c_info:
                 ci_lv_lst = natsorted(list(c_info[c_lv].keys()))
-                if len(c_info[c_lv].get(ci_lv_lst[-1], "")) >= len(c_info_max_c_lv) and len(c_lv) >= len(c_info_max_c):
+                if len(c_info[c_lv].get(ci_lv_lst[-1], "")) >= len(
+                    c_info_max_c_lv
+                ) and len(c_lv) >= len(c_info_max_c):
                     c_info_max_c_lv = c_lv
                     c_info_max_c = c_lv
             if c_info_max_c:
@@ -94,7 +96,7 @@ class Encoder(object):
                 c_lv_lst = natsorted(list(c_info[c].keys()))
                 c_num_lv = len(c_lv_lst)
                 c_max_str = c_info[c].get(c_lv_lst[-1], "")
-                if c_num_lv > num_lv:
+                if c_num_lv >= num_lv:
                     max_str = c_max_str
                     num_lv = c_num_lv
                     max_sum_c_count = max(c_sum_c, max_sum_c_count)
@@ -109,34 +111,44 @@ class Encoder(object):
                         max_sum_sp_o_count = max(c_sum_sp_o, max_sum_sp_o_count)
                         best_rule_score = 4
                     else:
-                        if c_sum_c >= max_sum_c_count and c_sum_sp_o >= max_sum_sp_o_count:
+                        if (
+                            c_sum_c >= max_sum_c_count
+                            and c_sum_sp_o >= max_sum_sp_o_count
+                        ):
                             max_str = c_max_str
                             num_lv = c_num_lv
                             max_sum_c_count = c_sum_c
                             max_sum_sp_o_count = c_sum_sp_o
                             best_rule_score = 3
-                        elif c_sum_c >= max_sum_c_count and c_sum_sp_o < max_sum_sp_o_count:
+                        elif (
+                            c_sum_c >= max_sum_c_count
+                            and c_sum_sp_o < max_sum_sp_o_count
+                        ):
                             max_str = c_max_str
                             num_lv = c_num_lv
                             max_sum_c_count = c_sum_c
                             best_rule_score = 2
-                        elif c_sum_c < max_sum_c_count and c_sum_sp_o >= max_sum_sp_o_count:
+                        elif (
+                            c_sum_c < max_sum_c_count
+                            and c_sum_sp_o >= max_sum_sp_o_count
+                        ):
                             max_sum_sp_o_count = c_sum_sp_o
                             best_rule_score = 1
                         else:
                             pass
+
+                if re.match(r"BioPAN", self.export_style, re.IGNORECASE):
+                    if is_modified:
+                        return {}, {}
+                else:
+                    is_sp_class = False
+                    for lmsd in lmsd_classes:
+                        if re.match(r"^SP.*$", lmsd, re.IGNORECASE):
+                            is_sp_class = True
+                    if is_sp_class and max_sum_sp_o_count > 0:
+                        best_rule_score += 1
                 if best_rule_score:
                     best_id_score_dct[best_rule_score] = c_info[c]
-            if re.match(r"BioPAN", self.export_style, re.IGNORECASE):
-                if is_modified:
-                    return {}, {}
-            else:
-                is_sp_class = False
-                for lmsd in lmsd_classes:
-                    if re.match(r'^SP.*$', lmsd, re.IGNORECASE):
-                        is_sp_class = True
-                if is_sp_class and max_sum_sp_o_count > 0:
-                    best_rule_score = 1
         if best_id_score_dct:
             max_best_score = max(list(best_id_score_dct.keys()))
             best_id_dct = best_id_score_dct.get(max_best_score, {})

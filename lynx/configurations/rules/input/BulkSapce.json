@@ -4,11 +4,11 @@
     "zhixu.ni@uni-leipzig.de"
   ],
   "SOURCES": [
-    "BioPAN"
+    "BulkSpace"
   ],
   "SEPARATOR": {
-    "RESIDUE_BRACKET_LEFT": "\\(",
-    "RESIDUE_BRACKET_RIGHT": "\\)",
+    "LIPID_CLASS_SEPARATOR": "\\s",
+    "MOD_SEPARATOR": "-",
     "SPACE": "\\s",
     "COLON": ":",
     "SEMICOLON": ";",
@@ -50,19 +50,13 @@
     },
     "RESIDUE_INFO_SUM": {
       "ORDER": [
-        "RESIDUE_BRACKET_LEFT",
-        "RESIDUE_SEPARATOR",
-        "RESIDUE_INFO",
-        "RESIDUE_BRACKET_RIGHT"
+        "LIPID_CLASS_SEPARATOR",
+        "AVOID_RESIDUE_SEPARATOR",
+        "RESIDUE_INFO"
       ],
-      "OPTIONAL": [
-        "RESIDUE_BRACKET_LEFT",
-        "RESIDUE_BRACKET_RIGHT"
-      ],
-      "RESIDUE_BRACKET_LEFT": "{{SEPARATOR.RESIDUE_BRACKET_LEFT}}",
-      "RESIDUE_SEPARATOR": "(?!_)|(?!/)",
+      "LIPID_CLASS_SEPARATOR": "{{SEPARATOR.LIPID_CLASS_SEPARATOR}}",
+      "AVOID_RESIDUE_SEPARATOR": "(?!_)|(?!/)",
       "RESIDUE_INFO": "{{RESIDUE.RESIDUE_INFO}}",
-      "RESIDUE_BRACKET_RIGHT": "{{SEPARATOR.RESIDUE_BRACKET_RIGHT}}",
       "EXAMPLES": [
         "18:2;3O",
         "18:2;O",
@@ -279,7 +273,7 @@
       "MAX_RESIDUES": 1,
       "PREFIX": "[AS]?Hex[1-6]?|PE-|dh",
       "CLASS": "Cer|SPB|SM|GM[1-3]?",
-      "SUFFIX": "([123][P])?",
+      "SUFFIX": "([123]?[P])?",
       "RESIDUE_INFO_SUM": "{{RESIDUE.RESIDUE_INFO_SUM}}",
       "EXAMPLES": [
         "Cer 34:1;O2",

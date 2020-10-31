@@ -602,27 +602,29 @@
     },
     "SP01": {
       "SPB18:0;O2": [
-        "([Dd][Hd])?SPB(\\s*-?\\s*1\\s*-?\\s*)?\\s+18:0\\s*([,;:\\-]\\s*(2O|O2))?",
+        "[Dd][Hd]S(PB|G)",
+        "([Dd][Hd])?S(PB|G)(\\s*-?\\s*1\\s*-?\\s*)?(\\s+|\\()?18:0\\s*([,;:\\-]\\s*(2O|O2))?\\)?",
         "[Ss]phinganine\\s*",
         "[Dd]ihydro\\s*[Ss]phingosine",
         "[Oo]ctadeca\\s*[Ss]phinganine"
       ],
       "SPB18:1;O2": [
-        "SPB(\\s*-?\\s*1\\s*-?\\s*)?\\s+18:1\\s*([,;:\\-]\\s*(2O|O2))?",
+        "S(PB|G)",
+        "S(PB|G)(\\s*-?\\s*1\\s*-?\\s*)?(\\s+|\\()?18:1\\s*([,;:\\-]\\s*(2O|O2))?\\)?",
         "[Ss]phingosine\\s*",
         "[Ss]phingenine\\s*",
         "(4\\s*-\\s*trans\\s*-\\s*)?[Ss]phingenine",
         "[Oo]ctadeca\\s*[Ss]phingenine"
       ],
       "SPBP18:0;O2": [
-        "([Dd][Hd])?S(PB)?(\\s*-?\\s*1\\s*-?\\s*)?P(\\s+|\\(?)18:0\\s*([,;:\\-]\\s*(2O|O2))?\\)?",
+        "([Dd][Hd])?S(PB)?(\\s*-?\\s*1\\s*-?\\s*)?P(\\s+|\\()?18:0\\s*([,;:\\-]\\s*(2O|O2))?\\)?",
         "[Ss](phinganine)?(\\(?\\s*-?\\s*1)?(\\s*-?\\)?)?\\s*[pP](hosphate)?",
         "[Dd]ihydro\\s*[Ss](phingosine)?(\\(?\\s*-?\\s*1)?(\\s*-?\\)?)?\\s*[pP](hosphate)?",
         "[Dd]ihydro\\s*[Ss](phingenine)?(\\(?\\s*-?\\s*1)?(\\s*-?\\)?)?\\s*[pP](hosphate)?",
         "[Oo]ctadeca\\s*[Ss]phinganine(\\s*-\\s*1)?\\s*-\\s*[pP](hosphate)?"
       ],
       "SPBP18:1;O2": [
-        "S(PB)?(\\s*-?\\s*1\\s*-?\\s*)?P(\\s+|\\(?)18:1\\s*([,;:\\-]\\s*(2O|O2))?\\)?",
+        "S(PB)?(\\s*-?\\s*1\\s*-?\\s*)?P(\\s+|\\()?18:1\\s*([,;:\\-]\\s*(2O|O2))?\\)?",
         "[Ss](phingosine)?(\\(?\\s*-?\\s*1)?(\\s*-?\\)?)?\\s*[pP](hosphate)?",
         "[Ss](phingenine)?(\\(?\\s*-?\\s*1)?(\\s*-?\\)?)?\\s*[pP](hosphate)?",
         "(4\\s*-\\s*trans\\s*-\\s*)?Sphingenine(\\s*-\\s*1)?\\s*-\\s*[pP](hosphate)?",

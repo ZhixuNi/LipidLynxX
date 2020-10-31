@@ -1,5 +1,5 @@
 {
-  "_DATE": 20201025,
+  "_DATE": 20201031,
   "_AUTHORS": [
     "zhixu.ni@uni-leipzig.de"
   ],
@@ -272,8 +272,8 @@
       ],
       "MAX_RESIDUES": 1,
       "PREFIX": "Acylcarnitine[\\s]?",
-      "LIPID_CLASS_SEPARATOR": "{{SEPARATOR.SPACE}}",
       "CLASS": "C",
+      "LIPID_CLASS_SEPARATOR": "{{SEPARATOR.SPACE}}",
       "RESIDUE_INFO_SUM": "{{RESIDUE.RESIDUE_INFO_SUM}}",
       "EXAMPLES": [
         "Acylcarnitine C14:0",

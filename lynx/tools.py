@@ -337,7 +337,7 @@ def convert_file(
                     "output_rules": default_output_rules,
                     "logger": cli_logger,
                     "input_style": fixed_input_style,
-                    "level": level
+                    "level": level,
                 }
                 for input_name in lipid_lst:
                     r = pool.apply_async(task_worker, args=(input_name, params))
@@ -353,7 +353,9 @@ def convert_file(
                         try:
                             rx = rl.get()
                         except (KeyError, SystemError, ValueError):
-                            cli_logger.warning(f'Cannot load results from multiprocessing...{rx}')
+                            cli_logger.warning(
+                                f"Cannot load results from multiprocessing...{rx}"
+                            )
                     final_r_dct.update(rx)
                 final_r_lst = []
                 for n_lipid in lipid_lst:
@@ -531,7 +533,10 @@ def convert(
         typer.echo(convert.__doc__)
 
 
-def task_worker(input_name: str, params: dict, ) -> dict:
+def task_worker(
+    input_name: str,
+    params: dict,
+) -> dict:
 
     # task = queue.get(True)
 
@@ -542,13 +547,15 @@ def task_worker(input_name: str, params: dict, ) -> dict:
         logger=params.get("logger"),
         input_style=params.get("input_style"),
     )
-    converted_obj = lynx_converter.convert_str(input_str=input_name, level=params.get("level"))
+    converted_obj = lynx_converter.convert_str(
+        input_str=input_name, level=params.get("level")
+    )
     converted_name = converted_obj.output
     if converted_name:
         filled_converted_name = converted_name
     else:
         filled_converted_name = "UNPROCESSED"
-    print(f"PID:{os.getpid()} input_name# {input_name}", '->', filled_converted_name)
+    print(f"PID:{os.getpid()} input_name# {input_name}", "->", filled_converted_name)
     return {input_name: filled_converted_name}
 
 
@@ -645,5 +652,4 @@ def link_lipid(
 
 if __name__ == "__main__":
     cli_app()
-    # python cli_lynx.py convert-file test/test_input/test_biopan_lite.csv --column 0 --output test/test_output/test_biopan_lite.csv --style BioPAN
-    # python cli_lynx.py convert-file test/test_input/test_biopan_demo.csv --column 0 --output test/test_output/test_biopan_demo.csv --style BioPAN --mode fixed
+    # python cli_lynx.py convert-file test/test_input/test_biopan_lite.csv --column 0 --output test/test_output/output_test_biopan_lite.csv --style BioPAN

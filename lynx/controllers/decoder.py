@@ -198,12 +198,18 @@ class Decoder(object):
         rebuild_str_lst = []
         if matched_info_dct:
             for k in matched_info_dct:
-                if re.match(r".*((CLASS)|(FIX)|(SUM)|(COUNT)|(SEPARATOR)|(BRACKET)).*", k, re.IGNORECASE):
+                if re.match(
+                    r".*((CLASS)|(FIX)|(SUM)|(COUNT)|(SEPARATOR)|(BRACKET)).*",
+                    k,
+                    re.IGNORECASE,
+                ):
                     ks = matched_info_dct[k]
                     if ks:
                         rebuild_str_lst.extend(ks)
-            rebuild_str = ''.join(rebuild_str_lst)
-            if len(rebuild_str) + 4 < len(lipid_name) and re.match(r".*[_|/].*", lipid_name, re.IGNORECASE):  # if more than 4 char not parsed, reject matching
+            rebuild_str = "".join(rebuild_str_lst)
+            if len(rebuild_str) + 4 < len(lipid_name) and re.match(
+                r".*[_|/].*", lipid_name, re.IGNORECASE
+            ):  # if more than 4 char not parsed, reject matching
                 matched_info_dct = {}
         return matched_info_dct
 
@@ -422,7 +428,7 @@ class Decoder(object):
 
         extracted_info_dct = {}
         force_alias_check = False
-        if len(lipid_name) < 16 and re.match(r"^([DHSA])|(P[DLO]).*", lipid_name):
+        if len(lipid_name) < 16 and re.match(r"^([CDHSA])|(P[DLO]).*", lipid_name):
             force_alias_check = True
 
         for c in self.rules:

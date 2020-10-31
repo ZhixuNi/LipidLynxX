@@ -306,11 +306,11 @@ class InputRules(object):
                 if pattern_str.startswith("^"):
                     pass
                 else:
-                    pattern_str = '^\\s*' + pattern_str
+                    pattern_str = "^\\s*" + pattern_str
                 if pattern_str.endswith("$"):
                     pass
                 else:
-                    pattern_str + '\\s*$'
+                    pattern_str + "\\s*$"
                 rule_info["MATCH"] = re.compile(pattern_str)
                 compiled_rules[rule] = rule_info
         self.rules = compiled_rules
