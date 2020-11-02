@@ -97,14 +97,40 @@ class Encoder(object):
                 c_num_lv = len(c_lv_lst)
                 c_max_str = c_info[c].get(c_lv_lst[-1], "")
                 if c_num_lv >= num_lv:
-                    max_str = c_max_str
                     num_lv = c_num_lv
                     max_sum_c_count = max(c_sum_c, max_sum_c_count)
                     max_sum_sp_o_count = max(c_sum_sp_o, max_sum_sp_o_count)
                     best_rule_score = 5
+                    if len(c_max_str) >= len(max_str):
+                        max_str = c_max_str
+                        num_lv = c_num_lv
+                        max_sum_c_count = max(c_sum_c, max_sum_c_count)
+                        max_sum_sp_o_count = max(c_sum_sp_o, max_sum_sp_o_count)
+                        best_rule_score += 4
+                    else:
+                        if (
+                            c_sum_c >= max_sum_c_count
+                            and c_sum_sp_o >= max_sum_sp_o_count
+                        ):
+                            max_sum_c_count = c_sum_c
+                            max_sum_sp_o_count = c_sum_sp_o
+                            best_rule_score += 3
+                        elif (
+                            c_sum_c >= max_sum_c_count
+                            and c_sum_sp_o < max_sum_sp_o_count
+                        ):
+                            max_sum_c_count = c_sum_c
+                            best_rule_score += 2
+                        elif (
+                            c_sum_c < max_sum_c_count
+                            and c_sum_sp_o >= max_sum_sp_o_count
+                        ):
+                            max_sum_sp_o_count = c_sum_sp_o
+                            best_rule_score += 1
+                        else:
+                            pass
                 else:
-                    c_max_str = c_info[c].get(c_lv_lst[-1], "")
-                    if len(c_max_str) > len(max_str):
+                    if len(c_max_str) >= len(max_str):
                         max_str = c_max_str
                         num_lv = c_num_lv
                         max_sum_c_count = max(c_sum_c, max_sum_c_count)
@@ -115,8 +141,6 @@ class Encoder(object):
                             c_sum_c >= max_sum_c_count
                             and c_sum_sp_o >= max_sum_sp_o_count
                         ):
-                            max_str = c_max_str
-                            num_lv = c_num_lv
                             max_sum_c_count = c_sum_c
                             max_sum_sp_o_count = c_sum_sp_o
                             best_rule_score = 3
@@ -124,8 +148,6 @@ class Encoder(object):
                             c_sum_c >= max_sum_c_count
                             and c_sum_sp_o < max_sum_sp_o_count
                         ):
-                            max_str = c_max_str
-                            num_lv = c_num_lv
                             max_sum_c_count = c_sum_c
                             best_rule_score = 2
                         elif (
@@ -300,7 +322,9 @@ class Encoder(object):
         return has_segments, head_seg
 
     @staticmethod
-    def check_biopan(lmsd_classes: list, c_prefix_lst: list, residues: dict):
+    def check_biopan(
+        lmsd_classes: list, c_prefix_lst: list, c_suffix_lst: list, residues: dict
+    ):
         is_sp_class = False
         is_gl_class = False
         is_gp_class = False
@@ -371,6 +395,11 @@ class Encoder(object):
                         "residues_separator_level": residues_separator_level,
                     }
                 elif is_sp_class:
+                    if len(c_suffix_lst) == 1 and c_suffix_lst[0].upper() in [
+                        "P",
+                        "1P",
+                    ]:
+                        c_suffix_lst = ["1P"]
                     for res in residues_order:
                         res_info = residues_info.get(res, {}).get("info", 0)
                         res_c_count = res_info.get("c_count", 0)
@@ -433,7 +462,7 @@ class Encoder(object):
             # if is_modified:
             #     residues = {}
             pass
-        return c_prefix_lst, residues, is_modified
+        return c_prefix_lst, c_suffix_lst, residues, is_modified
 
     def check_segments(self, parsed_info: dict):
         segments_dct = {}
@@ -443,8 +472,8 @@ class Encoder(object):
         c_suffix_lst = segments.get("SUFFIX", [])
         residues = parsed_info.get("residues", {})
         if re.match(r"BioPAN", self.export_style, re.IGNORECASE):
-            c_prefix_lst, residues, is_modified = self.check_biopan(
-                lmsd_classes, c_prefix_lst, residues
+            c_prefix_lst, c_suffix_lst, residues, is_modified = self.check_biopan(
+                lmsd_classes, c_prefix_lst, c_suffix_lst, residues
             )
         c_has_prefix, c_prefix_seg = self.check_head_seg(c_prefix_lst)
         c_has_suffix, c_suffix_seg = self.check_head_seg(c_suffix_lst)

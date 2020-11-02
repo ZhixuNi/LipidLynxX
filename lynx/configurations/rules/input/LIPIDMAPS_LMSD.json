@@ -505,7 +505,7 @@
       ],
       "MAX_RESIDUES": 2,
       "PREFIX": "[AS]?(Hex|Gal|Glc|Man){1,6}|PE-|Lyso",
-      "CLASS": "Cer[P]?|SPB|SM|GM[1-3]?",
+      "CLASS": "Cer(1P|P)?|SPB|SM|GM[1-3]?",
       "LIPID_CLASS_SEPARATOR": "{{SEPARATOR.SPACE}}",
       "BRACKET_LEFT": "{{SEPARATOR.BRACKET_LEFT}}",
       "RESIDUE_INFO_SUM": "{{RESIDUE.RESIDUE_INFO_SUM}}",

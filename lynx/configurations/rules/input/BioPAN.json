@@ -279,7 +279,7 @@
       "MAX_RESIDUES": 1,
       "PREFIX": "[AS]?Hex[1-6]?|PE-|dh",
       "CLASS": "Cer|SPB|SM|GM[1-3]?",
-      "SUFFIX": "([123][P])?",
+      "SUFFIX": "([123]?P)?",
       "RESIDUE_INFO_SUM": "{{RESIDUE.RESIDUE_INFO_SUM}}",
       "EXAMPLES": [
         "Cer 34:1;O2",
