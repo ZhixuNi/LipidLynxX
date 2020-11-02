@@ -21,16 +21,13 @@ from lynx.controllers.encoder import Encoder
 
 # from lynx.models.lipid import Lipid
 from lynx.models.api_models import (
-    InputDictData,
-    EqualizedLevelData,
     EqualizedData,
+    EqualizedLevelData,
     EqualizerExportData,
+    InputDictData,
 )
+from lynx.models.defaults import default_input_rules, default_output_rules
 from lynx.utils.basics import get_abs_path
-from lynx.models.defaults import (
-    default_output_rules,
-    default_input_rules,
-)
 from lynx.utils.log import app_logger
 
 

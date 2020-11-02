@@ -13,17 +13,11 @@
 # For more info please contact:
 #     Developer Zhixu Ni zhixu.ni@uni-leipzig.de
 
-import json
 import os
 import sys
-import unittest
 
 lynx_path = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, lynx_path + "/../")
-
-from lynx import app
-from lynx.utils.log import app_logger
-
 
 # r = requests.get(api_url, params={"data": json.dumps(data)}).json()
 

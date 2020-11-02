@@ -15,13 +15,13 @@
 
 import json
 import re
-from typing import Union, List
+import urllib.parse
+from typing import List, Union
 
 import aiohttp
-import requests
 import natsort
 import pandas as pd
-import urllib.parse
+import requests
 
 from lynx.controllers.converter import convert_lipid
 from lynx.models.api_models import StyleType
@@ -153,7 +153,6 @@ def get_lion_id(lipid_name: str = "PC(16:0/20:4)"):
 
 
 def get_lmsd_subclass(lmsd_id: str = "LMGP01010594") -> str:
-
     sub_class = ""
     if lmsd_id.startswith("LM") and len(lmsd_id) >= 8:
         raw_subclass_str = lmsd_id[2:8]
@@ -179,7 +178,7 @@ async def get_lmsd_id(
     else:
         url_safe_lipid_name = urllib.parse.quote(lipid_name, safe="")
         ref_url = re.sub(r"<lipid_id>", url_safe_lipid_name, lmsd_bulk_base_url)
-    print(ref_url)
+    # print(ref_url)
     async with aiohttp.request("GET", ref_url) as r_cross_ref_obj:
         r_cross_ref_status = r_cross_ref_obj.status
         if r_cross_ref_status == 200:
@@ -205,7 +204,58 @@ async def get_lmsd_id(
 
 
 def get_swiss_id(lipid_name: str = "PC(16:0/18:2(9Z,12Z))") -> requests.Response:
-    url_safe_lipid_name = urllib.parse.quote(lipid_name, safe="")
+    search_name = lipid_name
+
+    # Todo (Zhixu): Update following code to process SP correctly
+    if (
+        search_name.startswith("SM(")
+        and not search_name.startswith("SM(d")
+        and not search_name.startswith("SM(m")
+    ):
+        search_name = re.sub(r"SM\(", "SM(d", search_name)
+    elif (
+        search_name.startswith("SM ")
+        and not search_name.startswith("SM d")
+        and not search_name.startswith("SM m")
+    ):
+        search_name = re.sub(r"SM ", "SM d", search_name)
+    elif (
+        search_name.startswith("Cer(")
+        and not search_name.startswith("Cer(d")
+        and not search_name.startswith("Cer(m")
+    ):
+        search_name = re.sub(r"Cer\(", "Cer(d", search_name)
+    elif (
+        search_name.startswith("Cer ")
+        and not search_name.startswith("Cer d")
+        and not search_name.startswith("Cer m")
+    ):
+        search_name = re.sub(r"Cer ", "Cer d", search_name)
+    elif (
+        search_name.startswith("HexCer(")
+        and not search_name.startswith("HexCer(d")
+        and not search_name.startswith("HexCer(m")
+    ):
+        search_name = re.sub(r"HexCer\(", "HexCer(d", search_name)
+    elif (
+        search_name.startswith("HexCer ")
+        and not search_name.startswith("HexCer d")
+        and not search_name.startswith("HexCer m")
+    ):
+        search_name = re.sub(r"HexCer ", "HexCer d", search_name)
+    elif (
+        search_name.startswith("Hex2Cer(")
+        and not search_name.startswith("Hex2Cer(d")
+        and not search_name.startswith("Hex2Cer(m")
+    ):
+        search_name = re.sub(r"Hex2Cer\(", "Hex2Cer(d", search_name)
+    elif (
+        search_name.startswith("Hex2Cer ")
+        and not search_name.startswith("Hex2Cer d")
+        and not search_name.startswith("Hex2Cer m")
+    ):
+        search_name = re.sub(r"Hex2Cer ", "Hex2Cer d", search_name)
+    url_safe_lipid_name = urllib.parse.quote(search_name, safe="")
     q_swiss_str = CROSS_LINK_APIS.get("name_search", {}).get("swisslipids")
     q_swiss_str = re.sub(r"<lipid_id>", url_safe_lipid_name, q_swiss_str)
     r_swiss_obj = requests.get(q_swiss_str)
@@ -317,7 +367,6 @@ async def get_lmsd_linked_ids(
 
 
 async def get_external_link(ref_id: str, ref_db: str, check_url: bool = False) -> str:
-
     ref_db_urls = CROSS_LINK_APIS.get("link", {})
     ref_url = ""
     if ref_db in DEFAULT_DB_INFO and ref_id:
@@ -325,7 +374,7 @@ async def get_external_link(ref_id: str, ref_db: str, check_url: bool = False) -
         if ref_base_url:
             ref_url = re.sub(r"<lipid_id>", ref_id, ref_base_url)
             if check_url:
-                print(ref_url)
+                # print(ref_url)
                 async with aiohttp.request("GET", ref_url) as r_cross_ref_obj:
                     r_cross_ref_status = r_cross_ref_obj.status
                     if r_cross_ref_status == 200:
@@ -350,20 +399,20 @@ async def get_cross_links(
             swisslipids_name = swiss_ref.get("entity_name")
             swisslipids_id = swiss_ref.get("entity_id")
             if swisslipids_name.startswith("DG"):
-                siwss_lv_s_str = re.sub(r"/0:0", "", swisslipids_name)
-                siwss_lv_s_str = re.sub(r"\(0:0/", r"(", siwss_lv_s_str)
-                siwss_lv_s_str = re.sub(r"/0:0/", r"/", siwss_lv_s_str)
+                swiss_lv_s_str = re.sub(r"/0:0", "", swisslipids_name)
+                swiss_lv_s_str = re.sub(r"\(0:0/", r"(", swiss_lv_s_str)
+                swiss_lv_s_str = re.sub(r"/0:0/", r"/", swiss_lv_s_str)
             else:
-                siwss_lv_s_str = swisslipids_name
-            siwss_lv_s_str = re.sub(
-                r"\((\d{1,2}[EZ]?)(,\d{1,2}[EZ]?)+\)", "", siwss_lv_s_str
+                swiss_lv_s_str = swisslipids_name
+            swiss_lv_s_str = re.sub(
+                r"\((\d{1,2}[EZ]?)(,\d{1,2}[EZ]?)+\)", "", swiss_lv_s_str
             )
-            siwss_lv_m_str = re.sub(r"/", "_", siwss_lv_s_str)
-            print("SWISS_NAMES: ", swisslipids_name, siwss_lv_s_str, siwss_lv_m_str)
+            swiss_lv_m_str = re.sub(r"/", "_", swiss_lv_s_str)
+            # print("SWISS_NAMES: ", swisslipids_name, swiss_lv_s_str, swiss_lv_m_str)
             if (
                 lipid_name == swisslipids_name
-                or lipid_name == siwss_lv_s_str
-                or lipid_name == siwss_lv_m_str
+                or lipid_name == swiss_lv_s_str
+                or lipid_name == swiss_lv_m_str
             ):
                 # linked_ids["swisslipids"] = swisslipids_id
                 swiss_ids = [swisslipids_id] + await get_swiss_child(swisslipids_id)
@@ -467,9 +516,11 @@ async def link_lipids(lipid_list: List[str]) -> pd.DataFrame:
         search_name = convert_lipid(
             safe_lipid_name, style=StyleType("BracketsShorthand"), level="MAX"
         )
+        print(search_name)
         shorthand_name = convert_lipid(
             safe_lipid_name, style=StyleType("ShorthandNotation"), level="MAX"
         )
+        # Todo (Zhixu): Update following code to process SP correctly
         if (
             search_name.startswith("SM(")
             and not search_name.startswith("SM(d")
@@ -477,11 +528,23 @@ async def link_lipids(lipid_list: List[str]) -> pd.DataFrame:
         ):
             search_name = re.sub(r"SM\(", "SM(d", search_name)
         elif (
+            search_name.startswith("SM ")
+            and not search_name.startswith("SM d")
+            and not search_name.startswith("SM m")
+        ):
+            search_name = re.sub(r"SM ", "SM d", search_name)
+        elif (
             search_name.startswith("Cer(")
             and not search_name.startswith("Cer(d")
             and not search_name.startswith("Cer(m")
         ):
             search_name = re.sub(r"Cer\(", "Cer(d", search_name)
+        elif (
+            search_name.startswith("Cer ")
+            and not search_name.startswith("Cer d")
+            and not search_name.startswith("Cer m")
+        ):
+            search_name = re.sub(r"Cer ", "Cer d", search_name)
         elif (
             search_name.startswith("HexCer(")
             and not search_name.startswith("HexCer(d")
@@ -489,11 +552,23 @@ async def link_lipids(lipid_list: List[str]) -> pd.DataFrame:
         ):
             search_name = re.sub(r"HexCer\(", "HexCer(d", search_name)
         elif (
+            search_name.startswith("HexCer ")
+            and not search_name.startswith("HexCer d")
+            and not search_name.startswith("HexCer m")
+        ):
+            search_name = re.sub(r"HexCer ", "HexCer d", search_name)
+        elif (
             search_name.startswith("Hex2Cer(")
             and not search_name.startswith("Hex2Cer(d")
             and not search_name.startswith("Hex2Cer(m")
         ):
             search_name = re.sub(r"Hex2Cer\(", "Hex2Cer(d", search_name)
+        elif (
+            search_name.startswith("Hex2Cer ")
+            and not search_name.startswith("Hex2Cer d")
+            and not search_name.startswith("Hex2Cer m")
+        ):
+            search_name = re.sub(r"Hex2Cer ", "Hex2Cer d", search_name)
         lynx_name = convert_lipid(
             safe_lipid_name, style=StyleType("LipidLynxX"), level="MAX"
         )
@@ -504,6 +579,7 @@ async def link_lipids(lipid_list: List[str]) -> pd.DataFrame:
             "LipidLynxX": lynx_name,
             "BioPAN": biopan_name,
         }
+        print(search_name)
         linked_ids = await get_cross_links(
             lipid_name=search_name, export_url=True, formatted=False
         )
@@ -524,7 +600,7 @@ async def link_lipids(lipid_list: List[str]) -> pd.DataFrame:
                 else:
                     resources[db] = ""
         linked_info_dct[idx] = resources
-        print(resources)
+        # print(resources)
 
         idx += 1
     default_col = ["Input_name", "ShorthandNotation", "LipidLynxX", "BioPAN"]
@@ -557,9 +633,11 @@ if __name__ == "__main__":
     # ids = asyncio.run(get_cross_links(t_id, export_url=True, formatted=True))
     # print(ids)
     part = 11
-    df = pd.read_excel(f"D:/SysMedOs/LipidLynxX/temp/test_list{part}.xlsx")
-    lipid_id_lst = df["ID"].tolist()
-    # lipid_id_lst = ["LPC(16:0)", "DG(18:2/20:5)"]
-    results_df = asyncio.run(link_lipids(lipid_id_lst))
-    results_df.to_excel(f"D:/SysMedOs/LipidLynxX/temp/test_list_part{part}.xlsx")
+    # df = pd.read_excel(f"D:/SysMedOs/LipidLynxX/temp/test_list{part}.xlsx")
+    # lipid_id_lst = df["ID"].tolist()
+    lipid_id_lst = ["palmitic acid", "SM d18:1/24:0", "SM(d18:1/24:0)"]
+    loop = asyncio.get_event_loop()
+    results_df = loop.run_until_complete(link_lipids(lipid_id_lst))
+    print(results_df.T)
+    results_df.to_excel(f"D:/SysMedOs/LipidLynxX/lynx/temp/test_list_part{part}.xlsx")
     print("FIN")

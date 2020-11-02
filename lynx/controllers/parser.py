@@ -14,11 +14,14 @@
 #     Developer Zhixu Ni zhixu.ni@uni-leipzig.de
 
 import re
+
 from pydantic import parse_obj_as
 
 from lynx.controllers.converter import Converter
 from lynx.controllers.decoder import Decoder
+from lynx.controllers.encoder import Encoder
 from lynx.models.lipid import LipidType
+from lynx.utils.log import app_logger
 
 
 def parse_lipid(lipid_name: str):
@@ -26,37 +29,55 @@ def parse_lipid(lipid_name: str):
     converted_results = lynx_converter.convert_str(input_str=lipid_name)
     converted_name = converted_results.output
     decoder = Decoder()
+    encoder = Encoder(
+        logger=app_logger,
+    )
     extracted_info = decoder.extract(converted_name)
-    parsed_info = {}
+    best_input_rule = encoder.get_best_rule(lipid_name)
+    best_id = encoder.convert(lipid_name)
+    parsed_info = {"id": best_id, "input_style": best_input_rule}
     if extracted_info:
         for p in extracted_info:
             p_info = extracted_info[p]
             for in_r in p_info:
-
                 if re.search("#LipidLynxX", in_r, re.IGNORECASE):
                     parsed_info["id"] = converted_name
                     r_info = p_info[in_r]
-                    segments = r_info.get("SEGMENTS", {})
+                    segments = r_info.get("segments", {})
                     parsed_info["lipid_class"] = segments.get("CLASS", [""])[0]
-                    parsed_info["residues"] = r_info.get("RESIDUES", {})
-                    mod_type_lst = segments.get("MOD_TYPE")
-                    mod_type_lst = [mod for mod in mod_type_lst if mod]
+                    parsed_info["residues"] = r_info.get("residues", {})
 
-                    exact_sn_position = segments.get("RESIDUE_SEPARATOR")
-                    exact_sn_position_level = parsed_info["residues"].get(
-                        "RESIDUES_SEPARATOR_LEVEL"
+                    residues_separator_level = r_info.get("residues", {}).get(
+                        "residues_separator_level"
                     )
-                    if exact_sn_position == ["/"] or exact_sn_position_level == "S":
+
+                    if residues_separator_level == "S":
                         parsed_info["exact_sn_position"] = True
                     else:
                         parsed_info["exact_sn_position"] = False
-                    if mod_type_lst:
-                        parsed_info["is_modified"] = True
-                    else:
-                        parsed_info["is_modified"] = False
-    if parsed_info:
-        export_info = parse_obj_as(LipidType, parsed_info)
-    else:
-        export_info = {"msg": f"failed to parse {lipid_name}"}
 
-    return export_info
+    return parsed_info
+
+
+def detect_style(lipid_name: str) -> str:
+
+    encoder = Encoder(
+        logger=app_logger,
+    )
+    input_style = encoder.get_best_rule(lipid_name)
+
+    return input_style
+
+
+if __name__ == "__main__":
+    ls = (
+        "SM(18:1{4E};2OH{1R,3S}<2OH{8S,18R},oxo{10}>/18:2{8E,11E}<2OH{7S,18R},oxo{12}>)"
+    )
+    # ls = (
+    #     "SM(18:0;2OH{1R,3S}/18:2{9Z,12Z})"
+    # )
+    exp = parse_lipid(ls)
+    print(exp)
+
+    br = detect_style(ls)
+    print(f"Auto detect rule: [{br}] for lipid: {ls}")

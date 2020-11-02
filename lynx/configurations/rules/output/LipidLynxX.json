@@ -1,5 +1,5 @@
 {
-  "_DATE": 20200214,
+  "_DATE": 20201013,
   "_AUTHORS": [
     "zhixu.ni@uni-leipzig.de"
   ],
@@ -9,24 +9,24 @@
     "B1",
     "B2",
     "B3",
-    "D0",
-    "D0.1",
-    "D0.2",
-    "D1",
-    "D1.1",
-    "D1.2",
-    "D2",
-    "D2.1",
-    "D2.2",
-    "D3",
-    "D3.1",
-    "D3.2",
-    "D4",
-    "D4.1",
-    "D4.2",
-    "D5",
-    "D5.1",
-    "D5.2",
+    "M0",
+    "M0.1",
+    "M0.2",
+    "M1",
+    "M1.1",
+    "M1.2",
+    "M2",
+    "M2.1",
+    "M2.2",
+    "M3",
+    "M3.1",
+    "M3.2",
+    "M4",
+    "M4.1",
+    "M4.2",
+    "M5",
+    "M5.1",
+    "M5.2",
     "S0",
     "S0.1",
     "S0.2",
@@ -46,132 +46,214 @@
     "S5.1",
     "S5.2"
   ],
-  "SEPARATORS": {
-    "DB_SEPARATOR": ":",
-    "O_SEPARATOR": ";",
-    "RESIDUE_BRACKET_LEFT": "(",
-    "RESIDUE_BRACKET_RIGHT": ")",
-    "MOD_BRACKET_LEFT": "<",
-    "MOD_BRACKET_RIGHT": ">",
-    "SITE_BRACKET_LEFT": "{",
-    "SITE_BRACKET_RIGHT": "}",
-    "SQUARE_BRACKET_LEFT": "[",
-    "SQUARE_BRACKET_RIGHT": "]",
+  "SUPPORT_MODIFICATION": 1,
+  "SEPARATOR": {
+    "MOD_SEPARATOR": ",",
+    "RESIDUE_SEPARATOR": "_|/",
+    "SPACE": "\\s",
+    "COLON": ":",
+    "SEMICOLON": ";",
+    "COMMA": ",",
+    "RESIDUE_BRACKET_LEFT": "\\(",
+    "RESIDUE_BRACKET_RIGHT": "\\)",
+    "MOD_BRACKET_LEFT": "\\<",
+    "MOD_BRACKET_RIGHT": "\\>",
+    "SITE_BRACKET_LEFT": "\\{",
+    "SITE_BRACKET_RIGHT": "\\}",
+    "SQUARE_BRACKET_LEFT": "\\[",
+    "SQUARE_BRACKET_RIGHT": "\\]",
     "SEPARATOR_LEVELS": {
       "B": "",
-      "D": "_",
+      "M": "_",
       "S": "/"
     }
   },
-  "MODS": {
-    "MOD": {
+  "SITE": {
+    "SITE_INFO": {
       "ORDER": [
-        "MOD_COUNT",
-        "MOD_CV",
-        "SITE_BRACKET_LEFT",
-        "MOD_SITE",
-        "MOD_SITE_INFO",
-        "SITE_BRACKET_RIGHT"
+        "SITE",
+        "SITE_SUFFIX"
       ],
       "OPTIONAL": [
-        "MOD_COUNT",
-        "MOD_CV",
-        "SITE_BRACKET_LEFT",
-        "MOD_SITE",
-        "MOD_SITE_INFO",
-        "SITE_BRACKET_LEFT"
+        "SITE_SUFFIX"
       ],
-      "REPEAT": {
-        "MOD": [1, 10]
-      },
-      "MOD_COUNT": "\\d?\\d?",
-      "MOD_CV": "([a-zA-Z]*[-0-9a-zA-Z]*)",
-      "SITE_BRACKET_LEFT": "$.SEPARATORS.MODS_BRACKET_LEFT.0",
-      "MOD_SITE": "(\\s?,)?([0-9]{1,2})",
-      "MOD_SITE_INFO": "([EZRS])?",
-      "SITE_BRACKET_RIGHT": "$.SEPARATORS.SITE_BRACKET_RIGHT.0",
+      "SITE": "(\\s?,)?([0-9]{1,2})",
+      "SITE_SUFFIX": "([EZRS])?",
       "EXAMPLES": [
-        "{9,12}",
-        "{9Z,12Z}",
-        "OH",
-        "2OH",
-        "OH{8R}",
-        "2OH{8R,15S}"
+        "12",
+        "12Z"
       ]
     },
-    "SUM_MODS": {
+    "SITE_INFO_SUM": {
       "ORDER": [
-        "RESIDUE_BRACKET_LEFT",
-        "MOD",
-        "RESIDUE_BRACKET_RIGHT"
+        "SITE_BRACKET_LEFT",
+        "SITE_INFO",
+        "SITE_BRACKET_RIGHT"
       ],
       "REPEAT": {
-        "MOD_SITE": [
-          1,
-          10
-        ],
-        "MOD_SITE_INFO": [
-          1,
-          10
-        ]
+        "SITE_INFO": [1, 10]
       },
-      "BRACKET_LEFT": "$.SEPARATORS.BRACKET_LEFT.0",
-      "MOD": "$.MODS.MOD.0",
-      "RESIDUE_BRACKET_RIGHT": "$.SEPARATORS.BRACKET_RIGHT.0",
+      "SITE_BRACKET_LEFT": "{{SEPARATOR.SITE_BRACKET_LEFT}}",
+      "SITE_INFO": "{{SITE.SITE_INFO}}",
+      "SITE_BRACKET_RIGHT": "{{SEPARATOR.SITE_BRACKET_RIGHT}}",
       "EXAMPLES": [
-        "(9Z)",
-        "(9,12)",
-        "(9Z,12Z)"
+        "{9Z,12Z}"
       ]
     }
   },
-  "RESIDUES": {
-    "RESIDUE": {
+  "DB": {
+    "DB_INFO_SUM": {
       "ORDER": [
-        "LINK",
-        "NUM_C",
-        "DB_SEPARATOR",
-        "NUM_DB",
-        "O_SEPARATOR",
-        "NUM_O",
-        "MOD_BRACKET_LEFT",
-        "SUM_MODS",
-        "MOD_BRACKET_RIGHT"
+        "DB_SITE"
+      ],
+      "DB_SITE": "{{SITE.SITE_INFO_SUM}}",
+      "EXAMPLES": [
+        "{12}",
+        "{9,12}",
+        "{9Z,12Z}"
+      ]
+    }
+  },
+  "SP_O": {
+    "SP_O_INFO_SUM": {
+      "ORDER": [
+        "SP_O_SITE"
+      ],
+      "SP_O_SITE": "{{SITE.SITE_INFO_SUM}}",
+      "EXAMPLES": [
+        "{1}",
+        "{1,3}",
+        "{1R,3R}"
+      ]
+    }
+  },
+  "MOD": {
+    "MOD_INFO": {
+      "ORDER": [
+        "MOD_SEPARATOR",
+        "MOD_COUNT",
+        "MOD_TYPE",
+        "MOD_SITE"
       ],
       "OPTIONAL": [
-        "LINK",
-        "DB",
-        "O_SEPARATOR",
-        "NUM_O",
+        "MOD_SEPARATOR",
+        "MOD_COUNT",
+        "MOD_SITE"
+      ],
+      "MOD_SEPARATOR": "{{SEPARATOR.COMMA}}",
+      "MOD_COUNT":  "[+-]?(\\s?,)?([0-9]{1,2})?",
+      "MOD_TYPE": "([a-zA-Z]*[-0-9a-zA-Z]+)",
+      "MOD_SITE": "{{SITE.SITE_INFO_SUM}}",
+      "EXAMPLES": [
+        "+O",
+        "OH{9}",
+        ",2OH{9R,12S}"
+      ]
+    },
+    "MOD_INFO_SUM": {
+      "ORDER": [
         "MOD_BRACKET_LEFT",
-        "SUM_MODS",
+        "MOD_INFO",
         "MOD_BRACKET_RIGHT"
       ],
       "REPEAT": {
-        "SUM_MODS": [
-          0,
-          10
-        ]
+        "MOD_INFO": [1, 10]
       },
-      "LINK": "[OP]-|C|[mdt]|h",
-      "NUM_C": "[0-9]{1,2}",
-      "DB_SEPARATOR": ":",
-      "NUM_DB": "[1,2]?[0-9]",
-      "O_SEPARATOR": ";",
-      "NUM_O": "O[2-3]?",
-      "MOD_BRACKET_LEFT": "$.SEPARATORS.MOD_BRACKET_LEFT.0",
-      "SUM_MODS": "$.MODS.SUM_MODS.0",
-      "MOD_BRACKET_RIGHT": "$.SEPARATORS.MOD_BRACKET_LEFT.0"
+      "MOD_BRACKET_LEFT": "{{SEPARATOR.MOD_BRACKET_LEFT}}",
+      "MOD_INFO": "{{MOD.MOD_INFO}}",
+      "MOD_BRACKET_RIGHT": "{{SEPARATOR.MOD_BRACKET_RIGHT}}",
+      "EXAMPLES": [
+        "<2OH{9,12}>",
+        "<2OH{9R,12S}>",
+        "<2OH{9R,12S},oxo{4}>"
+      ]
+    }
+  },
+  "RESIDUE": {
+    "RESIDUE_INFO": {
+      "ORDER": [
+        "RESIDUE_SEPARATOR",
+        "LINK",
+        "C_COUNT",
+        "DB_SEPARATOR",
+        "DB_COUNT",
+        "DB_INFO_SUM",
+        "SP_O_SEPARATOR",
+        "SP_O_COUNT",
+        "SP_O_INFO_SUM",
+        "MOD_INFO_SUM"
+      ],
+      "OPTIONAL": [
+        "RESIDUE_SEPARATOR",
+        "LINK",
+        "DB_COUNT",
+        "DB_INFO_SUM",
+        "SP_O_SEPARATOR",
+        "SP_O_COUNT",
+        "SP_O_INFO_SUM",
+        "MOD_INFO_SUM"
+      ],
+      "RESIDUE_SEPARATOR": "{{SEPARATOR.RESIDUE_SEPARATOR}}",
+      "LINK": "[OP]-",
+      "C_COUNT": "[0-9]{1,2}",
+      "DB_SEPARATOR": "{{SEPARATOR.COLON}}",
+      "DB_COUNT": "[1,2]?[0-9]",
+      "DB_INFO_SUM": "{{DB.DB_INFO_SUM}}",
+      "SP_O_SEPARATOR": "{{SEPARATOR.SEMICOLON}}",
+      "SP_O_COUNT": "[2-9]?OH?",
+      "SP_O_INFO_SUM": "{{SP_O.SP_O_INFO_SUM}}",
+      "MOD_INFO_SUM": "{{MOD.MOD_INFO_SUM}}",
+      "EXAMPLES": [
+        "18:2;1",
+        "18:2",
+        "18:2{9Z,11E}<OH{12R}>",
+        "9:0<oxo{9}>",
+        "26:0<OH{3}>",
+        "34:1;2<FA16:0>",
+        "34:1<+14>",
+        "34:1<+O>",
+        "34:1<+O,-2H>"
+      ]
     },
-    "EXCEPTIONS": {
-      "PREFIX": "TEST"
+    "RESIDUE_ALIAS": {
+      "ORDER": [
+        "RESIDUE_SEPARATOR",
+        "ALIAS"
+      ],
+      "OPTIONAL": [
+        "RESIDUE_SEPARATOR"
+      ],
+      "RESIDUE_SEPARATOR": "{{SEPARATOR.RESIDUE_SEPARATOR}}",
+      "ALIAS": "[-,0-9a-zA-Z\\s]{3,}",
+      "EXAMPLES": [
+        "HETE",
+        "/HDoTE"
+      ]
+    },
+    "RESIDUE_INFO_SUM": {
+      "ORDER": [
+        "RESIDUE"
+      ],
+      "RESIDUE": "({{RESIDUE.RESIDUE_INFO}})|({{RESIDUE.RESIDUE_ALIAS}})",
+      "REPEAT": {
+        "RESIDUE": [1, 4]
+      },
+      "EXAMPLES": [
+        "18:2;1",
+        "18:2",
+        "9:0<oxo{9}>",
+        "34:1;2<FA16:0>",
+        "34:1<+14>",
+        "34:1<+O>",
+        "34:1<+O,-2H>"
+      ]
     }
   },
   "LMSD_CLASSES": {
     "FA01": {
       "ORDER": [
         "CLASS",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "MAX_RESIDUES": 1,
       "CLASS": {
@@ -184,7 +266,7 @@
     "FA02": {
       "ORDER": [
         "CLASS",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "MAX_RESIDUES": 1,
       "CLASS": {
@@ -197,7 +279,7 @@
     "FA03": {
       "ORDER": [
         "CLASS",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "MAX_RESIDUES": 1,
       "CLASS": {
@@ -210,7 +292,7 @@
     "FA04": {
       "ORDER": [
         "CLASS",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "MAX_RESIDUES": 1,
       "CLASS": {
@@ -223,7 +305,7 @@
     "FA0705": {
       "ORDER": [
         "CLASS",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "MAX_RESIDUES": 1,
       "CLASS": {
@@ -238,7 +320,7 @@
       "ORDER": [
         "CLASS",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "MAX_RESIDUES": 1,
@@ -254,7 +336,7 @@
       "ORDER": [
         "CLASS",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "MAX_RESIDUES": 2,
@@ -270,7 +352,7 @@
       "ORDER": [
         "CLASS",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -292,7 +374,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -320,7 +402,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -348,7 +430,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -376,7 +458,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -404,7 +486,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -434,7 +516,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -462,7 +544,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -490,7 +572,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -518,7 +600,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -546,7 +628,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "MAX_RESIDUES": 2,
@@ -574,7 +656,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -602,7 +684,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -630,7 +712,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -657,7 +739,7 @@
       "ORDER": [
         "CLASS",
         "SUFFIX",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "MAX_RESIDUES": 1,
       "CLASS": {
@@ -672,13 +754,13 @@
       "ORDER": [
         "CLASS",
         "SUFFIX",
-        "SUM_RESIDUES"
+        "RESIDUE_INFO_SUM"
       ],
       "MAX_RESIDUES": 1,
       "CLASS": {
         "OUTPUT": "SPBP",
         "INPUT": [
-          "SPBP"
+          "SPBP", "SPB1P"
         ]
       }
     },
@@ -688,7 +770,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -722,7 +804,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -750,7 +832,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -781,7 +863,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
@@ -808,7 +890,7 @@
         "CLASS",
         "SUFFIX",
         "RESIDUE_BRACKET_LEFT",
-        "SUM_RESIDUES",
+        "RESIDUE_INFO_SUM",
         "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
