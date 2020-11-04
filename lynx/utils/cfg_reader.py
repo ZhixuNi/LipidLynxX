@@ -36,7 +36,7 @@ def load_cfg_info(cfg_path: str = None) -> Dict[str, str]:
         "output_rules",
         "resource_kegg",
         "resource_lion",
-        "resource_lion",
+        "resource_rhea",
         "temp_folder",
         "temp_max_days",
         "temp_max_files",
