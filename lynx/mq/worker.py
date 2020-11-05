@@ -176,10 +176,7 @@ async def link_list(data: list, export_path: str, file_type: str):
         }
     }
     output_info = create_linker_output(
-        export_data,
-        output_name=export_path,
-        file_type=file_type,
-        export_url=True,
+        export_data, output_name=export_path, file_type=file_type, export_url=True,
     )
     data = {}
     for col in export_data:
@@ -214,10 +211,7 @@ async def link_dict(data: dict, export_path: str, file_type: str):
         }
 
     output_info = create_linker_output(
-        export_data,
-        output_name=export_path,
-        file_type=file_type,
-        export_url=True,
+        export_data, output_name=export_path, file_type=file_type, export_url=True,
     )
     data = {}
     for col in export_data:

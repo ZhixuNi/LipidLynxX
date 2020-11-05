@@ -27,6 +27,15 @@ from lynx.controllers.converter import convert_lipid
 from lynx.models.api_models import StyleType
 from lynx.models.defaults import kegg_ids, lion_ids, rhea_ids
 
+import os
+import ssl
+
+
+if not os.environ.get("PYTHONHTTPSVERIFY", "") and getattr(
+    ssl, "_create_unverified_context", None
+):
+    ssl._create_default_https_context = ssl._create_unverified_context
+
 DEFAULT_DB_INFO = {
     "chebi": "https://www.ebi.ac.uk/chebi",
     "hmdb": "https://hmdb.ca",
@@ -73,9 +82,7 @@ CROSS_LINK_DBS = {
         "lipidbank": "lipidbank_id",
         "pubchem": "pubchem_cid",
     },
-    "chebi": {
-        "uniprotkb_chebi": "UniProtKB",
-    },
+    "chebi": {"uniprotkb_chebi": "UniProtKB",},
     "rhea": {
         "uniprotkb_rhea_ud": "RHEA_ID_MASTER",
         "uniprotkb_rhea_lr": "RHEA_ID_LR",
@@ -544,6 +551,7 @@ async def get_cross_links(
     lipid_name: str = "PC(16:0/18:2(9Z,12Z))",
     export_url: bool = False,
     formatted: bool = True,
+    related: bool = False,
 ) -> dict:
     lipid_name = lipid_name.strip('"')
     linked_ids = {}
@@ -570,7 +578,10 @@ async def get_cross_links(
                 or lipid_name == swiss_lv_m_str
             ):
                 # linked_ids["swisslipids"] = swisslipids_id
-                swiss_ids = [swisslipids_id] + await get_swiss_child(swisslipids_id)
+                if related:
+                    swiss_ids = [swisslipids_id] + await get_swiss_child(swisslipids_id)
+                else:
+                    swiss_ids = [swisslipids_id]
                 # print("swiss_ids", swiss_ids)
                 for swiss_id in swiss_ids:
                     for cross_ref_db in CROSS_LINK_DBS.get("swisslipids"):
@@ -682,16 +693,16 @@ async def get_cross_links(
     sum_uniprot = {}
     sum_uniprot_ids = []
     for uk in linked_ids:
-        if re.match(r'.*uniprot.*', uk, re.IGNORECASE):
+        if re.match(r".*uniprot.*", uk, re.IGNORECASE):
             uk_info = linked_ids.get(uk)
             if isinstance(uk_info, list):
                 sum_uniprot_ids.extend(uk_info)
             elif isinstance(uk_info, dict):
                 sum_uniprot.update(uk_info)
     if sum_uniprot:
-        linked_ids['uniprot_sum'] = sum_uniprot
+        linked_ids["uniprot_sum"] = sum_uniprot
     if sum_uniprot_ids:
-        linked_ids['uniprot_sum'] = natsort.natsorted(list(set(sum_uniprot_ids)))
+        linked_ids["uniprot_sum"] = natsort.natsorted(list(set(sum_uniprot_ids)))
 
     if formatted:
         output_ids = {}
@@ -712,14 +723,14 @@ def add_hyperlink(text: str, url: str) -> str:
 
 
 async def link_lipids(
-    lipid_list: List[str], direct_search: bool = False
+    lipid_list: List[str], direct_search: bool = False, related: bool = False,
 ) -> pd.DataFrame:
     linked_df = pd.DataFrame()
     linked_info_dct = {}
     idx = 1
     for lipid_name in lipid_list:
 
-        resources = await link_lipid(lipid_name, direct_search)
+        resources = await link_lipid(lipid_name, direct_search, related=related)
         linked_info_dct[idx] = resources
         # print(resources)
         idx += 1
@@ -745,7 +756,9 @@ async def link_lipids(
     return linked_df
 
 
-async def link_lipid(lipid_name: str, direct_search: bool = False) -> dict:
+async def link_lipid(
+    lipid_name: str, direct_search: bool = False, related: bool = False,
+) -> dict:
     if not direct_search:
         if re.match(r"^LM\w\w\d{8}$", lipid_name, re.IGNORECASE):
             safe_lipid_name = await get_lmsd_name(lipid_name)
@@ -825,7 +838,7 @@ async def link_lipid(lipid_name: str, direct_search: bool = False) -> dict:
     }
     print(search_name)
     linked_ids = await get_cross_links(
-        lipid_name=search_name, export_url=True, formatted=False
+        lipid_name=search_name, export_url=True, formatted=False, related=related,
     )
     if isinstance(linked_ids, dict):
         for db in linked_ids:

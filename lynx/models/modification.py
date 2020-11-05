@@ -251,12 +251,7 @@ class Modification(object):
 
     def to_mod_site_info(self):
         return self.to_mod_base(
-            mod_seg_lst=[
-                "MOD_COUNT",
-                "MOD_TYPE",
-                "MOD_SITE_INFO",
-            ],
-            level=5,
+            mod_seg_lst=["MOD_COUNT", "MOD_TYPE", "MOD_SITE_INFO",], level=5,
         )
 
     def to_mod_level(self, level: Union[int, float, str] = 0) -> str:

@@ -102,8 +102,7 @@ def convert_lipid(
     else:
         converted_name = ""
         typer.secho(
-            'Please input a lipid name. e.g. "PLPC".',
-            fg=typer.colors.YELLOW,
+            'Please input a lipid name. e.g. "PLPC".', fg=typer.colors.YELLOW,
         )
         typer.echo(convert_lipid.__doc__)
 
@@ -221,10 +220,7 @@ def convert_lipids(
 def convert_file(
     file: Path = typer.Argument(None),
     column: str = typer.Option(
-        None,
-        "--column",
-        "-c",
-        help="name of the column that contains lipid notations",
+        None, "--column", "-c", help="name of the column that contains lipid notations",
     ),
     output_file: Path = typer.Option(
         None,
@@ -251,10 +247,7 @@ def convert_file(
         help="Select between different convert mode: active, dynamic, fixed",
     ),
     worker: int = typer.Option(
-        1,
-        "--worker",
-        "-w",
-        help="Number of worker for multipeocessing",
+        1, "--worker", "-w", help="Number of worker for multipeocessing",
     ),
 ):
     """
@@ -533,10 +526,7 @@ def convert(
         typer.echo(convert.__doc__)
 
 
-def task_worker(
-    input_name: str,
-    params: dict,
-) -> dict:
+def task_worker(input_name: str, params: dict,) -> dict:
 
     # task = queue.get(True)
 
@@ -583,10 +573,7 @@ def equalize(
     table_dct, table_header_lst = cli_get_table(file)
     levels = get_levels(level)
     typer.echo(
-        typer.style(
-            f"Equalize lipid names on {levels} level.",
-            fg=typer.colors.CYAN,
-        )
+        typer.style(f"Equalize lipid names on {levels} level.", fg=typer.colors.CYAN,)
     )
     typer.echo(f"Processing file: {file.name} ...")
     with click_spinner.spinner():

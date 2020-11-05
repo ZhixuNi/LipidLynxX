@@ -52,8 +52,10 @@ def test_link_file(file_info: List[str]):
     abs_file_path_str = get_abs_path(file_info[0])
     search_col = file_info[1]
 
-    output_name = f"LipidLynxX-Linker_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.csv"
-    
+    output_name = (
+        f"LipidLynxX-Linker_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.csv"
+    )
+
     df_dct = pd.read_csv(abs_file_path_str).to_dict(orient="list")
     lipid_names = df_dct.get(search_col)
 

@@ -20,8 +20,8 @@ import pandas as pd
 # Get rhea-directions.tsv
 # https://www.rhea-db.org/help/reaction-side-direction
 # ftp://ftp.expasy.org/databases/rhea/tsv/rhea-directions.tsv
-rhea_tsv = r'../../test/test_input/rhea-directions.tsv'
-rhea_json = r'../../test/test_output/rhea-directions.json'
+rhea_tsv = r"../../test/test_input/rhea-directions.tsv"
+rhea_json = r"../../test/test_output/rhea-directions.json"
 rhea_col = ["RHEA_ID_MASTER", "RHEA_ID_LR", "RHEA_ID_RL", "RHEA_ID_BI"]
 
 rhea_df = pd.read_csv(rhea_tsv, sep="\t")

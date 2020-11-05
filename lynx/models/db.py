@@ -163,10 +163,7 @@ class DB(object):
     def to_json(self):
         db_json_str = json.dumps(self.details)
 
-        if check_json(
-            validator=self.validator,
-            json_obj=json.loads(db_json_str),
-        ):
+        if check_json(validator=self.validator, json_obj=json.loads(db_json_str),):
             return db_json_str
         else:
             raise Exception(f"Schema test FAILED. Schema {self.schema}")

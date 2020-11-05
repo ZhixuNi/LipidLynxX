@@ -29,9 +29,7 @@ def parse_lipid(lipid_name: str):
     converted_results = lynx_converter.convert_str(input_str=lipid_name)
     converted_name = converted_results.output
     decoder = Decoder()
-    encoder = Encoder(
-        logger=app_logger,
-    )
+    encoder = Encoder(logger=app_logger,)
     extracted_info = decoder.extract(converted_name)
     best_input_rule = encoder.get_best_rule(lipid_name)
     best_id = encoder.convert(lipid_name)
@@ -61,9 +59,7 @@ def parse_lipid(lipid_name: str):
 
 def detect_style(lipid_name: str) -> str:
 
-    encoder = Encoder(
-        logger=app_logger,
-    )
+    encoder = Encoder(logger=app_logger,)
     input_style = encoder.get_best_rule(lipid_name)
 
     return input_style
