@@ -1,5 +1,5 @@
 {
-  "_DATE": 20201025,
+  "_DATE": 20201116,
   "_AUTHORS": [
     "zhixu.ni@uni-leipzig.de"
   ],
@@ -7,9 +7,9 @@
     "LIPIDMAPS_COMP_DB"
   ],
   "SEPARATOR": {
-    "RESIDUE_SEPARATOR": "\\s",
+    "RESIDUE_SEPARATOR": "\\s+",
     "MOD_SEPARATOR": "-",
-    "SPACE": "\\s",
+    "SPACE": "\\s+",
     "COLON": ":",
     "SEMICOLON": ";",
     "SEPARATOR_LEVELS": {
@@ -68,6 +68,7 @@
       "ORDER": [
         "RESIDUE_INFO"
       ],
+      "AVOID_RESIDUE_SEPARATOR": "(?!_)|(?!/)",
       "RESIDUE_INFO": "{{RESIDUE.RESIDUE_INFO}}",
       "EXAMPLES": [
         "18:2;3O",

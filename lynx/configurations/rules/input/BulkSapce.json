@@ -1,5 +1,5 @@
 {
-  "_DATE": 20201031,
+  "_DATE": 20201116,
   "_AUTHORS": [
     "zhixu.ni@uni-leipzig.de"
   ],
@@ -9,7 +9,7 @@
   "SEPARATOR": {
     "LIPID_CLASS_SEPARATOR": "\\s",
     "MOD_SEPARATOR": "-",
-    "SPACE": "\\s",
+    "SPACE": "\\s+",
     "COLON": ":",
     "SEMICOLON": ";",
     "SEPARATOR_LEVELS": {

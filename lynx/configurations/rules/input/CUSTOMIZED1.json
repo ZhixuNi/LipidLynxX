@@ -1,5 +1,5 @@
 {
-  "_DATE": 20201025,
+  "_DATE": 20201116,
   "_AUTHORS": [
     "zhixu.ni@uni-leipzig.de"
   ],
@@ -9,7 +9,7 @@
   "SEPARATOR": {
     "MOD_SEPARATOR": "_",
     "RESIDUE_SEPARATOR": "[/]",
-    "SPACE": "\\s",
+    "SPACE": "\\s+",
     "COLON": ":",
     "SEMICOLON": ";",
     "COMMA": ",",
