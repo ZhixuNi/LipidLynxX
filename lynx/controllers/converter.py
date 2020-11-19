@@ -207,7 +207,8 @@ if __name__ == "__main__":
         # "Cer1P(24:1)",
         # "SPB(18:0)",
         # "CerP 24:1",
-        "Cer d18:1/20:1",
+        # "Cer d18:1/20:1",
+        "FA(20:4)",
     ]
     lv = "B0"
     # test_out_rule = "COMP_DB"

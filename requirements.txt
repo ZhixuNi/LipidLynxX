@@ -9,7 +9,7 @@ ipython>=7.19.0
 ipywidgets>=7.5.1
 natsort==7.0.1
 nbformat>=5.0.8
-numpy>=1.19.4
+numpy>=1.19.3
 openpyxl>=3.0.5
 pandas>=1.1.4
 pydantic>=1.7.2

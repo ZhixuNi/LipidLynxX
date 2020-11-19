@@ -508,7 +508,10 @@ class Encoder(object):
                         pass
                     if c_segments_dct and c_orders:
                         if c not in segments_dct:
-                            segments_dct[c] = {"ORDER": c_orders, "INFO": c_segments_dct}
+                            segments_dct[c] = {
+                                "ORDER": c_orders,
+                                "INFO": c_segments_dct,
+                            }
                         else:
                             pass
             else:
@@ -573,7 +576,9 @@ class Encoder(object):
                         checked_seg_info = self.check_segments(r_info)
                         if checked_seg_info:
                             comp_dct = self.compile_segments(checked_seg_info)
-                            res_info = r_info.get("residues", {}).get("residues_info", {})
+                            res_info = r_info.get("residues", {}).get(
+                                "residues_info", {}
+                            )
                             sum_c = 0
                             sum_sp_o = 0
                             is_modified = False
