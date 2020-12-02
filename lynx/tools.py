@@ -15,6 +15,7 @@
 
 import asyncio
 import json
+from multiprocessing import Manager, Pool
 import os
 import re
 from pathlib import Path
@@ -23,30 +24,28 @@ from typing import List, Union
 import click_spinner
 import typer
 
-from lynx.utils.log import cli_logger
-
 from lynx.controllers.converter import Converter
 from lynx.controllers.equalizer import Equalizer
 from lynx.controllers.linker import get_cross_links, get_lmsd_name, get_swiss_name
+from lynx.controllers.parser import detect_style
 from lynx.models.api_models import StyleType
+from lynx.utils.cfg_reader import app_cfg_info, lynx_version
 from lynx.utils.cli_utils import cli_get_table, cli_save_output
 from lynx.utils.file_handler import (
     create_converter_output,
     create_equalizer_output,
     get_output_name,
 )
-
-from lynx.utils.cfg_reader import app_cfg_info, lynx_version
+from lynx.utils.log import cli_logger
 from lynx.utils.params_loader import build_input_rules, build_output_rules
 from lynx.utils.toolbox import get_levels, get_style_level
-
 
 cli_app = typer.Typer(
     help=f"LipidLynxX CLI tools version {lynx_version}. "
     f"Developed by team SysMedOs @ University of Leipzig "
     f"Please cite our publication in an appropriate form. "
     f"LipidLynxX preprint on bioRxiv.org. Zhixu Ni, Maria Fedorova. "
-    f"'LipidLynxX: a data transfer hub to support integration of large scale lipidomics datasets' "
+    f"'LipidLynxX: lipid annotations converter for large scale lipidomics and epilipidomics datasets' "
     f"DOI: 10.1101/2020.04.09.033894"
 )
 
@@ -124,6 +123,12 @@ def convert_lipids(
         "--level",
         "-l",
         help="Level of lipid identifier information for the output. Set to MAX by default.",
+    ),
+    mode: str = typer.Option(
+        "active",
+        "--mode",
+        "-m",
+        help="Select between different convert mode: active, dynamic, fixed",
     ),
 ):
     """
@@ -235,21 +240,47 @@ def convert_file(
         "-l",
         help="Level of lipid identifier information for the output. Set to MAX by default.",
     ),
+    mode: str = typer.Option(
+        "active",
+        "--mode",
+        "-m",
+        help="Select between different convert mode: active, dynamic, fixed",
+    ),
+    worker: int = typer.Option(
+        1, "--worker", "-w", help="Number of worker for multipeocessing",
+    ),
 ):
     """
-    Convert one .txt/ .csv / .xlsx FILE containing lipid names into supported levels
+    Convert one .csv /.tsv / .xlsx FILE containing lipid names into supported levels
     and export to supported style as .csv / .xlsx file.
     """
-    if column:
-        lipid_col_name = column
-        use_one_col = True
-        converted_only = True
-    else:
-        lipid_col_name = None
-        use_one_col = False
-        converted_only = False
 
-    raw_table_dct = cli_get_table(file)
+    raw_table_dct, table_header_lst = cli_get_table(file)
+
+    use_one_col = False
+    converted_only = False
+    lipid_col_name = None
+    if column:
+        if len(column) < 4:
+            try:
+                column = int(column)
+            except ValueError:
+                pass
+        if isinstance(column, str):
+            for col in table_header_lst:
+                if col.lower().strip(" ") == column.lower().strip(" "):
+                    lipid_col_name = col
+                    use_one_col = True
+                    converted_only = True
+        elif isinstance(column, int) and len(table_header_lst) > column:
+            lipid_col_name = table_header_lst[column]
+            use_one_col = True
+            converted_only = True
+        else:
+            pass
+    else:
+        pass
+
     if lipid_col_name:
         table_dct = {lipid_col_name: raw_table_dct.get(lipid_col_name)}
         if table_dct.get(lipid_col_name):
@@ -264,12 +295,7 @@ def convert_file(
     else:
         table_dct = raw_table_dct
     style, level = get_style_level(style, level)
-    lynx_converter = Converter(
-        style=style,
-        input_rules=default_input_rules,
-        output_rules=default_output_rules,
-        logger=cli_logger,
-    )
+
     typer.echo(
         typer.style(
             f"Convert lipid names into {style} style @ {level} level.",
@@ -277,18 +303,113 @@ def convert_file(
         )
     )
     typer.echo(f"Processing file: {file.name} ...")
-
+    fixed_input_style = ""
     with click_spinner.spinner():
         if use_one_col:
-            lipid_list = table_dct.get(lipid_col_name)
-            converted_obj = lynx_converter.convert_list(
-                input_list=lipid_list, level=level, default_na="UNPROCESSED"
-            )
-            converted_names = converted_obj.output
-            converted_dct = {f"Converted_{lipid_col_name}": converted_names}
-            converted_dct.update(raw_table_dct)
+            lipid_lst = table_dct.get(lipid_col_name)
+            if mode.lower() == "fixed" and len(lipid_lst) > 5:
+                top_input_style = detect_style(lipid_lst[0])
+                bottom_input_style = detect_style(lipid_lst[-1])
+                if top_input_style == bottom_input_style:
+                    fixed_input_style = top_input_style
+
+            if isinstance(worker, int):
+                if worker > len(lipid_lst):
+                    worker = len(lipid_lst)
+                else:
+                    worker = min(len(lipid_lst), worker)
+                    if worker > 8:
+                        worker = 8
+            if worker > 1:
+                # queue = Manager().Queue()
+                pool = Pool(processes=worker)
+                result_lst = []
+                params = {
+                    "style": style,
+                    "input_rules": default_input_rules,
+                    "output_rules": default_output_rules,
+                    "logger": cli_logger,
+                    "input_style": fixed_input_style,
+                    "level": level,
+                }
+                for input_name in lipid_lst:
+                    r = pool.apply_async(task_worker, args=(input_name, params))
+                    result_lst.append(r)
+                pool.close()
+                pool.join()
+
+                final_r_dct = {}
+                for rl in result_lst:
+                    if isinstance(rl, dict):
+                        rx = rl
+                    else:
+                        try:
+                            rx = rl.get()
+                        except (KeyError, SystemError, ValueError):
+                            cli_logger.warning(
+                                f"Cannot load results from multiprocessing...{rx}"
+                            )
+                    final_r_dct.update(rx)
+                final_r_lst = []
+                for n_lipid in lipid_lst:
+                    final_r_lst.append(final_r_dct.get(n_lipid, "UNPROCESSED"))
+                converted_dct = {f"Converted_{lipid_col_name}": final_r_lst}
+                converted_dct.update(raw_table_dct)
+            else:
+                lynx_converter = Converter(
+                    style=style,
+                    input_rules=default_input_rules,
+                    output_rules=default_output_rules,
+                    logger=cli_logger,
+                    input_style=fixed_input_style,
+                )
+                converted_obj = lynx_converter.convert_list(
+                    input_list=lipid_lst, level=level
+                )
+                converted_names = converted_obj.output
+                filled_converted_names = []
+                for c_n in converted_names:
+                    if c_n:
+                        filled_converted_names.append(c_n)
+                    else:
+                        filled_converted_names.append("UNPROCESSED")
+                converted_dct = {f"Converted_{lipid_col_name}": filled_converted_names}
+                converted_dct.update(raw_table_dct)
         else:
-            converted_dct = lynx_converter.convert_dict(table_dct, level=level)
+            if mode.lower() == "fixed":
+                converted_dct = {}
+                for k in table_dct:
+                    if isinstance(k, str) and len(k) < 256:
+                        k_val = table_dct[k]
+                        if isinstance(k_val, list):
+                            col_lipid_lst = k_val
+                        else:
+                            col_lipid_lst = [k_val]
+                        if col_lipid_lst:
+                            if len(col_lipid_lst) > 5:
+                                col_top_input_style = detect_style(col_lipid_lst[0])
+                                col_bottom_input_style = detect_style(col_lipid_lst[-1])
+                            if col_top_input_style == col_bottom_input_style:
+                                fixed_input_style = col_bottom_input_style
+                            lynx_converter = Converter(
+                                style=style,
+                                input_rules=default_input_rules,
+                                output_rules=default_output_rules,
+                                logger=cli_logger,
+                                input_style=fixed_input_style,
+                            )
+                            converted_dct[k] = lynx_converter.convert_list(
+                                input_list=col_lipid_lst, level=level
+                            )
+            else:
+                lynx_converter = Converter(
+                    style=style,
+                    input_rules=default_input_rules,
+                    output_rules=default_output_rules,
+                    logger=cli_logger,
+                    input_style=fixed_input_style,
+                )
+                converted_dct = lynx_converter.convert_dict(table_dct, level=level)
     if output_file:
         if isinstance(output_file, Path):
             pass
@@ -310,13 +431,16 @@ def convert_file(
 def convert(
     source: str = typer.Argument(None),
     column: str = typer.Option(
-        None, "--column", "-c", help="name of the column that contains lipid notations",
+        None,
+        "--column",
+        "-c",
+        help="Name or index of the column that contains lipid notations. # index count from 0.",
     ),
     style: StyleType = typer.Option(
         "LipidLynxX",
         "--style",
         "-s",
-        help="The export style, choose from LipidLynxX, COMP_DB, and ShorthandNotation. Set to LipidLynxX by default.",
+        help="The export style, choose from LipidLynxX, BioPAN, COMP_DB, and ShorthandNotation. Set to LipidLynxX by default.",
     ),
     level: str = typer.Option(
         "MAX",
@@ -333,11 +457,17 @@ def convert(
             "This option is valid only when an input file is provided as SOURCE argument"
         ),
     ),
+    mode: str = typer.Option(
+        "active",
+        "--mode",
+        "-m",
+        help="Select between different convert mode: active, dynamic, fixed",
+    ),
 ):
     """
     Convert SOURCE lipid names into supported levels.
 
-    Support SOURCE input as JSON string or file path of .txt/ .csv/ .xlsx file.
+    Support SOURCE input as JSON string or file path of .csv/ .tsv/ .xlsx file.
 
     Use option --output to export a .csv / .xlsx file from input file.
 
@@ -363,9 +493,15 @@ def convert(
     if source:
 
         if isinstance(source, Path):
-            convert_file(file=source, output_file=output_file, style=style, level=level)
+            convert_file(
+                file=source,
+                output_file=output_file,
+                style=style,
+                level=level,
+                mode=mode,
+            )
         elif isinstance(source, str):
-            if re.match(r".+(\.csv|\.txt|\.xlsx)$", source, re.IGNORECASE):
+            if re.match(r".+(\.csv|\.tsv|\.xlsx)$", source, re.IGNORECASE):
                 if os.path.isfile(source):
                     convert_file(
                         file=Path(source),
@@ -375,7 +511,7 @@ def convert(
                         level=level,
                     )
             else:
-                convert_lipids(lipids=source, style=style, level=level)
+                convert_lipids(lipids=source, style=style, level=level, mode=mode)
         else:
             typer.secho(
                 'Please input a lipid name. e.g. "PLPC" or a file path. Type --help to see instructions.',
@@ -388,6 +524,29 @@ def convert(
             fg=typer.colors.YELLOW,
         )
         typer.echo(convert.__doc__)
+
+
+def task_worker(input_name: str, params: dict,) -> dict:
+
+    # task = queue.get(True)
+
+    lynx_converter = Converter(
+        style=params.get("style"),
+        input_rules=params.get("input_rules"),
+        output_rules=params.get("output_rules"),
+        logger=params.get("logger"),
+        input_style=params.get("input_style"),
+    )
+    converted_obj = lynx_converter.convert_str(
+        input_str=input_name, level=params.get("level")
+    )
+    converted_name = converted_obj.output
+    if converted_name:
+        filled_converted_name = converted_name
+    else:
+        filled_converted_name = "UNPROCESSED"
+    print(f"PID:{os.getpid()} input_name# {input_name}", "->", filled_converted_name)
+    return {input_name: filled_converted_name}
 
 
 @cli_app.command(name="equalize")
@@ -411,7 +570,7 @@ def equalize(
     Equalize one .csv / .xlsx FILE containing lipid names into supported levels
     and export to supported style as .csv / .xlsx file.
     """
-    table_dct = cli_get_table(file)
+    table_dct, table_header_lst = cli_get_table(file)
     levels = get_levels(level)
     typer.echo(
         typer.style(f"Equalize lipid names on {levels} level.", fg=typer.colors.CYAN,)
@@ -446,15 +605,15 @@ def link_lipid(
     url: bool = typer.Option(False, "--url", "-u"),
 ):
     """
-    Convert one LIPID name into supported levels and export to supported style
+    Link one LIPID name into public available databases and resources
 
     LIPID: lipid abbreviation
 
-    --style: Export style. LipidLynxX, COMP_DB, or ShorthandNotation. Default value: LipidLynxX
+    --formatted: Group results by types of resources
 
-    --level: LipidLynxX lipid information levels. e.g. B0, D1, S4.1 or MAX for Maximum level. Default value: MAX
+    --url: export URL of the resources
 
-    e.g. convert "PLPC" --style LipidLynxX --level S1
+    e.g. link-lipid "PLPC" --formatted --url
 
     """
     if lipid:
@@ -480,3 +639,4 @@ def link_lipid(
 
 if __name__ == "__main__":
     cli_app()
+    # python cli_lynx.py convert-file test/test_input/test_biopan_lite.csv --column 0 --output test/test_output/output_test_biopan_lite.csv --style BioPAN

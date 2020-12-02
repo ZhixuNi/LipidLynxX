@@ -20,7 +20,7 @@
     "id": {
       "description": "The LipidLynx id",
       "type": "string",
-      "minLength": 2,
+      "minLength": 0,
       "maxLength": 384
     },
     "type": {
@@ -63,7 +63,7 @@
     },
     "info": {
       "description": "Information of the modification as individual objects",
-      "type": "array",
+      "type": "object",
       "items": {
         "type": "object",
         "required": [
@@ -74,7 +74,7 @@
           "cv": {
             "description": "The controlled vocabulary of modification",
             "type": "string",
-            "minLength": 1,
+            "minLength": 0,
             "maxLength": 8
           },
           "count": {
@@ -115,10 +115,10 @@
             "uniqueItems": true,
             "minProperties": 0,
             "propertyNames": {
-              "pattern": "(^[COHNPKS]|Na$)"
+              "pattern": "(^[COHNPKS]a?$)"
             },
             "patternProperties": {
-              "(^[COHNPKS]|Na$)": {
+              "(^[COHNPKS]a?$)": {
                 "type": "integer",
                 "minimum": -99,
                 "maximum": 99}

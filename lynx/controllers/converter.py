@@ -14,16 +14,12 @@
 #     Developer Zhixu Ni zhixu.ni@uni-leipzig.de
 
 import re
-from typing import List, Dict, Union, Tuple
+from typing import Dict, List, Union
 
 from lynx.controllers.encoder import Encoder
-
-from lynx.models.api_models import ConvertedStrData, ConvertedListData, StyleType
+from lynx.models.api_models import ConvertedListData, ConvertedStrData, StyleType
+from lynx.models.defaults import default_input_rules, default_output_rules
 from lynx.utils.log import app_logger
-from lynx.models.defaults import (
-    default_output_rules,
-    default_input_rules,
-)
 from lynx.utils.toolbox import keep_string_only
 
 
@@ -31,6 +27,7 @@ class Converter:
     def __init__(
         self,
         style: str = "LipidLynxX",
+        input_style: str = "",
         input_rules: dict = default_input_rules,
         output_rules: dict = default_output_rules,
         logger=app_logger,
@@ -40,17 +37,18 @@ class Converter:
             style=style,
             input_rules=input_rules,
             output_rules=output_rules,
+            input_style=input_style,
             logger=logger,
         )
         self.logger = logger
 
-    def convert_str(
-        self, input_str: str, level: str = None, default_na: str = ""
-    ) -> ConvertedStrData:
+    def convert_str(self, input_str: str, level: str = None,) -> ConvertedStrData:
         output_dct = {}
         # Set COMP_DB to max level B2
         if re.search(r"COMP\\s*[_]?\\s*(DB)?", self.style):
             level = "B2"
+        elif re.search(r"BioPAN", self.style, re.IGNORECASE):
+            level = "B0"
         if input_str and isinstance(input_str, str) and len(input_str) < 512:
             converted_id = self.encoder.convert(input_str, level=level)
             if converted_id:
@@ -61,23 +59,22 @@ class Converter:
                 output_dct["skipped"] = input_str
         converted_str_obj = ConvertedStrData(
             input=output_dct.get("input", input_str),
-            output=output_dct.get("output", default_na),
+            output=output_dct.get("output", ""),
             converted=output_dct.get("converted", tuple()),
             skipped=output_dct.get("skipped", ""),
         )
         return converted_str_obj
 
     def convert_list(
-        self, input_list: List[str], level: str = None, default_na: str = ""
+        self, input_list: List[str], level: str = None
     ) -> ConvertedListData:
         output_dct = {"input": [], "output": [], "converted": [], "skipped": []}
         abbr_result_lst = []
         if input_list and isinstance(input_list, list):
             input_list = keep_string_only(input_list, self.logger)
             for abbr in input_list:
-                abbr_result_lst.append(
-                    self.convert_str(abbr, level=level, default_na=default_na).dict()
-                )
+                abbr_result = self.convert_str(abbr, level=level).dict()
+                abbr_result_lst.append(abbr_result)
         for abbr_result in abbr_result_lst:
             for k in output_dct:
                 output_dct[k].append(abbr_result.get(k, ""))
@@ -97,10 +94,7 @@ class Converter:
         return converted_lst_obj
 
     def convert_dict(
-        self,
-        input_dct: Dict[str, Union[str, List[str]]],
-        level: str = None,
-        default_na: str = "",
+        self, input_dct: Dict[str, Union[str, List[str]]], level: str = None
     ) -> Dict[str, ConvertedListData]:
         output_dct = {}
         if input_dct and isinstance(input_dct, dict):
@@ -112,14 +106,15 @@ class Converter:
                     else:
                         in_lst = [k_val]
                     if in_lst:
-                        output_dct[k] = self.convert_list(
-                            in_lst, level=level, default_na=default_na
-                        )
+                        output_dct[k] = self.convert_list(in_lst, level=level)
 
         return output_dct
 
     def convert(
-        self, data: Union[dict, List[str], str], level: str = None
+        self,
+        data: Union[dict, List[str], str],
+        level: str = None,
+        input_style: str = "",
     ) -> Dict[str, dict]:
         output_dct = {}
 
@@ -165,33 +160,69 @@ if __name__ == "__main__":
 
     t_in_lst = [
         # "GM3(d18:1/18:2(9Z,11Z)(12OH))",
-        "TG P-18:1_18:2(9Z,11Z)(12OH)_18:1(9)(11OH)",
-        "TG P-18:1_18:2(9Z,11Z)_18:1(9)",
-        "CL(1'-[18:1(9Z)/18:2(9Z,12Z)],3'-[18:2(9Z,12Z)/18:2(9Z,12Z)])",
-        "TG(16:0/18:2/9:0<oxo{9}>)",
-        "HETE",
-        "HETE",
-        "SPBP 18:0;O",
-        "SPBP 18:0;O3",
-        "Cer 18:1;3O/20:4",
-        "CoA(20:3(11Z,14Z,17Z))",
-        "CoA 18:2;O",
-        "FACoA 18:0",
-        "Cer 24:2",
-        "LMGP01010594",
-        "lid",
+        # "TG P-18:1_18:2(9Z,11Z)(12OH)_18:1(9)(11OH)",
+        # "TG P-18:1_18:2(9Z,11Z)_18:1(9)",
+        # "CL(1'-[18:1(9Z)/18:2(9Z,12Z)],3'-[18:2(9Z,12Z)/18:2(9Z,12Z)])",
+        # "TG(16:0/18:2/9:0<oxo{9}>)",
+        # "HETE",
+        # "HETE",
+        # "SPBP 18:0;O",
+        # "SPBP 18:0;O3",
+        # "Cer 18:1;3O/20:4",
+        # "CoA(20:3(11Z,14Z,17Z))",
+        # "CoA 18:2;O",
+        # "FACoA 18:0",
+        # "Cer 24:2",
+        # "LMGP01010594",
+        # "lid",
+        # "PLPC",
+        # "SM d18:1/24:0",
+        # "DHA",
+        # "PC(18:1{9Z}/18:2{9Z,11E}<OH{12}>)",
+        # "SM(18:0;2OH{1R,3S}/18:2{8E,11E})",
+        # "SM(18:1{4E};2OH{1R,3S}<2OH{8S,18R},oxo{10}>/18:2{8E,11E}<2OH{7S,18R},oxo{12}>)",
+        # "TG(P-18:1_18:2_18:1)",
+        # "DG(P-34:2)",
+        # "DG P-34:2",
+        # "P-DG 34:2",
+        # "P-LPC 18:2",
+        # "SM 18:2",
+        # "dhCer 18:2",
+        # "FaCN 18:2",
+        # "PE(O-16:0/18:2(9Z,12Z))",
+        # "PE P-16:0/18:2(9Z,12Z)",
+        # "SM d18:1/20:4 5Z_8Z_10E_14Z",
+        # "PS 18:1(9Z)/18:2(9Z,11E)(10OH)",
+        # "Cer1P 24:1",
+        # "SM(18:0;2OH{1R,3S}/18:2{9Z,12Z})",
+        # "PLPC",
+        # "SPB 18:0",
+        # "SPB1P 18:0",
+        # "Cer(18:0;2OH{1R,3S}<2OH{8S,18R},oxo{10}>/18:2{9Z,12Z})",
+        # "PS 18:1(9Z)_18:2(9Z,11E)(10OH)",
+        # "DG(O-34:2)",
+        # "TG 18:1(9Z)/16:0/18:2(9Z,11E)(10OH)",
+        # "S1P(18:0)",
+        # "PS(16:0/HETE)",
+        # "Cer1P(24:1)",
+        # "SPB(18:0)",
+        # "CerP 24:1",
+        # "Cer d18:1/20:1",
+        "FA(20:4)",
     ]
-    lv = "B1"
+    lv = "B0"
     # test_out_rule = "COMP_DB"
-    test_out_rule = "LipidLynxX"
+    # test_out_rule = "LipidLynxX"
+    test_out_rule = "BioPAN"
+    # test_out_rule = "BracketsShorthand"
     lynx_converter = Converter(style=test_out_rule, logger=app_logger)
     for t_in in t_in_lst:
-        t1_out = lynx_converter.convert(t_in, level="B1")
+        t1_out = lynx_converter.convert(t_in, level=lv)
         app_logger.info(f"Input: {t_in} -> Best Output: {t1_out}")
 
-    t2_out = lynx_converter.convert(t_in_lst)
-    app_logger.info(f"Input: {t_in_lst} -> Best Output: {t2_out}")
-    app_logger.info(t2_out)
+    # t2_out = lynx_converter.convert(t_in_lst)
+    # app_logger.info(f"Input: {t_in_lst} -> Best Output: {t2_out}")
+    # app_logger.info(t2_out)
     #
     # t3_out = lynx_converter.convert({"1": t_in_lst})
     # logger.info(f"Input: {t_in_lst} -> Best Output: {t3_out}")

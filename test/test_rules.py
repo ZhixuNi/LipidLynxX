@@ -15,6 +15,7 @@
 
 import os
 import sys
+
 import pytest
 
 lynx_path = os.path.dirname(os.path.abspath(__file__))

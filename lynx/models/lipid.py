@@ -13,23 +13,17 @@
 # For more info please contact:
 #     Developer Zhixu Ni zhixu.ni@uni-leipzig.de
 
-from enum import Enum
 import itertools
 import json
-from operator import itemgetter
 import re
+from operator import itemgetter
 from typing import Dict, List, Optional
 
 from jsonschema import Draft7Validator
 from natsort import natsorted
-from pydantic import BaseModel, constr, conint
+from pydantic import BaseModel, conint, constr
 
-from lynx.models.api_models import LvType
-from lynx.models.defaults import (
-    lynx_schema_cfg,
-    lipid_level_lst,
-    mod_db_level_lst,
-)
+from lynx.models.defaults import lipid_level_lst, lynx_schema_cfg, mod_db_level_lst
 from lynx.utils.basics import get_abs_path
 from lynx.utils.cfg_reader import api_version
 from lynx.utils.log import app_logger
@@ -101,7 +95,7 @@ class LipidLegacy(object):
         self.level = self.sum_info.get("level", "")
         self.linked_ids = self.sum_info.get("linked_ids", {})
         self.logger = logger
-        self.logger.info(
+        self.logger.details(
             f"Level {self.level:4s} FattyAcid created from: {self.lipid_code}"
         )
 
@@ -231,7 +225,7 @@ class LipidLegacy(object):
         fa_info_lst = []
         for mod_lv in lv_lst["mod_lv_lst"]:
             fa_res_dct[mod_lv] = []
-        self.logger.info(res_lst)
+        self.logger.details(res_lst)
         for res in res_lst:
             res_info = res["info"]
             if res_info.get("type", None) == "FA":
@@ -359,8 +353,8 @@ class LipidLegacy(object):
                 "is_modified": self.is_modified,
                 "info": {"main_class": self.lynx_class_lv0, "residues": res_info_lst},
             }
-            self.logger.info(f"modification level: {self._max_mod_level}")
-            self.logger.info(f"\n{lipid_info_dct}")
+            self.logger.details(f"modification level: {self._max_mod_level}")
+            self.logger.details(f"\n{lipid_info_dct}")
 
             return lipid_info_dct
         else:
@@ -486,11 +480,11 @@ if __name__ == "__main__":
     counter = 0
     for pl in lipid_lst:
         counter += 1
-        app_logger.info(f"Test Lipid #{counter} : {pl}")
+        app_logger.details(f"Test Lipid #{counter} : {pl}")
         pl_obj = Lipid(lipid_code=pl)
-        app_logger.info(f"Export JSON \n {pl_obj.to_json()}")
-        app_logger.info(
+        app_logger.details(f"Export JSON \n {pl_obj.to_json()}")
+        app_logger.details(
             "".join([f"\n {s}: {pl_obj.linked_ids[s]}" for s in pl_obj.linked_ids])
         )
 
-    app_logger.info("FINISHED")
+    app_logger.details("FINISHED")

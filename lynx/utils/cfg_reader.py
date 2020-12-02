@@ -36,10 +36,13 @@ def load_cfg_info(cfg_path: str = None) -> Dict[str, str]:
         "output_rules",
         "resource_kegg",
         "resource_lion",
-        "resource_lion",
+        "resource_rhea",
         "temp_folder",
         "temp_max_days",
         "temp_max_files",
+        "zmq_client_port",
+        "zmq_worker_port",
+        "zmq_worker_runner",
     ]
     config = configparser.ConfigParser()
     if cfg_path and isinstance(cfg_path, str):
@@ -79,6 +82,12 @@ def load_cfg_info(cfg_path: str = None) -> Dict[str, str]:
         cfg_dct["app_url"] = "127.0.0.1"
     if "app_port" not in cfg_dct:
         cfg_dct["app_port"] = "1399"
+    if "zmq_client_port" not in cfg_dct:
+        cfg_dct["zmq_client_port"] = 5559
+    if "zmq_worker_port" not in cfg_dct:
+        cfg_dct["zmq_worker_port"] = 5560
+    if "zmq_worker_runner" not in cfg_dct:
+        cfg_dct["zmq_worker_runner"] = 5
 
     usr_app_prefix = cfg_dct.get("app_prefix", "").strip("/")
 
@@ -131,7 +140,7 @@ def get_cli_log_settings(log_cfg: Union[str, bool] = "OFF"):
 default_cfg_path = "/lynx/config.ini"
 app_cfg_info = load_cfg_info(cfg_path=default_cfg_path)
 
-lynx_version = "0.8.24"
+lynx_version = "0.9.24"
 api_version = app_cfg_info.get("api_version", "1.0")
 app_prefix = app_cfg_info.get("app_prefix", "")
 app_log_level = get_log_level(app_cfg_info.get("app_log_level", "DEBUG"))

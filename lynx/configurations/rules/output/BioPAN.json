@@ -1,81 +1,33 @@
 {
-  "_DATE": 20200731,
+  "_DATE": 20201030,
   "_AUTHORS": [
     "zhixu.ni@uni-leipzig.de"
   ],
   "NOMENCLATURE": "BioPAN",
   "SUPPORTED_LEVELS": [
-    "B2"
+    "B0"
   ],
-  "SEPARATORS": {
+  "SUPPORT_MODIFICATION": 0,
+  "SEPARATOR": {
     "DB_SEPARATOR": ":",
-    "O_SEPARATOR": ";",
-    "RESIDUE_SEPARATOR": " ",
-    "SQUARE_BRACKET_LEFT": "[",
-    "SQUARE_BRACKET_RIGHT": "]",
+    "RESIDUE_BRACKET_LEFT": "\\(",
+    "RESIDUE_BRACKET_RIGHT": "\\)",
     "SEPARATOR_LEVELS": {
       "B": "",
-      "D": "_",
+      "M": "_",
       "S": "/"
-    }
-  },
-  "MODS": {
-    "MOD": {
-      "ORDER": [
-        "SEMICOLON",
-        "MOD_CV",
-        "MOD_COUNT"
-      ],
-      "OPTIONAL": [
-        "SEMICOLON",
-        "MOD_COUNT"
-      ],
-      "REPEAT": {
-        "MOD": [
-          1,
-          10
-        ]
-      },
-      "SEMICOLON": ";",
-      "MOD_CV": "([a-zA-Z]*[-0-9a-zA-Z]*)",
-      "MOD_COUNT": "\\d?\\d?",
-      "EXAMPLES": [
-        ";O",
-        ";O2"
-      ]
-    },
-    "SUM_MODS": {
-      "ORDER": [
-        "MOD"
-      ],
-      "REPEAT": {
-        "MOD": [
-          1,
-          10
-        ]
-      },
-      "MOD": "$.MODS.MOD.0",
-      "EXAMPLES": [
-        ";O2;H2"
-      ]
     }
   },
   "RESIDUES": {
     "RESIDUE": {
       "ORDER": [
         "LINK",
-        "NUM_C",
+        "C_COUNT",
         "DB_SEPARATOR",
-        "NUM_DB",
-        "O_SEPARATOR",
-        "NUM_O"
+        "DB_COUNT"
       ],
       "OPTIONAL": [
-        "LINK",
-        "DB",
-        "O_SEPARATOR",
-        "NUM_O",
-        "SUM_MODS"
+        "LINK"
       ],
       "REPEAT": {
         "SUM_MODS": [
@@ -84,12 +36,9 @@
         ]
       },
       "LINK": "[OP]-|C|[mdt]|h",
-      "NUM_C": "[0-9]{1,2}",
+      "C_COUNT": "[0-9]{1,2}",
       "DB_SEPARATOR": ":",
-      "NUM_DB": "[1,2]?[0-9]",
-      "O_SEPARATOR": ";",
-      "NUM_O": "O[2-3]?",
-      "SUM_MODS": "$.MODS.SUM_MODS.0"
+      "DB_COUNT": "[1,2]?[0-9]"
     },
     "EXCEPTIONS": {
       "PREFIX": "TEST"
@@ -99,8 +48,9 @@
     "FA01": {
       "ORDER": [
         "CLASS",
-        "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
       ],
       "MAX_RESIDUES": 1,
       "CLASS": {
@@ -113,8 +63,9 @@
     "FA02": {
       "ORDER": [
         "CLASS",
-        "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
       ],
       "MAX_RESIDUES": 1,
       "CLASS": {
@@ -127,8 +78,9 @@
     "FA03": {
       "ORDER": [
         "CLASS",
-        "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
       ],
       "MAX_RESIDUES": 1,
       "CLASS": {
@@ -141,8 +93,9 @@
     "FA04": {
       "ORDER": [
         "CLASS",
-        "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
       ],
       "MAX_RESIDUES": 1,
       "CLASS": {
@@ -155,8 +108,9 @@
     "FA0705": {
       "ORDER": [
         "CLASS",
-        "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
       ],
       "MAX_RESIDUES": 1,
       "CLASS": {
@@ -167,11 +121,34 @@
         ]
       }
     },
-    "GL01": {
+    "FA0707": {
       "ORDER": [
         "CLASS",
-        "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
+      ],
+      "MAX_RESIDUES": 1,
+      "CLASS": {
+        "OUTPUT": "FaCN",
+        "INPUT": [
+          "FaCN",
+          "FACN"
+        ]
+      }
+    },
+    "GL01": {
+      "ORDER": [
+        "PREFIX",
+        "CLASS",
+        "SUFFIX",
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
+      ],
+      "OPTIONAL": [
+        "PREFIX",
+        "SUFFIX"
       ],
       "MAX_RESIDUES": 1,
       "CLASS": {
@@ -184,9 +161,16 @@
     },
     "GL02": {
       "ORDER": [
+        "PREFIX",
         "CLASS",
-        "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "SUFFIX",
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
+      ],
+      "OPTIONAL": [
+        "PREFIX",
+        "SUFFIX"
       ],
       "MAX_RESIDUES": 2,
       "CLASS": {
@@ -199,9 +183,12 @@
     },
     "GL03": {
       "ORDER": [
+        "PREFIX",
         "CLASS",
-        "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "SUFFIX",
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
         "PREFIX",
@@ -221,8 +208,9 @@
         "PREFIX",
         "CLASS",
         "SUFFIX",
-        "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
         "PREFIX",
@@ -248,8 +236,9 @@
         "PREFIX",
         "CLASS",
         "SUFFIX",
-        "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
         "PREFIX",
@@ -275,8 +264,9 @@
         "PREFIX",
         "CLASS",
         "SUFFIX",
-        "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
         "PREFIX",
@@ -302,8 +292,9 @@
         "PREFIX",
         "CLASS",
         "SUFFIX",
-        "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
         "PREFIX",
@@ -329,8 +320,9 @@
         "PREFIX",
         "CLASS",
         "SUFFIX",
-        "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
         "PREFIX",
@@ -358,8 +350,9 @@
         "PREFIX",
         "CLASS",
         "SUFFIX",
-        "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
         "PREFIX",
@@ -385,8 +378,9 @@
         "PREFIX",
         "CLASS",
         "SUFFIX",
-        "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
         "PREFIX",
@@ -412,8 +406,9 @@
         "PREFIX",
         "CLASS",
         "SUFFIX",
-        "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
         "PREFIX",
@@ -439,8 +434,9 @@
         "PREFIX",
         "CLASS",
         "SUFFIX",
-        "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
         "PREFIX",
@@ -466,8 +462,9 @@
         "PREFIX",
         "CLASS",
         "SUFFIX",
-        "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
       ],
       "MAX_RESIDUES": 2,
       "PREFIX": {
@@ -493,8 +490,9 @@
         "PREFIX",
         "CLASS",
         "SUFFIX",
-        "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
         "PREFIX",
@@ -520,8 +518,9 @@
         "PREFIX",
         "CLASS",
         "SUFFIX",
-        "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
         "PREFIX",
@@ -547,8 +546,9 @@
         "PREFIX",
         "CLASS",
         "SUFFIX",
-        "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
         "PREFIX",
@@ -572,14 +572,12 @@
     },
     "SP01": {
       "ORDER": [
-        "CLASS",
-        "SUFFIX",
-        "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "PREFIX",
+        "CLASS"
       ],
       "MAX_RESIDUES": 1,
       "CLASS": {
-        "OUTPUT": "SG",
+        "OUTPUT": "SPB",
         "INPUT": [
           "SPB",
           "[Ss]phingosine"
@@ -588,16 +586,14 @@
     },
     "SP0105": {
       "ORDER": [
-        "CLASS",
-        "SUFFIX",
-        "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "PREFIX",
+        "CLASS"
       ],
       "MAX_RESIDUES": 1,
       "CLASS": {
-        "OUTPUT": "SGP",
+        "OUTPUT": "SPBP",
         "INPUT": [
-          "SPBP"
+          "SPBP", "SPB1P", "S1P"
         ]
       }
     },
@@ -606,8 +602,9 @@
         "PREFIX",
         "CLASS",
         "SUFFIX",
-        "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
         "PREFIX",
@@ -628,9 +625,9 @@
         ]
       },
       "SUFFIX": {
-        "OUTPUT": "P",
+        "OUTPUT": "1P",
         "INPUT": [
-          "P"
+          "P", "1P"
         ]
       }
     },
@@ -639,8 +636,9 @@
         "PREFIX",
         "CLASS",
         "SUFFIX",
-        "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
         "PREFIX",
@@ -666,8 +664,9 @@
         "PREFIX",
         "CLASS",
         "SUFFIX",
-        "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
         "PREFIX",
@@ -696,8 +695,9 @@
         "PREFIX",
         "CLASS",
         "SUFFIX",
-        "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
         "PREFIX",
@@ -722,8 +722,9 @@
         "PREFIX",
         "CLASS",
         "SUFFIX",
-        "RESIDUE_SEPARATOR",
-        "SUM_RESIDUES"
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
       ],
       "OPTIONAL": [
         "PREFIX",
