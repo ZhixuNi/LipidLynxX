@@ -13,27 +13,22 @@
 # For more info please contact:
 #     Developer Zhixu Ni zhixu.ni@uni-leipzig.de
 
-from multiprocessing import Process
 import re
+from multiprocessing import Process
 
 from fastapi import APIRouter, HTTPException, status
 
 from lynx.controllers.linker import get_cross_links, get_lmsd_name, get_swiss_name
 from lynx.models.api_models import (
+    InputDictData,
+    InputListData,
     JobStatus,
     JobType,
     LevelsData,
-    InputDictData,
-    InputListData,
 )
 from lynx.mq.client import linker_client
 from lynx.routers.api_converter import convert_lipid
-from lynx.utils.job_manager import (
-    is_job_finished,
-    get_job_output,
-    save_job,
-    create_job_token,
-)
+from lynx.utils.job_manager import create_job_token, get_job_output, is_job_finished
 
 router = APIRouter()
 
@@ -195,38 +190,40 @@ async def link_str(
     return await link_one_lipid(lipid_name, export_url, export_names)
 
 
-@router.post("/list/", status_code=status.HTTP_201_CREATED)
-async def link_list(
-    lipid_names: list, export_url: bool = False, export_names: bool = True,
-) -> dict:
-    """
-    link a list of lipids to related resources from posted lipid name list
-    """
-    linked_info = {}
-    for lipid_name in lipid_names:
-        linked_info[lipid_name] = await link_one_lipid(
-            lipid_name, export_url, export_names
-        )
-    return linked_info
-
-
-@router.post("/dict/", status_code=status.HTTP_201_CREATED)
-async def link_dict(
-    lipid_names: dict, export_url: bool = False, export_names: bool = True
-) -> dict:
-    """
-    link a list of lipids to related resources from posted lipid name list
-    """
-    linked_info = {}
-    for col in lipid_names:
-        lipid_col = lipid_names[col]
-        linked_col_info = {}
-        for lipid_name in lipid_col:
-            linked_col_info[lipid_name] = await link_one_lipid(
-                lipid_name, export_url, export_names
-            )
-        linked_info[col] = linked_col_info
-    return linked_info
+# @router.post("/list/", status_code=status.HTTP_201_CREATED)
+# async def link_list(
+#     lipid_names: list,
+#     export_url: bool = False,
+#     export_names: bool = True,
+# ) -> dict:
+#     """
+#     link a list of lipids to related resources from posted lipid name list
+#     """
+#     linked_info = {}
+#     for lipid_name in lipid_names:
+#         linked_info[lipid_name] = await link_one_lipid(
+#             lipid_name, export_url, export_names
+#         )
+#     return linked_info
+#
+#
+# @router.post("/dict/", status_code=status.HTTP_201_CREATED)
+# async def link_dict(
+#     lipid_names: dict, export_url: bool = False, export_names: bool = True
+# ) -> dict:
+#     """
+#     link a list of lipids to related resources from posted lipid name list
+#     """
+#     linked_info = {}
+#     for col in lipid_names:
+#         lipid_col = lipid_names[col]
+#         linked_col_info = {}
+#         for lipid_name in lipid_col:
+#             linked_col_info[lipid_name] = await link_one_lipid(
+#                 lipid_name, export_url, export_names
+#             )
+#         linked_info[col] = linked_col_info
+#     return linked_info
 
 
 @router.post("/list/", response_model=JobStatus, status_code=status.HTTP_201_CREATED)

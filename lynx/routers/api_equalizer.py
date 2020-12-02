@@ -14,7 +14,7 @@
 #     Developer Zhixu Ni zhixu.ni@uni-leipzig.de
 
 from multiprocessing import Process
-from typing import Optional, Union, List
+from typing import List, Optional, Union
 
 from fastapi import APIRouter, status
 
@@ -27,11 +27,7 @@ from lynx.models.api_models import (
     LevelsData,
 )
 from lynx.mq.client import equalizer_client
-from lynx.utils.job_manager import (
-    create_job_token,
-    is_job_finished,
-    get_job_output
-)
+from lynx.utils.job_manager import create_job_token, get_job_output, is_job_finished
 
 router = APIRouter()
 
@@ -94,8 +90,7 @@ async def equalize_multiple_levels(
 async def create_equalize_job(
     data: InputDictData, levels: Union[str, List[str]] = "B1", file_type: str = "xlsx",
 ):
-    """
-    """
+    """"""
     token = create_job_token(JobType(job="convert"))
     job_execute_data = {
         "data": data.data,

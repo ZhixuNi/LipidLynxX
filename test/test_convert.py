@@ -16,7 +16,6 @@
 import os
 import sys
 
-from natsort import natsorted
 import pandas as pd
 import pytest
 
@@ -25,7 +24,6 @@ sys.path.insert(0, lynx_path + "/../")
 
 from lynx.controllers.converter import Converter
 
-from lynx.models.defaults import supported_levels
 from lynx.utils.cfg_reader import app_cfg_info
 from lynx.utils.file_handler import get_abs_path
 from lynx.utils.log import app_logger

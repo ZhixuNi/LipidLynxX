@@ -16,10 +16,10 @@
 import asyncio
 import json
 import os
-import regex as re
 import time
 
 import pandas as pd
+import regex as re
 import zmq
 
 from lynx.controllers.converter import Converter
@@ -139,9 +139,13 @@ def run_equalizer(token: str, data: dict, job_data_type: str) -> dict:
         for results_tab in results_tabs_lst:
             tab_df = pd.read_excel(export_abs_path, sheet_name=results_tab)
             if results_tab == "skipped":
-                skipped_html_dct["skipped"] = re.sub(r'NaN', "", tab_df.to_html(table_id="skipped"))
+                skipped_html_dct["skipped"] = re.sub(
+                    r"NaN", "", tab_df.to_html(table_id="skipped")
+                )
             else:
-                equalized_html_dct[results_tab] = re.sub(r'NaN', "", tab_df.to_html(table_id=results_tab))
+                equalized_html_dct[results_tab] = re.sub(
+                    r"NaN", "", tab_df.to_html(table_id=results_tab)
+                )
         response_data["results"] = {
             "equalized": equalized_html_dct,
             "skipped": skipped_html_dct,
@@ -172,10 +176,7 @@ async def link_list(data: list, export_path: str, file_type: str):
         }
     }
     output_info = create_linker_output(
-        export_data,
-        output_name=export_path,
-        file_type=file_type,
-        export_url=True,
+        export_data, output_name=export_path, file_type=file_type, export_url=True,
     )
     data = {}
     for col in export_data:
@@ -210,10 +211,7 @@ async def link_dict(data: dict, export_path: str, file_type: str):
         }
 
     output_info = create_linker_output(
-        export_data,
-        output_name=export_path,
-        file_type=file_type,
-        export_url=True,
+        export_data, output_name=export_path, file_type=file_type, export_url=True,
     )
     data = {}
     for col in export_data:

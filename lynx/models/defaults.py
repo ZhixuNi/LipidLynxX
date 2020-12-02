@@ -19,11 +19,10 @@ import os
 from lynx.utils.basics import get_abs_path
 from lynx.utils.cfg_reader import app_cfg_info
 from lynx.utils.params_loader import (
-    build_mod_parser,
     build_input_rules,
+    build_mod_parser,
     build_output_rules,
 )
-from lynx.utils.ports import check_port
 
 # Define default values across LipidLynx
 # load default values from files defined in config.ini
@@ -35,6 +34,7 @@ default_cv_file = get_abs_path(app_cfg_info["controlled_vocabularies"])
 default_alias_file = get_abs_path(app_cfg_info["defined_alias"])
 default_kegg_file = get_abs_path(app_cfg_info["resource_kegg"])
 default_lion_file = get_abs_path(app_cfg_info["resource_lion"])
+default_rhea_file = get_abs_path(app_cfg_info["resource_rhea"])
 default_temp_folder = app_cfg_info.get("temp_folder", r"lynx/temp")
 default_temp_max_days = int(app_cfg_info.get("temp_max_days", "3"))
 default_temp_max_files = int(app_cfg_info.get("temp_max_files", "99"))
@@ -65,16 +65,19 @@ with open(default_kegg_file, "r") as kegg_json_obj:
 with open(default_lion_file, "r") as lion_json_obj:
     lion_ids = json.load(lion_json_obj)
 
+with open(default_rhea_file, "r") as rhea_json_obj:
+    rhea_ids = json.load(rhea_json_obj)
+
 
 default_template_files = {
     "LipidLynxX_Converter_Template.csv": "lynx/static/files/LipidLynxX_Converter_Template.csv",
     "LipidLynxX_Equalizer_Template.csv": "lynx/static/files/LipidLynxX_Equalizer_Template.csv",
-    "LipidLynxX_Linker_Template.csv": "lynx/static/files/LipidLynxX_Linker_Template.csv"
+    "LipidLynxX_Linker_Template.csv": "lynx/static/files/LipidLynxX_Linker_Template.csv",
 }
 
 lipid_level_lst = ["B", "M", "S"]
 mod_level_lst = ["0", "1", "2", "3", "4", "5"]
-db_level_lst = [".0", "0.1", "0.2"]
+db_level_lst = ["0.0", "0.1", "0.2"]
 mod_db_level_lst = [
     "0",
     "0.1",
@@ -139,6 +142,8 @@ supported_levels = [
 ]
 
 lynx_schema_cfg = {
+    "lynx_db": r"lynx/models/schema/lynx_db.schema.json",
+    "lynx_o": r"lynx/models/schema/lynx_sp_o.schema.json",
     "lynx_mod": r"lynx/models/schema/lynx_mod.schema.json",
     "lynx_residue": r"lynx/models/schema/lynx_residue.schema.json",
     "lynx_lipidclass": r"lynx/models/schema/lynx_lipidclass.schema.json",

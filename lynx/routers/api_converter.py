@@ -25,18 +25,13 @@ from lynx.models.api_models import (
     InputStrData,
     JobStatus,
     JobType,
-    LvType,
     LevelsData,
+    LvType,
     StyleType,
 )
 from lynx.mq.client import converter_client
-from lynx.utils.job_manager import (
-    create_job_token,
-    is_job_finished,
-    get_job_output
-)
+from lynx.utils.job_manager import create_job_token, get_job_output, is_job_finished
 from lynx.utils.toolbox import get_level
-
 
 router = APIRouter()
 

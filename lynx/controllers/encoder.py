@@ -18,15 +18,15 @@ from typing import Dict, List
 
 from natsort import natsorted
 
-from lynx.utils.params_loader import load_output_rule
 from lynx.controllers.decoder import Decoder
-from lynx.models.residue import Residue, merge_residues
 from lynx.models.defaults import (
-    default_output_rules,
     default_input_rules,
+    default_output_rules,
     supported_levels,
 )
+from lynx.models.residue import merge_residues, Residue
 from lynx.utils.log import app_logger
+from lynx.utils.params_loader import load_output_rule
 
 
 class Encoder(object):
@@ -35,19 +35,25 @@ class Encoder(object):
         style: str = "LipidLynxX",
         input_rules: dict = default_input_rules,
         output_rules: dict = default_output_rules,
+        input_style: str = "",
         logger=app_logger,
     ):
         self.export_style = style
+        self.input_rule = input_style
         self.output_rules = load_output_rule(output_rules, style)
         self.class_rules = self.output_rules.get("LMSD_CLASSES", {})
-        self.mod_rules = self.output_rules.get("MODS", {}).get("MOD", {})
-        self.sum_mod_rules = self.output_rules.get("MODS", {}).get("SUM_MODS", {})
-        self.residue_rules = self.output_rules.get("RESIDUES", {}).get("RESIDUE", {})
-        self.separator_levels = self.output_rules.get("SEPARATORS", {}).get(
+        self.mod_rules = self.output_rules.get("MOD", {}).get("MOD_INFO", {})
+        self.sum_mod_rules = self.output_rules.get("MOD", {}).get("MOD_INFO_SUM", {})
+        self.residue_rules = self.output_rules.get("RESIDUE", {}).get(
+            "RESIDUE_INFO_SUM", {}
+        )
+        self.separator_levels = self.output_rules.get("SEPARATOR", {}).get(
             "SEPARATOR_LEVELS", {}
         )
-        self.separators = self.output_rules.get("SEPARATORS", {})
-        self.extractor = Decoder(rules=input_rules, logger=logger)
+        self.separators = self.output_rules.get("SEPARATOR", {})
+        self.extractor = Decoder(
+            input_style=self.input_rule, rules=input_rules, logger=logger
+        )
         self.logger = logger
 
     def get_best_id(self, candidate: Dict[str, str]) -> str:
@@ -56,34 +62,118 @@ class Encoder(object):
         c_max_str = candidate.get(c_lv_lst[-1], "")
         return c_max_str
 
-    @staticmethod
-    def get_best_id_series(candidates: List[dict]) -> dict:
+    def get_best_id_series(self, candidates: List[dict]) -> [dict, str]:
         best_id_dct = {}
+        best_id_score_dct = {}
         num_lv = 0
         max_str = ""
-        sum_db = 0
+        max_sum_c_count = 0
+        max_sum_sp_o_count = 0
+        best_input_rule = ""
+        is_modified = False
         for c_info_set in candidates:
             c_info = c_info_set.get("compiled_names", {})
-            c_sum_db = c_info_set.get("sum_db", 0)
+            c_sum_c = c_info_set.get("sum_c", 0)
+            c_sum_sp_o = c_info_set.get("sp_o_count", 0)
+            c_in_rule = c_info_set.get("input_rule", 0)
+            c_is_modified = c_info_set.get("is_modified", False)
+            lmsd_classes = c_info_set.get("lmsd_classes", False)
+            best_rule_score = 0
+            if c_is_modified:
+                is_modified = True
+            c_info_max_c_lv = ""
+            c_info_max_c = ""
+            for c_lv in c_info:
+                ci_lv_lst = natsorted(list(c_info[c_lv].keys()))
+                if len(c_info[c_lv].get(ci_lv_lst[-1], "")) >= len(
+                    c_info_max_c_lv
+                ) and len(c_lv) >= len(c_info_max_c):
+                    c_info_max_c_lv = c_lv
+                    c_info_max_c = c_lv
+            if c_info_max_c:
+                c_info = {c_info_max_c: c_info[c_info_max_c]}
             for c in c_info:
                 c_lv_lst = natsorted(list(c_info[c].keys()))
                 c_num_lv = len(c_lv_lst)
                 c_max_str = c_info[c].get(c_lv_lst[-1], "")
-                if c_num_lv > num_lv:
-                    best_id_dct = c_info[c]
-                    max_str = c_max_str
+                if c_num_lv >= num_lv:
                     num_lv = c_num_lv
-                    sum_db = c_sum_db
-                else:
-                    c_max_str = c_info[c].get(c_lv_lst[-1], "")
-                    if len(c_max_str) > len(max_str):
-                        best_id_dct = c_info[c]
+                    max_sum_c_count = max(c_sum_c, max_sum_c_count)
+                    max_sum_sp_o_count = max(c_sum_sp_o, max_sum_sp_o_count)
+                    best_rule_score = 5
+                    if len(c_max_str) >= len(max_str):
                         max_str = c_max_str
                         num_lv = c_num_lv
-                        sum_db = c_sum_db
+                        max_sum_c_count = max(c_sum_c, max_sum_c_count)
+                        max_sum_sp_o_count = max(c_sum_sp_o, max_sum_sp_o_count)
+                        best_rule_score += 4
                     else:
-                        pass
+                        if (
+                            c_sum_c >= max_sum_c_count
+                            and c_sum_sp_o >= max_sum_sp_o_count
+                        ):
+                            max_sum_c_count = c_sum_c
+                            max_sum_sp_o_count = c_sum_sp_o
+                            best_rule_score += 3
+                        elif (
+                            c_sum_c >= max_sum_c_count
+                            and c_sum_sp_o < max_sum_sp_o_count
+                        ):
+                            max_sum_c_count = c_sum_c
+                            best_rule_score += 2
+                        elif (
+                            c_sum_c < max_sum_c_count
+                            and c_sum_sp_o >= max_sum_sp_o_count
+                        ):
+                            max_sum_sp_o_count = c_sum_sp_o
+                            best_rule_score += 1
+                        else:
+                            pass
+                else:
+                    if len(c_max_str) >= len(max_str):
+                        max_str = c_max_str
+                        num_lv = c_num_lv
+                        max_sum_c_count = max(c_sum_c, max_sum_c_count)
+                        max_sum_sp_o_count = max(c_sum_sp_o, max_sum_sp_o_count)
+                        best_rule_score = 4
+                    else:
+                        if (
+                            c_sum_c >= max_sum_c_count
+                            and c_sum_sp_o >= max_sum_sp_o_count
+                        ):
+                            max_sum_c_count = c_sum_c
+                            max_sum_sp_o_count = c_sum_sp_o
+                            best_rule_score = 3
+                        elif (
+                            c_sum_c >= max_sum_c_count
+                            and c_sum_sp_o < max_sum_sp_o_count
+                        ):
+                            max_sum_c_count = c_sum_c
+                            best_rule_score = 2
+                        elif (
+                            c_sum_c < max_sum_c_count
+                            and c_sum_sp_o >= max_sum_sp_o_count
+                        ):
+                            max_sum_sp_o_count = c_sum_sp_o
+                            best_rule_score += 1
+                        else:
+                            pass
 
+                if re.match(r"BioPAN", self.export_style, re.IGNORECASE):
+                    if is_modified:
+                        return {}, {}
+                else:
+                    is_sp_class = False
+                    for lmsd in lmsd_classes:
+                        if re.match(r"^SP.*$", lmsd, re.IGNORECASE):
+                            is_sp_class = True
+                    if is_sp_class and max_sum_sp_o_count > 0:
+                        best_rule_score += 1
+                if best_rule_score:
+                    best_id_score_dct[best_rule_score] = c_info[c]
+        if best_id_score_dct:
+            max_best_score = max(list(best_id_score_dct.keys()))
+            best_id_dct = best_id_score_dct.get(max_best_score, {})
         # add levels for B0, D0, S0 lipids
         if best_id_dct and all(
             [re.match(r"^[BMS]0(.[12])?$", lv) for lv in best_id_dct]
@@ -96,7 +186,7 @@ class Encoder(object):
         updated_best_id_dct = {}
         if (
             best_id_dct
-            and sum_db == 0
+            and max_sum_c_count == 0
             and all([re.match(r"^[BMS][0-5]$", lv) for lv in best_id_dct])
         ):
             for from_lv in best_id_dct:
@@ -115,7 +205,7 @@ class Encoder(object):
         if best_id_dct.get("M2") and not best_id_dct.get("B2"):
             best_id_dct["B2"] = best_id_dct["M2"]
 
-        return best_id_dct
+        return best_id_dct, best_input_rule
 
     # def check_rest(self, segment_text: str, segment_name: str, lmsd_class: str):
     #     patterns_dct = self.class_rules[lmsd_class].get(segment_name)
@@ -141,16 +231,16 @@ class Encoder(object):
     #     return self.get_best_candidate(out_seg_lst)
 
     def get_residues(self, residues: dict):
-        residues_order = residues.get("RESIDUES_ORDER", [])
-        residues_sep_level = residues.get("RESIDUES_SEPARATOR_LEVEL", "")
-        residues_info = residues.get("RESIDUES_INFO", [])
+        residues_order = residues.get("residues_order", [])
+        residues_sep_level = residues.get("residues_separator_level", "")
+        residues_info = residues.get("residues_info", [])
         res_count = len(residues_order)
         # sum_residues_str = ""
         res_lv_id_dct = {}
         res_lv_dct = {}
         sum_lv_lst = []
         for res_abbr in residues_info:
-            res_obj = Residue(residues_info[res_abbr], nomenclature=self.export_style)
+            res_obj = Residue(residues_info[res_abbr])
             res_lv_id_dct[res_abbr] = res_obj.linked_ids
             res_lv_dct[res_abbr] = list(res_obj.linked_ids.keys())
             sum_lv_lst.extend(res_lv_dct[res_abbr])
@@ -189,11 +279,17 @@ class Encoder(object):
         for sep_lv in sum_res_sep_lv_lst:
             if sep_lv == "B":
                 # prepare bulk level
-                merged_res_obj = merge_residues(
-                    residues_order, residues_info, nomenclature=self.export_style
-                )
-                merged_res_linked_ids = merged_res_obj.linked_ids
-                merged_res_lv_lst = list(merged_res_obj.linked_ids.keys())
+                if len(residues_order) > 1:
+                    merged_res_obj = merge_residues(residues_order, residues_info)
+                    merged_res_linked_ids = merged_res_obj.linked_ids
+                    merged_res_lv_lst = list(merged_res_obj.linked_ids.keys())
+                elif len(residues_order) == 1:
+                    merged_res_obj = Residue(residues_info.get(residues_order[0]))
+                    merged_res_linked_ids = merged_res_obj.linked_ids
+                    merged_res_lv_lst = list(merged_res_obj.linked_ids.keys())
+                else:
+                    merged_res_linked_ids = []
+                    merged_res_lv_lst = []
                 for merged_res_lv in merged_res_lv_lst:
                     sum_res_id_lv_dct[f"B{merged_res_lv}"] = merged_res_linked_ids[
                         merged_res_lv
@@ -208,57 +304,220 @@ class Encoder(object):
 
         return sum_res_id_lv_dct
 
+    @staticmethod
+    def check_head_seg(head_segments):
+        has_segments = False
+        head_seg = ""
+        if len(head_segments) == 1 and head_segments[0]:
+            head_seg = head_segments[0]
+            has_segments = True
+        elif len(head_segments) > 1:
+            head_seg = "".join(list(set(head_segments)))
+            if head_seg == "LO-":
+                head_seg = "O-L"
+            elif head_seg == "LP-":
+                head_seg = "P-L"
+            has_segments = True
+
+        return has_segments, head_seg
+
+    @staticmethod
+    def check_biopan(
+        lmsd_classes: list, c_prefix_lst: list, c_suffix_lst: list, residues: dict
+    ):
+        is_sp_class = False
+        is_gl_class = False
+        is_gp_class = False
+        is_modified = False
+        for c in lmsd_classes:
+            if c.upper().startswith("GL"):
+                is_gl_class = True
+                break
+            elif c.upper().startswith("GP"):
+                is_gp_class = True
+                break
+            elif c.upper().startswith("SP"):
+                is_sp_class = True
+                break
+
+        if is_gl_class or is_gp_class or is_sp_class:
+            residues_order = residues.get("residues_order", [])
+            residues_info = residues.get("residues_info", {})
+            for res in residues_order:
+                mod_level = (
+                    residues_info.get(res, {})
+                    .get("info", 0)
+                    .get("mod_info_sum", {})
+                    .get("level", 0)
+                )
+                mod_info = (
+                    residues_info.get(res, {})
+                    .get("info", 0)
+                    .get("mod_info_sum", {})
+                    .get("info", {})
+                )
+                if float(mod_level) > 0 or mod_info:
+                    is_modified = True
+
+            if is_modified:
+                if len(residues_order) > 1:
+                    residues = {}
+            else:
+                if is_gl_class or is_gp_class:
+                    residues_separator_level = residues_info.get(
+                        "residues_separator_level", "B"
+                    )
+                    for res in residues_order:
+                        res_info = residues_info.get(res, {}).get("info", 0)
+                        res_link = res_info.get("link", "")
+
+                        if res_link == "O-":
+                            c_prefix_lst.append("O-")
+                            residues_info[res]["info"]["link"] = ""
+                        elif res_link == "P-":
+                            c_prefix_lst.append("P-")
+                            residues_info[res]["info"]["link"] = ""
+                            # residues_info[res]["info"]["db_count"] = (
+                            #     1 + residues_info[res]["info"]["db_count"]
+                            # )
+                            residues_info[res]["info"]["db_info_sum"]["info"][
+                                "0.01_DB"
+                            ]["count"] = residues_info[res]["info"]["db_count"]
+                            residues_info[res]["info"]["db_info_sum"]["info"][
+                                "0.01_DB"
+                            ]["site"] = []
+                            residues_info[res]["info"]["db_info_sum"]["info"][
+                                "0.01_DB"
+                            ]["site_info"] = []
+                    residues = {
+                        "residues_order": residues_order,
+                        "residues_info": residues_info,
+                        "residues_separator_level": residues_separator_level,
+                    }
+                elif is_sp_class:
+                    if len(c_suffix_lst) == 1 and c_suffix_lst[0].upper() in [
+                        "P",
+                        "1P",
+                    ]:
+                        c_suffix_lst = ["1P"]
+                    for res in residues_order:
+                        res_info = residues_info.get(res, {}).get("info", 0)
+                        res_c_count = res_info.get("c_count", 0)
+                        res_sp_o_count = res_info.get("sp_o_count", 0)
+                        residues_separator_level = residues_info.get(
+                            "residues_separator_level", "B"
+                        )
+                        res_link = res_info.get("link", "")
+                        if (
+                            res_sp_o_count == 2
+                            or res_link == "d"
+                            or res.lower().startswith("d")
+                        ):
+                            res_db_count = res_info.get("db_count", 0)
+                            if res_c_count == 18 and res_db_count in [0, 1]:
+                                if len(residues_order) == 2:
+                                    residues_order.remove(res)
+                                    del residues_info[res]
+                                residues = {
+                                    "residues_order": residues_order,
+                                    "residues_info": residues_info,
+                                    "residues_separator_level": residues_separator_level,
+                                }
+                                if res_db_count == 0:
+                                    c_prefix_lst.append("dh")
+                            else:
+                                residues = {}
+                        elif (
+                            res_sp_o_count == 0
+                            and res_c_count < 27
+                            and len(residues_order) == 1
+                        ):
+                            residues = {
+                                "residues_order": residues_order,
+                                "residues_info": residues_info,
+                                "residues_separator_level": "B",
+                            }
+                        else:
+                            residues = {}
+        else:
+            # residues_order = residues.get("residues_order", [])
+            # residues_info = residues.get("residues_info", {})
+            # is_modified = False
+            # for res in residues_order:
+            #     mod_level = (
+            #         residues_info.get(res, {})
+            #         .get("info", 0)
+            #         .get("mod_info_sum", {})
+            #         .get("level", 0)
+            #     )
+            #     mod_info = (
+            #         residues_info.get(res, {})
+            #         .get("info", 0)
+            #         .get("mod_info_sum", {})
+            #         .get("info", {})
+            #     )
+            #     if float(mod_level) > 0 or mod_info:
+            #         is_modified = True
+            #
+            # if is_modified:
+            #     residues = {}
+            pass
+        return c_prefix_lst, c_suffix_lst, residues, is_modified
+
     def check_segments(self, parsed_info: dict):
         segments_dct = {}
-        lmsd_classes = parsed_info.get("LMSD_CLASSES", None)
-        segments = parsed_info["SEGMENTS"]
+        lmsd_classes = parsed_info.get("lmsd_classes", [])
+        segments = parsed_info.get("segments", {})
         c_prefix_lst = segments.get("PREFIX", [])
         c_suffix_lst = segments.get("SUFFIX", [])
-        c_has_prefix = False
-        if len(c_prefix_lst) == 1 and c_prefix_lst[0]:
-            c_prefix_seg = c_prefix_lst[0]
-            c_has_prefix = True
-        else:
-            c_prefix_seg = ""
-        c_has_suffix = False
-        if len(c_suffix_lst) == 1 and c_suffix_lst[0]:
-            c_suffix_seg = c_suffix_lst[0]
-            c_has_suffix = True
-        else:
-            c_suffix_seg = ""
-        residues = parsed_info.get("RESIDUES", {})
-        sum_res_id_lv_dct = self.get_residues(residues)
-        obs_c_seg_lst = segments.get("CLASS", [])
-        c_seg = ""
-        if obs_c_seg_lst and len(obs_c_seg_lst) == 1:
-            obs_c_seg = obs_c_seg_lst[0]
-            for c in lmsd_classes:
-                c_segments_dct = {}
-                c_orders = []
-                if c in self.class_rules:
-                    c_orders = self.class_rules[c].get("ORDER", [])
-                    c_identifier_dct = self.class_rules[c].get("CLASS", {})
-                    for c_identifier in c_identifier_dct:
-                        if c_identifier.match(obs_c_seg):
-                            c_seg = c_identifier_dct.get(c_identifier, "")
-                            for lv in sum_res_id_lv_dct:
-                                c_lv_segments = {
-                                    "CLASS": c_seg,
-                                    "SUM_RESIDUES": sum_res_id_lv_dct[lv],
-                                }
-                                if c_has_prefix:
-                                    c_lv_segments["PREFIX"] = c_prefix_seg
-                                if c_has_suffix:
-                                    c_lv_segments["SUFFIX"] = c_suffix_seg
-                                c_segments_dct[lv] = c_lv_segments
+        residues = parsed_info.get("residues", {})
+        if re.match(r"BioPAN", self.export_style, re.IGNORECASE):
+            c_prefix_lst, c_suffix_lst, residues, is_modified = self.check_biopan(
+                lmsd_classes, c_prefix_lst, c_suffix_lst, residues
+            )
+        c_has_prefix, c_prefix_seg = self.check_head_seg(c_prefix_lst)
+        c_has_suffix, c_suffix_seg = self.check_head_seg(c_suffix_lst)
+        if residues:
+            sum_res_id_lv_dct = self.get_residues(residues)
+            obs_c_seg_lst = segments.get("CLASS", [])
+            c_seg = ""
+            if obs_c_seg_lst and len(obs_c_seg_lst) == 1:
+                obs_c_seg = obs_c_seg_lst[0]
+                for c in lmsd_classes:
+                    c_segments_dct = {}
+                    c_orders = []
+                    if c in self.class_rules:
+                        c_orders = self.class_rules[c].get("ORDER", [])
+                        c_identifier_dct = self.class_rules[c].get("CLASS", {})
+                        for c_identifier in c_identifier_dct:
+                            if c_identifier.match(obs_c_seg):
+                                c_seg = c_identifier_dct.get(c_identifier, "")
+                                for lv in sum_res_id_lv_dct:
+                                    c_lv_segments = {
+                                        "CLASS": c_seg,
+                                        "RESIDUE_INFO_SUM": sum_res_id_lv_dct[lv],
+                                    }
+                                    if c_has_prefix:
+                                        c_lv_segments["PREFIX"] = c_prefix_seg
+                                    if c_has_suffix:
+                                        c_lv_segments["SUFFIX"] = c_suffix_seg
+                                    c_segments_dct[lv] = c_lv_segments
+                            else:
+                                pass
+                    else:
+                        pass
+                    if c_segments_dct and c_orders:
+                        if c not in segments_dct:
+                            segments_dct[c] = {
+                                "ORDER": c_orders,
+                                "INFO": c_segments_dct,
+                            }
                         else:
                             pass
-                else:
-                    pass
-                if c_segments_dct and c_orders:
-                    segments_dct[c] = {"ORDER": c_orders, "INFO": c_segments_dct}
+            else:
+                self.logger.warning(f"No Class identified!")
         else:
-            self.logger.warning(f"No Class identified!")
+            segments_dct = {}
 
         return segments_dct
 
@@ -277,7 +536,7 @@ class Encoder(object):
                     if c_seg in lv_seg_info:
                         lv_seg_lst.append(lv_seg_info[c_seg])
                     elif c_seg in self.separators and c_seg != "SEPARATOR_LEVELS":
-                        lv_seg_lst.append(self.separators[c_seg])
+                        lv_seg_lst.append(re.sub(r"\\", "", self.separators[c_seg]))
                     else:
                         if c_seg not in c_optional_seg:
                             self.logger.debug(
@@ -290,38 +549,84 @@ class Encoder(object):
 
         return comp_seg_dct
 
-    def export_all_levels(self, lipid_name: str) -> dict:
+    def export_all_levels(self, lipid_name: str) -> [dict, str]:
 
         extracted_info = self.extractor.extract(lipid_name)
         export_info = []
+
+        # check the max number of residues observed and reject the rules find fewer residues
+        max_residue_count = 0
+        if extracted_info:
+            for p in extracted_info:
+                p_info = extracted_info[p]
+                self.logger.debug(p_info)
+                for in_r in p_info:
+                    r_info = p_info[in_r]
+                    r_residue_lst = r_info.get("residues", {}).get("residues_order", [])
+                    max_residue_count = max(max_residue_count, len(r_residue_lst))
+
         if extracted_info:
             for p in extracted_info:
                 p_info = extracted_info[p]
                 self.logger.debug(p_info)
                 for in_r in p_info:
                     r_info = p_info[in_r]  # type: dict
-                    checked_seg_info = self.check_segments(r_info)
-                    comp_dct = self.compile_segments(checked_seg_info)
-                    res_info = r_info.get("RESIDUES", {}).get("RESIDUES_INFO", {})
-                    sum_db = 0
-                    for res in res_info:
-                        sum_db += res_info[res].get("NUM_DB", 0)
-                    export_info.append({"compiled_names": comp_dct, "sum_db": sum_db})
-            pre_best_export_dct = self.get_best_id_series(export_info)
+                    r_residue_lst = r_info.get("residues", {}).get("residues_order", [])
+                    if len(r_residue_lst) == max_residue_count:
+                        checked_seg_info = self.check_segments(r_info)
+                        if checked_seg_info:
+                            comp_dct = self.compile_segments(checked_seg_info)
+                            res_info = r_info.get("residues", {}).get(
+                                "residues_info", {}
+                            )
+                            sum_c = 0
+                            sum_sp_o = 0
+                            is_modified = False
+                            for res in res_info:
+                                r_info_dct = res_info[res].get("info", {})
+                                sum_c += r_info_dct.get("c_count", 0)
+                                sum_sp_o += r_info_dct.get("sp_o_count", 0)
+                                mod_info_sum = r_info_dct.get("mod_info_sum", {})
+                                mod_level = mod_info_sum.get("level", 0)
+                                mod_info = mod_info_sum.get("info", {})
+                                if float(mod_level) > 0 or mod_info:
+                                    is_modified = True
+                            export_info.append(
+                                {
+                                    "compiled_names": comp_dct,
+                                    "sum_c": sum_c,
+                                    "sp_o_count": sum_sp_o,
+                                    "input_rule": in_r,
+                                    "is_modified": is_modified,
+                                    "segments": r_info.get("segments", {}),
+                                    "lmsd_classes": r_info.get("lmsd_classes", {}),
+                                }
+                            )
+                        else:
+                            pass
+                    else:
+                        pass
+            pre_best_export_dct, best_input_rule = self.get_best_id_series(export_info)
+            # sort dict by keys
             best_export_dct = {
                 k: pre_best_export_dct[k] for k in sorted(pre_best_export_dct)
             }
             self.logger.debug(f"Convert Lipid: {lipid_name} into:\n{best_export_dct}")
         else:
             best_export_dct = {}
+            best_input_rule = ""
 
-        return best_export_dct
+        return best_export_dct, best_input_rule
+
+    def get_best_rule(self, lipid_name: str) -> str:
+        pre_best_export_dct, best_input_rule = self.export_all_levels(lipid_name)
+        return best_input_rule
 
     def convert(self, lipid_name: str, level: str = None) -> str:
         if level in supported_levels:
             best_id = self.export_level(lipid_name, level=level)
         else:
-            all_lv_id_dct = self.export_all_levels(lipid_name)
+            all_lv_id_dct, best_in_rule = self.export_all_levels(lipid_name)
             best_id = ""
             if all_lv_id_dct:
                 best_id = self.get_best_id(all_lv_id_dct)
@@ -334,7 +639,7 @@ class Encoder(object):
     ):
 
         lv_id = ""
-        all_lv_id_dct = self.export_all_levels(lipid_name)
+        all_lv_id_dct, best_in_rule = self.export_all_levels(lipid_name)
         if level in supported_levels:
             if level in all_lv_id_dct:
                 lv_id = all_lv_id_dct[level]
@@ -366,7 +671,7 @@ class Encoder(object):
         if levels is None:
             levels = ["B0"]
         lv_id_dct = {}
-        all_lv_id_dct = self.export_all_levels(lipid_name)
+        all_lv_id_dct, best_in_rule = self.export_all_levels(lipid_name)
         for level in levels:
             if level in supported_levels:
                 if level in all_lv_id_dct:

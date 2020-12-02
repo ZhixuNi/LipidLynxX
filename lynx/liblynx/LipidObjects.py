@@ -415,15 +415,15 @@ if __name__ == "__main__":
     print(type(pl.fa1.elements), pl.fa1.elements)
     pl.charge = "neg"
     pl.bug = "BUG"
-    logger.info(asdict(pl))
+    logger.details(asdict(pl))
     print(pl.bug)
     tg = GL(input_abbr=usr_tg)
-    logger.info(asdict(tg))
+    logger.details(asdict(tg))
 
     print(asdict(tg).get("smi", "No SMILES"), type(tg.smiles))
 
-    logger.info(json.dumps(pl, cls=LipidEncoder))
-    logger.info(json.dumps(pl, cls=LipidEncoderLite))
+    logger.details(json.dumps(pl, cls=LipidEncoder))
+    logger.details(json.dumps(pl, cls=LipidEncoderLite))
 
-    logger.info(json.dumps(tg, cls=LipidEncoder))
-    logger.info(json.dumps(tg, cls=LipidEncoderLite))
+    logger.details(json.dumps(tg, cls=LipidEncoder))
+    logger.details(json.dumps(tg, cls=LipidEncoderLite))

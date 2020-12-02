@@ -17,39 +17,28 @@ import base64
 import json
 import os
 
-from fastapi import (
-    APIRouter,
-    File,
-    Form,
-    Request,
-    UploadFile,
-    HTTPException,
-)
+from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.templating import Jinja2Templates
 
+import lynx.api as api
 from lynx.models.api_models import (
     FileType,
-    StyleType,
-    InputListData,
     InputDictData,
-    EqualizerExportData,
-    LevelsData,
+    InputListData,
     JobStatus,
+    StyleType,
 )
 from lynx.models.defaults import default_temp_folder, default_template_files
-import lynx.api as api
 from lynx.routers.api_converter import create_convert_dict_job, create_convert_list_job
 from lynx.routers.api_equalizer import create_equalize_job
 from lynx.routers.api_linker import create_link_dict_job, create_link_list_job
-from lynx.utils.cfg_reader import api_version, lynx_version, app_prefix
+from lynx.utils.cfg_reader import api_version, lynx_version
 from lynx.utils.file_handler import (
-    create_equalizer_output,
     get_file_type,
     get_table,
-    get_output_name,
 )
-from lynx.utils.toolbox import get_levels, get_style_level, get_url_safe_str
+from lynx.utils.toolbox import get_levels, get_style_level
 
 # upload file size check
 # async def valid_content_length(content_length: int = Header(..., lt=10240_000)):
