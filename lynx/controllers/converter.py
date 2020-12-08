@@ -42,7 +42,11 @@ class Converter:
         )
         self.logger = logger
 
-    def convert_str(self, input_str: str, level: str = None,) -> ConvertedStrData:
+    def convert_str(
+        self,
+        input_str: str,
+        level: str = None,
+    ) -> ConvertedStrData:
         output_dct = {}
         # Set COMP_DB to max level B2
         if re.search(r"COMP\\s*[_]?\\s*(DB)?", self.style):
@@ -208,12 +212,20 @@ if __name__ == "__main__":
         # "SPB(18:0)",
         # "CerP 24:1",
         # "Cer d18:1/20:1",
-        "FA(20:4)",
+        # "FA(20:4)",
+        # "PC O-a 34:2",
+        "Cer-NDS(m20:0/18:0)",
+        "Cer-NDS(d20:0/18:0)",
+        "Cer-NDS(t20:0/18:0)",
+        # "Cer-NS(d18:2/22:0)",
+        # "HexCer-NS(d18:1/23:0)",
+        # "plasmanyl-TG(O-20:0_14:0_18:2)",
     ]
-    lv = "B0"
+    # lv = "B0"
+    lv = "MAX"
     # test_out_rule = "COMP_DB"
-    # test_out_rule = "LipidLynxX"
-    test_out_rule = "BioPAN"
+    test_out_rule = "LipidLynxX"
+    # test_out_rule = "BioPAN"
     # test_out_rule = "BracketsShorthand"
     lynx_converter = Converter(style=test_out_rule, logger=app_logger)
     for t_in in t_in_lst:

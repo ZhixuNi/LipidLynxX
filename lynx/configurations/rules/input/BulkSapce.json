@@ -1,5 +1,5 @@
 {
-  "_DATE": 20201116,
+  "_DATE": 20201208,
   "_AUTHORS": [
     "zhixu.ni@uni-leipzig.de"
   ],
@@ -28,7 +28,7 @@
         "LINK",
         "DB_COUNT"
       ],
-      "LINK": "[OP]-|C|[mdt]|h",
+      "LINK": "[OP]-(a\\s)?|C|[mdt]|h",
       "C_COUNT": "[0-9]{1,2}",
       "DB_SEPARATOR": "{{SEPARATOR.COLON}}",
       "DB_COUNT": "[1,2]?[0-9]",
@@ -148,10 +148,10 @@
       "EXAMPLES": [
         "MG 16:0",
         "DG 34:2",
-        "DG O-34:2",
-        "DG P-34:2",
+        "O-DG 34:2",
+        "P-DG 34:2",
         "TG 52:2",
-        "TG O-52:2"
+        "O-TG 52:2"
       ]
     },
     "PL": {

@@ -1,5 +1,5 @@
 {
-  "_DATE": 20201013,
+  "_DATE": 20201208,
   "_AUTHORS": [
     "zhixu.ni@uni-leipzig.de"
   ],
@@ -200,7 +200,7 @@
       "DB_COUNT": "[1,2]?[0-9]",
       "DB_INFO_SUM": "{{DB.DB_INFO_SUM}}",
       "SP_O_SEPARATOR": "{{SEPARATOR.SEMICOLON}}",
-      "SP_O_COUNT": "[2-9]?OH?",
+      "SP_O_COUNT": "O[2-9]?|[2-9]?OH",
       "SP_O_INFO_SUM": "{{SP_O.SP_O_INFO_SUM}}",
       "MOD_INFO_SUM": "{{MOD.MOD_INFO_SUM}}",
       "EXAMPLES": [

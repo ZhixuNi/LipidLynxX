@@ -218,6 +218,15 @@ class Residue(object):
                             else:
                                 res_str += o_info.get(sub_lv, "")
 
+            if re.match('.*;1O$', res_str):
+                res_str = re.sub(';1O', ';O', res_str)
+            elif re.match('.*;2O$', res_str):
+                res_str = re.sub(';2O', ';O2', res_str)
+            elif re.match('.*;3O$', res_str):
+                res_str = re.sub(';3O', ';O3', res_str)
+            else:
+                pass
+
             na_brackets_lst = [r"\<\>", r"\{\}", r"\[\]", r"\(\)"]
             for b in na_brackets_lst:
                 res_str = re.sub(b, "", res_str)
