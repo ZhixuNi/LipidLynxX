@@ -22,7 +22,7 @@ import pandas as pd
 import typer
 
 
-def cli_get_table(file: Union[Path, str]):
+def cli_get_table(file: Union[Path, str], sep: str = None):
     table_header_lst = []
     if isinstance(file, Path) and file.is_file():
         in_file_name_low_str = file.name.lower()
@@ -37,21 +37,39 @@ def cli_get_table(file: Union[Path, str]):
             table_dct = table_df.to_dict(orient="list")
             table_header_lst = table_df.columns.values.tolist()
         elif in_file_name_low_str.endswith("csv"):
-            try:
-                table_df = pd.read_csv(file)
+            if sep:
+                sep = sep.strip('"')
+                sep = sep.strip("'")
+                table_df = pd.read_csv(file, sep=sep)
                 table_dct = table_df.to_dict(orient="list")
-                tab_table_df = pd.read_csv(file, sep="\t")
-                tab_table_dct = tab_table_df.to_dict(orient="list")
-                if len(list(tab_table_dct.keys())) > len(list(table_dct)):
-                    print(f"{in_file_name_low_str} is identified as Tab separated csv.")
-                    table_dct = tab_table_dct
-                    table_df = tab_table_df
-                else:
-                    pass
-            except pd.errors.ParserError:
-                print(f"{in_file_name_low_str} is Tab separated csv.")
-                table_df = pd.read_csv(file, sep="\t")
-                table_dct = table_df.to_dict(orient="list")
+            else:
+                try:
+                    table_df = pd.read_csv(file)
+                    table_dct = table_df.to_dict(orient="list")
+                    tab_table_df = pd.read_csv(file, sep="\t")
+                    tab_table_dct = tab_table_df.to_dict(orient="list")
+                    semicolon_table_df = pd.read_csv(file, sep=";")
+                    semicolon_table_dct = semicolon_table_df.to_dict(orient="list")
+                    col_count_lst = [
+                        len(list(table_dct.keys())),
+                        len(list(tab_table_dct.keys())),
+                        len(list(semicolon_table_dct.keys())),
+                    ]
+                    max_col_idx = col_count_lst.index(max(col_count_lst))
+                    if max_col_idx == 1:
+                        print(f"{in_file_name_low_str} is identified as Tab separated csv.")
+                        table_dct = tab_table_dct
+                        table_df = tab_table_df
+                    if max_col_idx == 2:
+                        print(f"{in_file_name_low_str} is identified as ';' separated csv.")
+                        table_dct = semicolon_table_dct
+                        table_df = semicolon_table_df
+                    else:
+                        pass
+                except pd.errors.ParserError:
+                    print(f"{in_file_name_low_str} is Tab separated csv.")
+                    table_df = pd.read_csv(file, sep="\t")
+                    table_dct = table_df.to_dict(orient="list")
             table_header_lst = table_df.columns.values.tolist()
 
         elif in_file_name_low_str.endswith("tsv"):

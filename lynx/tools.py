@@ -102,7 +102,8 @@ def convert_lipid(
     else:
         converted_name = ""
         typer.secho(
-            'Please input a lipid name. e.g. "PLPC".', fg=typer.colors.YELLOW,
+            'Please input a lipid name. e.g. "PLPC".',
+            fg=typer.colors.YELLOW,
         )
         typer.echo(convert_lipid.__doc__)
 
@@ -220,7 +221,15 @@ def convert_lipids(
 def convert_file(
     file: Path = typer.Argument(None),
     column: str = typer.Option(
-        None, "--column", "-c", help="name of the column that contains lipid notations",
+        None,
+        "--column",
+        "-c",
+        help="name of the column that contains lipid notations",
+    ),
+    sep: str = typer.Option(
+        None,
+        "--sep",
+        help="separator of .csv file",
     ),
     output_file: Path = typer.Option(
         None,
@@ -247,7 +256,10 @@ def convert_file(
         help="Select between different convert mode: active, dynamic, fixed",
     ),
     worker: int = typer.Option(
-        1, "--worker", "-w", help="Number of worker for multipeocessing",
+        1,
+        "--worker",
+        "-w",
+        help="Number of worker for multipeocessing",
     ),
 ):
     """
@@ -255,7 +267,7 @@ def convert_file(
     and export to supported style as .csv / .xlsx file.
     """
 
-    raw_table_dct, table_header_lst = cli_get_table(file)
+    raw_table_dct, table_header_lst = cli_get_table(file, sep=sep)
 
     use_one_col = False
     converted_only = False
@@ -282,6 +294,7 @@ def convert_file(
         pass
 
     if lipid_col_name:
+
         table_dct = {lipid_col_name: raw_table_dct.get(lipid_col_name)}
         if table_dct.get(lipid_col_name):
             pass
@@ -436,6 +449,11 @@ def convert(
         "-c",
         help="Name or index of the column that contains lipid notations. # index count from 0.",
     ),
+    sep: str = typer.Option(
+        None,
+        "--sep",
+        help="separator of .csv file",
+    ),
     style: StyleType = typer.Option(
         "LipidLynxX",
         "--style",
@@ -495,6 +513,8 @@ def convert(
         if isinstance(source, Path):
             convert_file(
                 file=source,
+                column=column,
+                sep=sep,
                 output_file=output_file,
                 style=style,
                 level=level,
@@ -506,6 +526,7 @@ def convert(
                     convert_file(
                         file=Path(source),
                         column=column,
+                        sep=sep,
                         output_file=output_file,
                         style=style,
                         level=level,
@@ -526,7 +547,10 @@ def convert(
         typer.echo(convert.__doc__)
 
 
-def task_worker(input_name: str, params: dict,) -> dict:
+def task_worker(
+    input_name: str,
+    params: dict,
+) -> dict:
 
     # task = queue.get(True)
 
@@ -553,6 +577,11 @@ def task_worker(input_name: str, params: dict,) -> dict:
 @cli_app.command(name="equalize-file")
 def equalize(
     file: Path = typer.Argument(None),
+    sep: str = typer.Option(
+        None,
+        "--sep",
+        help="separator of .csv file",
+    ),
     output_file: Path = typer.Option(
         None,
         "--output",
@@ -570,10 +599,13 @@ def equalize(
     Equalize one .csv / .xlsx FILE containing lipid names into supported levels
     and export to supported style as .csv / .xlsx file.
     """
-    table_dct, table_header_lst = cli_get_table(file)
+    table_dct, table_header_lst = cli_get_table(file, sep=sep)
     levels = get_levels(level)
     typer.echo(
-        typer.style(f"Equalize lipid names on {levels} level.", fg=typer.colors.CYAN,)
+        typer.style(
+            f"Equalize lipid names on {levels} level.",
+            fg=typer.colors.CYAN,
+        )
     )
     typer.echo(f"Processing file: {file.name} ...")
     with click_spinner.spinner():
