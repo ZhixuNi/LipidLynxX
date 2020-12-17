@@ -86,6 +86,12 @@ class Formatter(object):
             if o_str:
                 if o_str in ["O", "OH"]:
                     o_count = 1
+                elif o_str == 'M':
+                    o_count = 1
+                elif o_str == 'D':
+                    o_count = 2
+                elif o_str == 'T':
+                    o_count = 3
                 else:
                     o_count_str = o_str.strip("OH")
                     o_count_str = o_count_str.strip("O")

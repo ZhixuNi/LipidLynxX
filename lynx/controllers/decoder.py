@@ -87,7 +87,9 @@ class Decoder(object):
             residues_separator_count = len(
                 matched_info_dct.get("RESIDUE_SEPARATOR", [])
             )
-            if residues_count == residues_separator_count + 1 and residues_count > 0:
+            if residues_count == residues_separator_count + 1 and residues_count > 1:
+                pass
+            elif residues_count == 1:
                 pass
             else:
                 # self.logger.debug(f"The numbers of residues and residue_separators do not fit. Skipped...")

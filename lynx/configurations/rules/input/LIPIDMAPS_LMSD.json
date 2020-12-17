@@ -1,5 +1,5 @@
 {
-  "_DATE": 20201031,
+  "_DATE": 20201120,
   "_AUTHORS": [
     "zhixu.ni@uni-leipzig.de"
   ],
@@ -329,7 +329,7 @@
         "TAIL"
       ],
       "MAX_RESIDUES": 3,
-      "CLASS": "TG|DG|MG",
+      "CLASS": "[MDT](A)?G",
       "LIPID_CLASS_SEPARATOR": "{{SEPARATOR.SPACE}}",
       "BRACKET_LEFT": "{{SEPARATOR.BRACKET_LEFT}}",
       "RESIDUE_INFO_SUM": "{{RESIDUE.RESIDUE_INFO_SUM}}",

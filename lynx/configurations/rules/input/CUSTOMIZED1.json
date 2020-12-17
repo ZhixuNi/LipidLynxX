@@ -1,5 +1,5 @@
 {
-  "_DATE": 20201025,
+  "_DATE": 20201120,
   "_AUTHORS": [
     "zhixu.ni@uni-leipzig.de"
   ],
@@ -9,7 +9,7 @@
   "SEPARATOR": {
     "MOD_SEPARATOR": "_",
     "RESIDUE_SEPARATOR": "[/]",
-    "SPACE": "\\s",
+    "SPACE": "\\s+",
     "COLON": ":",
     "SEMICOLON": ";",
     "COMMA": ",",
@@ -290,7 +290,7 @@
         "LIPID_CLASS_SEPARATOR"
       ],
       "MAX_RESIDUES": 3,
-      "CLASS": "TG|DG|MG",
+      "CLASS": "[MDT](A)?G",
       "LIPID_CLASS_SEPARATOR": "{{SEPARATOR.SPACE}}",
       "RESIDUE_INFO_SUM": "{{RESIDUE.RESIDUE_INFO_SUM}}",
       "EXAMPLES": [

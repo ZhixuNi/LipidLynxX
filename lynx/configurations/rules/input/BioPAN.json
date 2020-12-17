@@ -1,5 +1,5 @@
 {
-  "_DATE": 20201031,
+  "_DATE": 20201120,
   "_AUTHORS": [
     "zhixu.ni@uni-leipzig.de"
   ],
@@ -149,7 +149,7 @@
       "OPTIONAL": [],
       "MAX_RESIDUES": 3,
       "PREFIX": "(O|plasmanyl|P|plasmenyl)[-]?",
-      "CLASS": "TG|DG|MG",
+      "CLASS": "[MDT](A)?G",
       "RESIDUE_INFO_SUM": "{{RESIDUE.RESIDUE_INFO_SUM}}",
       "EXAMPLES": [
         "MG 16:0",

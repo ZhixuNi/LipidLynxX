@@ -163,13 +163,9 @@ async def get_link_lipid(
 
 
 @router.get(
-    "/jobs/{token}",
-    response_model=JobStatus,
-    status_code=status.HTTP_202_ACCEPTED,
+    "/jobs/{token}", response_model=JobStatus, status_code=status.HTTP_202_ACCEPTED,
 )
-async def check_linker_job(
-    token: str,
-):
+async def check_linker_job(token: str,):
     """"""
     if is_job_finished(token):
         job_data = get_job_output(token)
@@ -247,10 +243,7 @@ async def create_link_list_job(
             "file_type": file_type,
         },
     }
-    Process(
-        target=linker_client,
-        args=(token, job_execute_data, "list"),
-    ).start()
+    Process(target=linker_client, args=(token, job_execute_data, "list"),).start()
     job_status = "created"
     job_info = JobStatus(token=token, status=job_status, data=job_execute_data)
 
@@ -274,10 +267,7 @@ async def create_link_dict_job(
             "file_type": file_type,
         },
     }
-    Process(
-        target=linker_client,
-        args=(token, job_execute_data, "dict"),
-    ).start()
+    Process(target=linker_client, args=(token, job_execute_data, "dict"),).start()
     job_status = "created"
     job_info = JobStatus(token=token, status=job_status, data=job_execute_data)
 

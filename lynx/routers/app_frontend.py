@@ -89,9 +89,7 @@ def levels(request: Request):
 
 
 @frontend.get("/linker/", include_in_schema=False)
-async def linker(
-    request: Request,
-):
+async def linker(request: Request,):
     return templates.TemplateResponse(
         "linker.html", {"request": request, "all_resources": {}}
     )
@@ -214,9 +212,7 @@ async def equalizer_file(
 
 @frontend.post("/linker/text", include_in_schema=False)
 async def linker_text(
-    request: Request,
-    lipid_names: str = Form(...),
-    file_type: FileType = Form(...),
+    request: Request, lipid_names: str = Form(...), file_type: FileType = Form(...),
 ):
     if not lipid_names:
         raise HTTPException(status_code=404)
@@ -225,8 +221,7 @@ async def linker_text(
     export_file_type = get_file_type(file_type)
     input_data = InputListData(data=names)
     job_info = await create_link_list_job(
-        data=input_data,
-        file_type=export_file_type,
+        data=input_data, file_type=export_file_type,
     )  # type: JobStatus
     response_data = job_info.dict()
     response_data["request"] = request
@@ -238,9 +233,7 @@ async def linker_text(
 
 @frontend.post("/linker/file", include_in_schema=False)
 async def linker_file(
-    request: Request,
-    file_obj: UploadFile = File(...),
-    file_type: FileType = Form(...),
+    request: Request, file_obj: UploadFile = File(...), file_type: FileType = Form(...),
 ):
     table_info, err_lst = get_table(file_obj, err_lst=[])
     export_file_type = get_file_type(file_type)
@@ -248,8 +241,7 @@ async def linker_file(
     if table_info:
         input_data = InputDictData(data=table_info)
         job_info = await create_link_dict_job(
-            data=input_data,
-            file_type=export_file_type,
+            data=input_data, file_type=export_file_type,
         )  # type: JobStatus
         response_data = job_info.dict()
         response_data["request"] = request

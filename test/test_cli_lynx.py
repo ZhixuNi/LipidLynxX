@@ -58,8 +58,7 @@ def test_convert():
     if os.path.isfile(test_output):
         os.remove(test_output)
     result = runner.invoke(
-        cli_app,
-        ["convert", test_input_file, "--output", test_output],
+        cli_app, ["convert", test_input_file, "--output", test_output],
     )
     cli_output_lst = result.stdout.strip("\n").split("\n")
     print(cli_output_lst)
@@ -74,6 +73,7 @@ def test_convert():
 
 
 def test_convert_biopan():
+    # python cli_lynx.py convert-file test/test_input/test_biopan_lite.csv --column 0 --output test/test_output/output_test_biopan_lite.csv --style BioPAN
     try:
         test_output = os.path.abspath(
             get_abs_path(r"test/test_output/test_convert_biopan.xlsx")
@@ -83,7 +83,7 @@ def test_convert_biopan():
             test_output = os.path.join(r"test/test_output", "test_convert_biopan.xlsx")
             test_output = os.path.abspath(test_output)
         else:
-            test_output = r"test/test_output/test_convert_biopan.xlsx"
+            test_output = r"test/test_output/test_convert_biopan.csv"
     test_input_file = get_abs_path(r"test/test_input/test_biopan_lite.csv")
     if os.path.isfile(test_input_file):
         print(test_input_file)
@@ -96,8 +96,7 @@ def test_convert_biopan():
     if os.path.isfile(test_output):
         os.remove(test_output)
     result = runner.invoke(
-        cli_app,
-        ["convert", test_input_file, "--output", test_output],
+        cli_app, ["convert", test_input_file, "--output", test_output],
     )
     cli_output_lst = result.stdout.strip("\n").split("\n")
     print(cli_output_lst)
@@ -126,8 +125,7 @@ def test_equalize():
     if os.path.isfile(test_output):
         os.remove(test_output)
     result = runner.invoke(
-        cli_app,
-        ["equalize", test_input_file, "--output", test_output],
+        cli_app, ["equalize", test_input_file, "--output", test_output],
     )
     cli_output_lst = result.stdout.strip("\n").split("\n")
     print(cli_output_lst)

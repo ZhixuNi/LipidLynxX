@@ -1,0 +1,919 @@
+{
+  "_DATE": 20201102,
+  "_AUTHORS": [
+    "zhixu.ni@uni-leipzig.de"
+  ],
+  "NOMENCLATURE": "BracketsShorthand",
+  "SUPPORTED_LEVELS": [
+    "B0",
+    "B1",
+    "B2",
+    "B3",
+    "M0",
+    "M0.1",
+    "M0.2",
+    "M1",
+    "M1.1",
+    "M1.2",
+    "M2",
+    "M2.1",
+    "M2.2",
+    "M3",
+    "M3.1",
+    "M3.2",
+    "M4",
+    "M4.1",
+    "M4.2",
+    "M5",
+    "M5.1",
+    "M5.2",
+    "S0",
+    "S0.1",
+    "S0.2",
+    "S1",
+    "S1.1",
+    "S1.2",
+    "S2",
+    "S2.1",
+    "S2.2",
+    "S3",
+    "S3.1",
+    "S3.2",
+    "S4",
+    "S4.1",
+    "S4.2",
+    "S5",
+    "S5.1",
+    "S5.2"
+  ],
+  "SUPPORT_MODIFICATION": 1,
+  "SEPARATOR": {
+    "MOD_SEPARATOR": ",",
+    "RESIDUE_SEPARATOR": "_|/",
+    "SPACE": "\\s",
+    "COLON": ":",
+    "SEMICOLON": ";",
+    "COMMA": ",",
+    "RESIDUE_BRACKET_LEFT": "\\(",
+    "RESIDUE_BRACKET_RIGHT": "\\)",
+    "MOD_BRACKET_LEFT": "\\(",
+    "MOD_BRACKET_RIGHT": "\\)",
+    "SITE_BRACKET_LEFT": "\\(",
+    "SITE_BRACKET_RIGHT": "\\)",
+    "SQUARE_BRACKET_LEFT": "\\(",
+    "SQUARE_BRACKET_RIGHT": "\\)",
+    "SEPARATOR_LEVELS": {
+      "B": "",
+      "M": "_",
+      "S": "/"
+    }
+  },
+  "SITE": {
+    "SITE_INFO": {
+      "ORDER": [
+        "SITE",
+        "SITE_SUFFIX"
+      ],
+      "OPTIONAL": [
+        "SITE_SUFFIX"
+      ],
+      "SITE": "(\\s?,)?([0-9]{1,2})",
+      "SITE_SUFFIX": "([EZRS])?",
+      "EXAMPLES": [
+        "12",
+        "12Z"
+      ]
+    },
+    "SITE_INFO_SUM": {
+      "ORDER": [
+        "SITE_BRACKET_LEFT",
+        "SITE_INFO",
+        "SITE_BRACKET_RIGHT"
+      ],
+      "REPEAT": {
+        "SITE_INFO": [1, 10]
+      },
+      "SITE_BRACKET_LEFT": "{{SEPARATOR.SITE_BRACKET_LEFT}}",
+      "SITE_INFO": "{{SITE.SITE_INFO}}",
+      "SITE_BRACKET_RIGHT": "{{SEPARATOR.SITE_BRACKET_RIGHT}}",
+      "EXAMPLES": [
+        "{9Z,12Z}"
+      ]
+    }
+  },
+  "DB": {
+    "DB_INFO_SUM": {
+      "ORDER": [
+        "DB_SITE"
+      ],
+      "DB_SITE": "{{SITE.SITE_INFO_SUM}}",
+      "EXAMPLES": [
+        "{12}",
+        "{9,12}",
+        "{9Z,12Z}"
+      ]
+    }
+  },
+  "SP_O": {
+    "SP_O_INFO_SUM": {
+      "ORDER": [
+        "SP_O_SITE"
+      ],
+      "SP_O_SITE": "{{SITE.SITE_INFO_SUM}}",
+      "EXAMPLES": [
+        "{1}",
+        "{1,3}",
+        "{1R,3R}"
+      ]
+    }
+  },
+  "MOD": {
+    "MOD_INFO": {
+      "ORDER": [
+        "MOD_SEPARATOR",
+        "MOD_COUNT",
+        "MOD_TYPE",
+        "MOD_SITE"
+      ],
+      "OPTIONAL": [
+        "MOD_SEPARATOR",
+        "MOD_COUNT",
+        "MOD_SITE"
+      ],
+      "MOD_SEPARATOR": "{{SEPARATOR.COMMA}}",
+      "MOD_COUNT":  "[+-]?(\\s?,)?([0-9]{1,2})?",
+      "MOD_TYPE": "([a-zA-Z]*[-0-9a-zA-Z]+)",
+      "MOD_SITE": "{{SITE.SITE_INFO_SUM}}",
+      "EXAMPLES": [
+        "+O",
+        "OH{9}",
+        ",2OH{9R,12S}"
+      ]
+    },
+    "MOD_INFO_SUM": {
+      "ORDER": [
+        "MOD_BRACKET_LEFT",
+        "MOD_INFO",
+        "MOD_BRACKET_RIGHT"
+      ],
+      "REPEAT": {
+        "MOD_INFO": [1, 10]
+      },
+      "MOD_BRACKET_LEFT": "{{SEPARATOR.MOD_BRACKET_LEFT}}",
+      "MOD_INFO": "{{MOD.MOD_INFO}}",
+      "MOD_BRACKET_RIGHT": "{{SEPARATOR.MOD_BRACKET_RIGHT}}",
+      "EXAMPLES": [
+        "<2OH{9,12}>",
+        "<2OH{9R,12S}>",
+        "<2OH{9R,12S},oxo{4}>"
+      ]
+    }
+  },
+  "RESIDUE": {
+    "RESIDUE_INFO": {
+      "ORDER": [
+        "RESIDUE_SEPARATOR",
+        "LINK",
+        "C_COUNT",
+        "DB_SEPARATOR",
+        "DB_COUNT",
+        "DB_INFO_SUM",
+        "SP_O_SEPARATOR",
+        "SP_O_COUNT",
+        "SP_O_INFO_SUM",
+        "MOD_INFO_SUM"
+      ],
+      "OPTIONAL": [
+        "RESIDUE_SEPARATOR",
+        "LINK",
+        "DB_COUNT",
+        "DB_INFO_SUM",
+        "SP_O_SEPARATOR",
+        "SP_O_COUNT",
+        "SP_O_INFO_SUM",
+        "MOD_INFO_SUM"
+      ],
+      "RESIDUE_SEPARATOR": "{{SEPARATOR.RESIDUE_SEPARATOR}}",
+      "LINK": "[OP]-",
+      "C_COUNT": "[0-9]{1,2}",
+      "DB_SEPARATOR": "{{SEPARATOR.COLON}}",
+      "DB_COUNT": "[1,2]?[0-9]",
+      "DB_INFO_SUM": "{{DB.DB_INFO_SUM}}",
+      "SP_O_SEPARATOR": "{{SEPARATOR.SEMICOLON}}",
+      "SP_O_COUNT": "[2-9]?OH?",
+      "SP_O_INFO_SUM": "{{SP_O.SP_O_INFO_SUM}}",
+      "MOD_INFO_SUM": "{{MOD.MOD_INFO_SUM}}",
+      "EXAMPLES": [
+        "18:2;1",
+        "18:2",
+        "18:2{9Z,11E}<OH{12R}>",
+        "9:0<oxo{9}>",
+        "26:0<OH{3}>",
+        "34:1;2<FA16:0>",
+        "34:1<+14>",
+        "34:1<+O>",
+        "34:1<+O,-2H>"
+      ]
+    },
+    "RESIDUE_ALIAS": {
+      "ORDER": [
+        "RESIDUE_SEPARATOR",
+        "ALIAS"
+      ],
+      "OPTIONAL": [
+        "RESIDUE_SEPARATOR"
+      ],
+      "RESIDUE_SEPARATOR": "{{SEPARATOR.RESIDUE_SEPARATOR}}",
+      "ALIAS": "[-,0-9a-zA-Z\\s]{3,}",
+      "EXAMPLES": [
+        "HETE",
+        "/HDoTE"
+      ]
+    },
+    "RESIDUE_INFO_SUM": {
+      "ORDER": [
+        "RESIDUE"
+      ],
+      "RESIDUE": "({{RESIDUE.RESIDUE_INFO}})|({{RESIDUE.RESIDUE_ALIAS}})",
+      "REPEAT": {
+        "RESIDUE": [1, 4]
+      },
+      "EXAMPLES": [
+        "18:2;1",
+        "18:2",
+        "9:0<oxo{9}>",
+        "34:1;2<FA16:0>",
+        "34:1<+14>",
+        "34:1<+O>",
+        "34:1<+O,-2H>"
+      ]
+    }
+  },
+  "LMSD_CLASSES": {
+    "FA01": {
+      "ORDER": [
+        "CLASS",
+        "RESIDUE_INFO_SUM"
+      ],
+      "MAX_RESIDUES": 1,
+      "CLASS": {
+        "OUTPUT": "FA",
+        "INPUT": [
+          "FA"
+        ]
+      }
+    },
+    "FA02": {
+      "ORDER": [
+        "CLASS",
+        "RESIDUE_INFO_SUM"
+      ],
+      "MAX_RESIDUES": 1,
+      "CLASS": {
+        "OUTPUT": "FA",
+        "INPUT": [
+          "FA"
+        ]
+      }
+    },
+    "FA03": {
+      "ORDER": [
+        "CLASS",
+        "RESIDUE_INFO_SUM"
+      ],
+      "MAX_RESIDUES": 1,
+      "CLASS": {
+        "OUTPUT": "FA",
+        "INPUT": [
+          "FA"
+        ]
+      }
+    },
+    "FA04": {
+      "ORDER": [
+        "CLASS",
+        "RESIDUE_INFO_SUM"
+      ],
+      "MAX_RESIDUES": 1,
+      "CLASS": {
+        "OUTPUT": "FA",
+        "INPUT": [
+          "FA"
+        ]
+      }
+    },
+    "FA0705": {
+      "ORDER": [
+        "CLASS",
+        "RESIDUE_INFO_SUM"
+      ],
+      "MAX_RESIDUES": 1,
+      "CLASS": {
+        "OUTPUT": "CoA",
+        "INPUT": [
+          "FaCoA",
+          "CoA"
+        ]
+      }
+    },
+    "GL01": {
+      "ORDER": [
+        "CLASS",
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
+      ],
+      "MAX_RESIDUES": 1,
+      "CLASS": {
+        "OUTPUT": "MG",
+        "INPUT": [
+          "MG",
+          "MAG"
+        ]
+      }
+    },
+    "GL02": {
+      "ORDER": [
+        "CLASS",
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
+      ],
+      "MAX_RESIDUES": 2,
+      "CLASS": {
+        "OUTPUT": "DG",
+        "INPUT": [
+          "DG",
+          "DAG"
+        ]
+      }
+    },
+    "GL03": {
+      "ORDER": [
+        "CLASS",
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
+      ],
+      "OPTIONAL": [
+        "PREFIX",
+        "SUFFIX"
+      ],
+      "MAX_RESIDUES": 3,
+      "CLASS": {
+        "OUTPUT": "TG",
+        "INPUT": [
+          "TG",
+          "TAG"
+        ]
+      }
+    },
+    "GP01": {
+      "ORDER": [
+        "PREFIX",
+        "CLASS",
+        "SUFFIX",
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
+      ],
+      "OPTIONAL": [
+        "PREFIX",
+        "SUFFIX"
+      ],
+      "MAX_RESIDUES": 2,
+      "PREFIX": {
+        "OUTPUT": "L",
+        "INPUT": [
+          "L",
+          "Lyso"
+        ]
+      },
+      "CLASS": {
+        "OUTPUT": "PC",
+        "INPUT": [
+          "PC"
+        ]
+      }
+    },
+    "GP02": {
+      "ORDER": [
+        "PREFIX",
+        "CLASS",
+        "SUFFIX",
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
+      ],
+      "OPTIONAL": [
+        "PREFIX",
+        "SUFFIX"
+      ],
+      "MAX_RESIDUES": 2,
+      "PREFIX": {
+        "OUTPUT": "L",
+        "INPUT": [
+          "L",
+          "Lyso"
+        ]
+      },
+      "CLASS": {
+        "OUTPUT": "PE",
+        "INPUT": [
+          "PE"
+        ]
+      }
+    },
+    "GP03": {
+      "ORDER": [
+        "PREFIX",
+        "CLASS",
+        "SUFFIX",
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
+      ],
+      "OPTIONAL": [
+        "PREFIX",
+        "SUFFIX"
+      ],
+      "MAX_RESIDUES": 2,
+      "PREFIX": {
+        "OUTPUT": "L",
+        "INPUT": [
+          "L",
+          "Lyso"
+        ]
+      },
+      "CLASS": {
+        "OUTPUT": "PS",
+        "INPUT": [
+          "PS"
+        ]
+      }
+    },
+    "GP04": {
+      "ORDER": [
+        "PREFIX",
+        "CLASS",
+        "SUFFIX",
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
+      ],
+      "OPTIONAL": [
+        "PREFIX",
+        "SUFFIX"
+      ],
+      "MAX_RESIDUES": 2,
+      "PREFIX": {
+        "OUTPUT": "L",
+        "INPUT": [
+          "L",
+          "Lyso"
+        ]
+      },
+      "CLASS": {
+        "OUTPUT": "PG",
+        "INPUT": [
+          "PG"
+        ]
+      }
+    },
+    "GP0410": {
+      "ORDER": [
+        "PREFIX",
+        "CLASS",
+        "SUFFIX",
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
+      ],
+      "OPTIONAL": [
+        "PREFIX",
+        "SUFFIX"
+      ],
+      "MAX_RESIDUES": 2,
+      "PREFIX": {
+        "OUTPUT": "",
+        "INPUT": [
+          "L",
+          "Lyso"
+        ]
+      },
+      "CLASS": {
+        "OUTPUT": "BMP",
+        "INPUT": [
+          "BPA",
+          "LBPA",
+          "BMP"
+        ]
+      }
+    },
+    "GP05": {
+      "ORDER": [
+        "PREFIX",
+        "CLASS",
+        "SUFFIX",
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
+      ],
+      "OPTIONAL": [
+        "PREFIX",
+        "SUFFIX"
+      ],
+      "MAX_RESIDUES": 2,
+      "PREFIX": {
+        "OUTPUT": "L",
+        "INPUT": [
+          "L",
+          "Lyso"
+        ]
+      },
+      "CLASS": {
+        "OUTPUT": "PGP",
+        "INPUT": [
+          "PGP"
+        ]
+      }
+    },
+    "GP06": {
+      "ORDER": [
+        "PREFIX",
+        "CLASS",
+        "SUFFIX",
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
+      ],
+      "OPTIONAL": [
+        "PREFIX",
+        "SUFFIX"
+      ],
+      "MAX_RESIDUES": 2,
+      "PREFIX": {
+        "OUTPUT": "L",
+        "INPUT": [
+          "L",
+          "Lyso"
+        ]
+      },
+      "CLASS": {
+        "OUTPUT": "PI",
+        "INPUT": [
+          "PI"
+        ]
+      }
+    },
+    "GP07": {
+      "ORDER": [
+        "PREFIX",
+        "CLASS",
+        "SUFFIX",
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
+      ],
+      "OPTIONAL": [
+        "PREFIX",
+        "SUFFIX"
+      ],
+      "MAX_RESIDUES": 2,
+      "PREFIX": {
+        "OUTPUT": "L",
+        "INPUT": [
+          "L",
+          "Lyso"
+        ]
+      },
+      "CLASS": {
+        "OUTPUT": "PIP",
+        "INPUT": [
+          "PIP"
+        ]
+      }
+    },
+    "GP08": {
+      "ORDER": [
+        "PREFIX",
+        "CLASS",
+        "SUFFIX",
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
+      ],
+      "OPTIONAL": [
+        "PREFIX",
+        "SUFFIX"
+      ],
+      "MAX_RESIDUES": 2,
+      "PREFIX": {
+        "OUTPUT": "L",
+        "INPUT": [
+          "L",
+          "Lyso"
+        ]
+      },
+      "CLASS": {
+        "OUTPUT": "PIP2",
+        "INPUT": [
+          "PIP2"
+        ]
+      }
+    },
+    "GP09": {
+      "ORDER": [
+        "PREFIX",
+        "CLASS",
+        "SUFFIX",
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
+      ],
+      "MAX_RESIDUES": 2,
+      "PREFIX": {
+        "OUTPUT": "L",
+        "INPUT": [
+          "L",
+          "Lyso"
+        ]
+      },
+      "OPTIONAL": [
+        "PREFIX",
+        "SUFFIX"
+      ],
+      "CLASS": {
+        "OUTPUT": "PIP3",
+        "INPUT": [
+          "PIP3"
+        ]
+      }
+    },
+    "GP10": {
+      "ORDER": [
+        "PREFIX",
+        "CLASS",
+        "SUFFIX",
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
+      ],
+      "OPTIONAL": [
+        "PREFIX",
+        "SUFFIX"
+      ],
+      "MAX_RESIDUES": 2,
+      "PREFIX": {
+        "OUTPUT": "L",
+        "INPUT": [
+          "L",
+          "Lyso"
+        ]
+      },
+      "CLASS": {
+        "OUTPUT": "PA",
+        "INPUT": [
+          "PA"
+        ]
+      }
+    },
+    "GP11": {
+      "ORDER": [
+        "PREFIX",
+        "CLASS",
+        "SUFFIX",
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
+      ],
+      "OPTIONAL": [
+        "PREFIX",
+        "SUFFIX"
+      ],
+      "MAX_RESIDUES": 2,
+      "PREFIX": {
+        "OUTPUT": "L",
+        "INPUT": [
+          "L",
+          "Lyso"
+        ]
+      },
+      "CLASS": {
+        "OUTPUT": "PPA",
+        "INPUT": [
+          "PPA"
+        ]
+      }
+    },
+    "GP12": {
+      "ORDER": [
+        "PREFIX",
+        "CLASS",
+        "SUFFIX",
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
+      ],
+      "OPTIONAL": [
+        "PREFIX",
+        "SUFFIX"
+      ],
+      "MAX_RESIDUES": 4,
+      "PREFIX": {
+        "OUTPUT": "EXCEPTIONS",
+        "INPUT": [
+          "ML|DL"
+        ]
+      },
+      "CLASS": {
+        "OUTPUT": "CL",
+        "INPUT": [
+          "CL",
+          "CL",
+          "DLCL"
+        ]
+      }
+    },
+    "SP01": {
+      "ORDER": [
+        "CLASS",
+        "SUFFIX",
+        "RESIDUE_INFO_SUM"
+      ],
+      "MAX_RESIDUES": 1,
+      "CLASS": {
+        "OUTPUT": "SPB",
+        "INPUT": [
+          "SPB",
+          "[Ss]phingosine"
+        ]
+      }
+    },
+    "SP0105": {
+      "ORDER": [
+        "CLASS",
+        "SUFFIX",
+        "RESIDUE_INFO_SUM"
+      ],
+      "MAX_RESIDUES": 1,
+      "CLASS": {
+        "OUTPUT": "SPBP",
+        "INPUT": [
+          "SPBP", "SPB1P"
+        ]
+      }
+    },
+    "SP02": {
+      "ORDER": [
+        "PREFIX",
+        "CLASS",
+        "SUFFIX",
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
+      ],
+      "OPTIONAL": [
+        "PREFIX",
+        "SUFFIX"
+      ],
+      "MAX_RESIDUES": 2,
+      "PREFIX": {
+        "OUTPUT": "L",
+        "INPUT": [
+          "L",
+          "Lyso"
+        ]
+      },
+      "CLASS": {
+        "OUTPUT": "Cer",
+        "INPUT": [
+          "Cer"
+        ]
+      },
+      "SUFFIX": {
+        "OUTPUT": "P",
+        "INPUT": [
+          "P"
+        ]
+      }
+    },
+    "SP03": {
+      "ORDER": [
+        "PREFIX",
+        "CLASS",
+        "SUFFIX",
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
+      ],
+      "OPTIONAL": [
+        "PREFIX",
+        "SUFFIX"
+      ],
+      "MAX_RESIDUES": 2,
+      "PREFIX": {
+        "OUTPUT": "L",
+        "INPUT": [
+          "L",
+          "Lyso"
+        ]
+      },
+      "CLASS": {
+        "OUTPUT": "SM",
+        "INPUT": [
+          "SM"
+        ]
+      }
+    },
+    "SP05": {
+      "ORDER": [
+        "PREFIX",
+        "CLASS",
+        "SUFFIX",
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
+      ],
+      "OPTIONAL": [
+        "PREFIX",
+        "SUFFIX"
+      ],
+      "MAX_RESIDUES": 2,
+      "PREFIX": {
+        "OUTPUT": "EXCEPTIONS",
+        "INPUT": [
+          "Hex\\d?",
+          "Gal\\d?",
+          "Glc\\d?",
+          "Man\\d?",
+          "([AS]?(Hex|Gal|Glc|Man){1,6}|PE-|Lyso)"
+        ]
+      },
+      "CLASS": {
+        "OUTPUT": "Cer",
+        "INPUT": [
+          "Cer"
+        ]
+      }
+    },
+    "SP06": {
+      "ORDER": [
+        "PREFIX",
+        "CLASS",
+        "SUFFIX",
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
+      ],
+      "OPTIONAL": [
+        "PREFIX",
+        "SUFFIX"
+      ],
+      "MAX_RESIDUES": 2,
+      "PREFIX": {
+        "OUTPUT": "EXCEPTIONS",
+        "INPUT": [
+          "GM[1-4]?"
+        ]
+      },
+      "CLASS": {
+        "OUTPUT": "EXCEPTIONS",
+        "INPUT": [
+          "GM[1-4]?"
+        ]
+      }
+    },
+    "ST01": {
+      "ORDER": [
+        "PREFIX",
+        "CLASS",
+        "SUFFIX",
+        "RESIDUE_BRACKET_LEFT",
+        "RESIDUE_INFO_SUM",
+        "RESIDUE_BRACKET_RIGHT"
+      ],
+      "OPTIONAL": [
+        "PREFIX",
+        "SUFFIX"
+      ],
+      "MAX_RESIDUES": 2,
+      "PREFIX": {
+        "OUTPUT": "",
+        "INPUT": [
+          "BR",
+          "CA",
+          "SI",
+          "ST"
+        ]
+      },
+      "CLASS": {
+        "OUTPUT": "ST",
+        "INPUT": [
+          "CE",
+          "ST"
+        ]
+      }
+    }
+  }
+}

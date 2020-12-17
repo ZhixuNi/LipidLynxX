@@ -168,10 +168,7 @@ class SP_O(object):
     def to_json(self):
         sp_o_json_str = json.dumps(self.details)
 
-        if check_json(
-            validator=self.validator,
-            json_obj=json.loads(sp_o_json_str),
-        ):
+        if check_json(validator=self.validator, json_obj=json.loads(sp_o_json_str),):
             return sp_o_json_str
         else:
             raise Exception(f"Schema test FAILED. Schema {self.schema}")

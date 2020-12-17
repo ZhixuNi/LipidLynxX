@@ -25,7 +25,16 @@ import requests
 
 from lynx.controllers.converter import convert_lipid
 from lynx.models.api_models import StyleType
-from lynx.models.defaults import kegg_ids, lion_ids
+from lynx.models.defaults import kegg_ids, lion_ids, rhea_ids
+
+import os
+import ssl
+
+
+if not os.environ.get("PYTHONHTTPSVERIFY", "") and getattr(
+    ssl, "_create_unverified_context", None
+):
+    ssl._create_default_https_context = ssl._create_unverified_context
 
 DEFAULT_DB_INFO = {
     "chebi": "https://www.ebi.ac.uk/chebi",
@@ -39,8 +48,22 @@ DEFAULT_DB_INFO = {
     "recon3": "https://www.vmh.life/#reconmap",
     "rhea": "https://www.rhea-db.org",
     "swisslipids": "https://www.swisslipids.org",
-    "uniportkb": "https://www.uniprot.org",
+    "uniprotkb": "https://www.uniprot.org",
     "vmh_metabolites": "https://www.vmh.life/#metabolite",
+}
+
+DEFAULT_ORGANISMS = {
+    "c. elegans": 1077491,
+    "cyperus elegans": 1077491,
+    "human": 9606,
+    "homo sapiens": 9606,
+    "homo sapiens (human)": 9606,
+    "mouse": 10090,
+    "mus musculus": 10090,
+    "mus musculus (mouse)": 10090,
+    "rat": 10116,
+    "rattus norvegicus": 10116,
+    "rattus norvegicus (rat)": 10116,
 }
 
 CROSS_LINK_DBS = {
@@ -50,7 +73,7 @@ CROSS_LINK_DBS = {
         "lipidmaps": "LipidMaps",
         "swisslipids": "SwissLipids",
         "rhea": "Rhea",
-        "uniportkb": "UniProtKB",
+        "uniprotkb_siwsslipids": "UniProtKB",
     },
     "lipidmaps": {
         "chebi": "chebi_id",
@@ -59,7 +82,15 @@ CROSS_LINK_DBS = {
         "lipidbank": "lipidbank_id",
         "pubchem": "pubchem_cid",
     },
+    "chebi": {"uniprotkb_chebi": "UniProtKB",},
+    "rhea": {
+        "uniprotkb_rhea_ud": "RHEA_ID_MASTER",
+        "uniprotkb_rhea_lr": "RHEA_ID_LR",
+        "uniprotkb_rhea_rl": "RHEA_ID_RL",
+        "uniprotkb_rhea_bi": "RHEA_ID_BI",
+    },
 }
+
 CROSS_LINK_APIS = {
     "name_search": {
         "swisslipids": r"https://www.swisslipids.org/api/search?term=<lipid_id>"
@@ -82,7 +113,7 @@ CROSS_LINK_APIS = {
         "recon3": "https://www.vmh.life/minerva/index.xhtml?id=ReconMap-3&search=<lipid_id>",
         "rhea": r"https://www.rhea-db.org/reaction?id=<lipid_id>",
         "swisslipids": r"https://www.swisslipids.org/#/entity/<lipid_id>/",
-        "uniportkb": r"https://www.uniprot.org/uniprot/?query=<lipid_id>",
+        "uniprotkb": r"https://www.uniprot.org/uniprot/?query=<organism><lipid_id>",
         "vmh_metabolites": "https://www.vmh.life/_api/metabolites/?hmdb=<lipid_id>&format=json",
     },
 }
@@ -94,7 +125,7 @@ DB_SECTIONS = {
     "General database": ["chebi", "pubchem"],
     "Pathways": ["kegg", "recon2.01", "recon3"],
     "Reactions": ["rhea"],
-    "Related database": ["uniportkb"],
+    "Related database": ["uniprotkb"],
 }
 
 
@@ -295,6 +326,36 @@ async def get_swiss_linked_id(
                 )
             else:
                 cross_ref_ids.append(swisslipids_id)
+        # elif ref_db.lower() == "uniprotkb" and re.match(r"^(chebi:|annotation:).*", swisslipids_id, re.IGNORECASE):
+        #     uniprot_url = CROSS_LINK_APIS.get("link", {}).get("uniprotkb", "")
+        #     uniprot_url = re.sub(r"<lipid_id>", swisslipids_id, uniprot_url)
+        #     organism = "organism:10090+AND+"
+        #     uniprot_url = re.sub(r"<organism>", organism, uniprot_url)
+        #     uniprot_url += '&format=list'
+        #     found_ref_id_lst = []
+        #     async with aiohttp.request("GET", uniprot_url) as r_uniprot_ref_obj:
+        #         r_uniprot_ref_status = r_uniprot_ref_obj.status
+        #         if r_uniprot_ref_status == 200:
+        #             r_uniprot_ref_str = await r_uniprot_ref_obj.text()
+        #             if r_uniprot_ref_str:
+        #                 r_uniprot_ref_str = re.sub(r'\n', ';', r_uniprot_ref_str)
+        #                 temp_found_ref_id_lst = r_uniprot_ref_str.split(r';')
+        #                 temp_found_ref_id_lst = [uid.strip(";") for uid in temp_found_ref_id_lst]
+        #                 temp_found_ref_id_lst = [isuid for isuid in temp_found_ref_id_lst if isuid]
+        #                 found_ref_id_lst.extend(temp_found_ref_id_lst)
+        #             found_ref_id_lst = natsort.natsorted(found_ref_id_lst)
+        #             for cross_ref_id in found_ref_id_lst:
+        #                 if (
+        #                         export_url
+        #                         and cross_ref_id not in cross_ref_id_urls
+        #                 ):
+        #                     cross_ref_id_urls[
+        #                         cross_ref_id
+        #                     ] = await get_external_link(
+        #                         cross_ref_id, ref_db
+        #                     )
+        #                 else:
+        #                     cross_ref_ids.append(cross_ref_id)
         else:
             pre_ref_url = re.sub(r"<DB_NAME>", ref_dbs.get(ref_db), swiss_base_url)
             ref_url = re.sub(r"<lipid_id>", str(swisslipids_id), pre_ref_url)
@@ -314,7 +375,20 @@ async def get_swiss_linked_id(
                         ):
                             for cross_ref_id_info in cross_ref_id_lst:
                                 cross_ref_id = str(cross_ref_id_info.get("id"))
-                                if cross_ref_id:
+                                found_ref_id_lst = []
+                                if ref_db.lower().startswith("uniprotkb"):
+                                    if cross_ref_id.upper().startswith("SLP:"):
+                                        temp_found_ref_id_lst = await get_uniprot_id(
+                                            cross_ref_id, from_db="swisslipids"
+                                        )
+                                        found_ref_id_lst.extend(temp_found_ref_id_lst)
+                                else:
+                                    if isinstance(cross_ref_id, str):
+                                        found_ref_id_lst = [cross_ref_id]
+                                    elif isinstance(cross_ref_id, list):
+                                        found_ref_id_lst = cross_ref_id
+                                found_ref_id_lst = natsort.natsorted(found_ref_id_lst)
+                                for cross_ref_id in found_ref_id_lst:
                                     if (
                                         export_url
                                         and cross_ref_id not in cross_ref_id_urls
@@ -347,10 +421,11 @@ async def get_lmsd_linked_ids(
         r_cross_ref_status = r_cross_ref_obj.status
         if r_cross_ref_status == 200:
             r_cross_ref_js = await r_cross_ref_obj.json(content_type="application/json")
-            for ref_db in ref_dbs:
-                ref_id = r_cross_ref_js.get(ref_dbs.get(ref_db))
-                if ref_id:
-                    cross_ref_ids[ref_db] = ref_id
+            if r_cross_ref_js:
+                for ref_db in ref_dbs:
+                    ref_id = r_cross_ref_js.get(ref_dbs.get(ref_db))
+                    if ref_id:
+                        cross_ref_ids[ref_db] = ref_id
 
     lion_id = get_lion_id(lm_id)
     if lion_id:
@@ -366,6 +441,89 @@ async def get_lmsd_linked_ids(
     return cross_ref_ids
 
 
+async def get_chebi_linked_ids(
+    chebi_id: str = "72959", ref_dbs: List[str] = None, export_url: bool = False
+) -> dict:
+    if not ref_dbs:
+        ref_dbs = CROSS_LINK_DBS.get("chebi", {})
+    cross_ref_ids = {}
+    for ref_db in ref_dbs:
+        if ref_db.lower().startswith("uniprot"):
+            cross_ref_ids[ref_db] = await get_uniprot_id(
+                lipid_id=chebi_id, from_db="chebi"
+            )
+
+    return cross_ref_ids
+
+
+async def get_rhea_linked_ids(
+    rhea_id: str = "17732", ref_dbs: List[str] = None, export_url: bool = False
+) -> dict:
+    if not ref_dbs:
+        ref_dbs = CROSS_LINK_DBS.get("rhea", {})
+
+    # if rhea_id not in rhea_ids:
+    #     test_ids = {
+    #         "RHEA_ID_MASTER": str(int(rhea_id) + 3),
+    #         "RHEA_ID_LR": str(int(rhea_id) + 2),
+    #         "RHEA_ID_RL": str(int(rhea_id) + 1),
+    #     }
+    #     for u_d in test_ids:
+    #         ud_id = test_ids[u_d]
+    #         if ud_id in rhea_ids and rhea_ids.get(ud_id,{}).get(u_d, "") == ud_id:
+    #             rhea_id = ud_id
+    #             break
+
+    rhea_directions = rhea_ids.get(rhea_id, {})
+    cross_ref_ids = {}
+    for uniprot_direction in ref_dbs:
+        direction = ref_dbs.get(uniprot_direction, "")
+        rhea_direction_id = rhea_directions.get(direction, "")
+        cross_ref_ids[uniprot_direction] = await get_uniprot_id(
+            lipid_id=rhea_direction_id, from_db="rhea"
+        )
+
+    return cross_ref_ids
+
+
+async def get_uniprot_id(lipid_id: str, from_db: str = "") -> List[str]:
+    uniprot_url = CROSS_LINK_APIS.get("link", {}).get("uniprotkb", "")
+    organism = "organism:10090+AND+"
+    uniprot_url = re.sub(r"<organism>", organism, uniprot_url)
+    uniprot_url += "&format=list"
+    search_id = ""
+    uniprot_id_lst = []
+    if not from_db or from_db.lower().startswith("uniprot"):
+        search_id = lipid_id
+    elif from_db.lower().startswith("chebi"):
+        search_id = f"chebi:{lipid_id}"
+    elif from_db.lower().startswith("swiss"):
+        search_id = re.sub(r"SLP:|slp:", "slp", lipid_id)
+    elif from_db.lower().startswith("rhea"):
+        search_id = f'annotation:(type:"catalytic activity" rhea:{lipid_id})'
+    else:
+        pass
+
+    uniprot_url = re.sub(r"<lipid_id>", search_id, uniprot_url)
+
+    async with aiohttp.request("GET", uniprot_url) as r_cross_ref_obj:
+        r_cross_ref_status = r_cross_ref_obj.status
+        if r_cross_ref_status == 200:
+            r_uniprot_ref_str = await r_cross_ref_obj.text()
+            if r_uniprot_ref_str:
+                r_uniprot_ref_str = re.sub(r"\n", ";", r_uniprot_ref_str)
+                temp_found_ref_id_lst = r_uniprot_ref_str.split(r";")
+                temp_found_ref_id_lst = [
+                    uid.strip(";") for uid in temp_found_ref_id_lst
+                ]
+                temp_found_ref_id_lst = [
+                    isuid for isuid in temp_found_ref_id_lst if isuid
+                ]
+                uniprot_id_lst.extend(temp_found_ref_id_lst)
+
+    return uniprot_id_lst
+
+
 async def get_external_link(ref_id: str, ref_db: str, check_url: bool = False) -> str:
     ref_db_urls = CROSS_LINK_APIS.get("link", {})
     ref_url = ""
@@ -373,6 +531,10 @@ async def get_external_link(ref_id: str, ref_db: str, check_url: bool = False) -
         ref_base_url = ref_db_urls.get(ref_db)
         if ref_base_url:
             ref_url = re.sub(r"<lipid_id>", ref_id, ref_base_url)
+            if ref_db == "uniprotkb":
+                # organism = ""
+                organism = "organism:10090+AND+"
+                ref_url = re.sub(r"<organism>", organism, ref_url)
             if check_url:
                 # print(ref_url)
                 async with aiohttp.request("GET", ref_url) as r_cross_ref_obj:
@@ -389,6 +551,7 @@ async def get_cross_links(
     lipid_name: str = "PC(16:0/18:2(9Z,12Z))",
     export_url: bool = False,
     formatted: bool = True,
+    related: bool = False,
 ) -> dict:
     lipid_name = lipid_name.strip('"')
     linked_ids = {}
@@ -415,7 +578,10 @@ async def get_cross_links(
                 or lipid_name == swiss_lv_m_str
             ):
                 # linked_ids["swisslipids"] = swisslipids_id
-                swiss_ids = [swisslipids_id] + await get_swiss_child(swisslipids_id)
+                if related:
+                    swiss_ids = [swisslipids_id] + await get_swiss_child(swisslipids_id)
+                else:
+                    swiss_ids = [swisslipids_id]
                 # print("swiss_ids", swiss_ids)
                 for swiss_id in swiss_ids:
                     for cross_ref_db in CROSS_LINK_DBS.get("swisslipids"):
@@ -484,6 +650,60 @@ async def get_cross_links(
             linked_ids["hmdb"] = new_hmdb_urls
         else:
             linked_ids["hmdb"] = [h_id for h_id in linked_ids["hmdb"] if len(h_id) > 9]
+    if "chebi" in linked_ids:
+        chebi_ids = list(linked_ids["chebi"].keys())
+        chebi_uniprot_info = {}
+        chebi_uniprot_ids = []
+        for chebi_id in chebi_ids:
+            temp_chebi_uniprot_ids = await get_uniprot_id(
+                lipid_id=chebi_id, from_db="chebi"
+            )
+            chebi_uniprot_ids.extend(temp_chebi_uniprot_ids)
+        if export_url:
+            for c_up_id in chebi_uniprot_ids:
+                chebi_uniprot_info[
+                    c_up_id
+                ] = f"https://www.uniprot.org/uniprot/{c_up_id}"
+            linked_ids["uniprot_chebi"] = chebi_uniprot_info
+        else:
+            linked_ids["uniprot_chebi"] = chebi_uniprot_ids
+    if "rhea" in linked_ids:
+        found_rhea_ids = list(linked_ids["rhea"].keys())
+        rhea_uniprot_info = {}
+        for rhea_id in found_rhea_ids:
+            temp_rhea_uniprot_ids = await get_rhea_linked_ids(rhea_id)
+            for ud in temp_rhea_uniprot_ids:
+                if ud not in rhea_uniprot_info:
+                    rhea_uniprot_info[ud] = temp_rhea_uniprot_ids[ud]
+                else:
+                    rhea_uniprot_info[ud] = (
+                        rhea_uniprot_info[ud] + temp_rhea_uniprot_ids[ud]
+                    )
+
+        for r_up_d in rhea_uniprot_info:
+            r_up_id_info = {}
+            r_up_ids = rhea_uniprot_info[r_up_d]
+            if export_url:
+                for r_up_id in r_up_ids:
+                    r_up_id_info[r_up_id] = f"https://www.uniprot.org/uniprot/{r_up_id}"
+                linked_ids[r_up_d] = r_up_id_info
+            else:
+                linked_ids[r_up_d] = r_up_ids
+
+    sum_uniprot = {}
+    sum_uniprot_ids = []
+    for uk in linked_ids:
+        if re.match(r".*uniprot.*", uk, re.IGNORECASE):
+            uk_info = linked_ids.get(uk)
+            if isinstance(uk_info, list):
+                sum_uniprot_ids.extend(uk_info)
+            elif isinstance(uk_info, dict):
+                sum_uniprot.update(uk_info)
+    if sum_uniprot:
+        linked_ids["uniprot_sum"] = sum_uniprot
+    if sum_uniprot_ids:
+        linked_ids["uniprot_sum"] = natsort.natsorted(list(set(sum_uniprot_ids)))
+
     if formatted:
         output_ids = {}
         for ref_group in DB_SECTIONS:
@@ -502,11 +722,44 @@ def add_hyperlink(text: str, url: str) -> str:
     return f'=HYPERLINK("{url}", "{text}")'
 
 
-async def link_lipids(lipid_list: List[str]) -> pd.DataFrame:
+async def link_lipids(
+    lipid_list: List[str], direct_search: bool = False, related: bool = False,
+) -> pd.DataFrame:
     linked_df = pd.DataFrame()
     linked_info_dct = {}
     idx = 1
     for lipid_name in lipid_list:
+
+        resources = await link_lipid(lipid_name, direct_search, related=related)
+        linked_info_dct[idx] = resources
+        # print(resources)
+        idx += 1
+
+    default_col = ["Input_name", "ShorthandNotation", "LipidLynxX", "BioPAN"]
+    if linked_info_dct:
+        sum_df = pd.DataFrame(data=linked_info_dct).T
+        sum_df_columns = sum_df.columns.tolist()
+        link_cols = []
+        for col in sum_df_columns:
+            if col.startswith("Link_"):
+                sum_df_columns.remove(col)
+                link_cols.append(col)
+            elif col in default_col:
+                sum_df_columns.remove(col)
+        sum_df_columns = (
+            default_col
+            + natsort.natsorted(sum_df_columns)
+            + natsort.natsorted(link_cols)
+        )
+        linked_df = pd.DataFrame(sum_df, columns=sum_df_columns)
+
+    return linked_df
+
+
+async def link_lipid(
+    lipid_name: str, direct_search: bool = False, related: bool = False,
+) -> dict:
+    if not direct_search:
         if re.match(r"^LM\w\w\d{8}$", lipid_name, re.IGNORECASE):
             safe_lipid_name = await get_lmsd_name(lipid_name)
         elif re.match(r"^SLM:\d{9}$", lipid_name, re.IGNORECASE):
@@ -569,59 +822,42 @@ async def link_lipids(lipid_list: List[str]) -> pd.DataFrame:
             and not search_name.startswith("Hex2Cer m")
         ):
             search_name = re.sub(r"Hex2Cer ", "Hex2Cer d", search_name)
-        lynx_name = convert_lipid(
-            safe_lipid_name, style=StyleType("LipidLynxX"), level="MAX"
-        )
-        biopan_name = convert_lipid(safe_lipid_name, style=StyleType("COMP_DB"))
-        resources = {
-            "Input_name": lipid_name,
-            "ShorthandNotation": shorthand_name,
-            "LipidLynxX": lynx_name,
-            "BioPAN": biopan_name,
-        }
-        print(search_name)
-        linked_ids = await get_cross_links(
-            lipid_name=search_name, export_url=True, formatted=False
-        )
-        if isinstance(linked_ids, dict):
-            for db in linked_ids:
-                db_resources = linked_ids.get(db)
-                if db_resources and isinstance(db_resources, dict):
-                    if len(list(db_resources.keys())) < 2:
-                        resources[db] = ";".join(list(db_resources.keys()))
-                        resources[f"Link_{db}"] = ";".join(
-                            [db_resources.get(i) for i in db_resources]
-                        )
-                    else:
-                        resources[db] = json.dumps(list(db_resources.keys()))
-                        resources[f"Link_{db}"] = json.dumps(
-                            [db_resources.get(i) for i in db_resources]
-                        )
+    else:
+        search_name = lipid_name
+        safe_lipid_name = lipid_name
+        shorthand_name = lipid_name
+    lynx_name = convert_lipid(
+        safe_lipid_name, style=StyleType("LipidLynxX"), level="MAX"
+    )
+    biopan_name = convert_lipid(safe_lipid_name, style=StyleType("COMP_DB"))
+    resources = {
+        "Input_name": lipid_name,
+        "ShorthandNotation": shorthand_name,
+        "LipidLynxX": lynx_name,
+        "BioPAN": biopan_name,
+    }
+    print(search_name)
+    linked_ids = await get_cross_links(
+        lipid_name=search_name, export_url=True, formatted=False, related=related,
+    )
+    if isinstance(linked_ids, dict):
+        for db in linked_ids:
+            db_resources = linked_ids.get(db)
+            if db_resources and isinstance(db_resources, dict):
+                if len(list(db_resources.keys())) < 2:
+                    resources[db] = ";".join(list(db_resources.keys()))
+                    resources[f"Link_{db}"] = ";".join(
+                        [db_resources.get(i) for i in db_resources]
+                    )
                 else:
-                    resources[db] = ""
-        linked_info_dct[idx] = resources
-        # print(resources)
+                    resources[db] = json.dumps(list(db_resources.keys()))
+                    resources[f"Link_{db}"] = json.dumps(
+                        [db_resources.get(i) for i in db_resources]
+                    )
+            else:
+                resources[db] = ""
 
-        idx += 1
-    default_col = ["Input_name", "ShorthandNotation", "LipidLynxX", "BioPAN"]
-    if linked_info_dct:
-        sum_df = pd.DataFrame(data=linked_info_dct).T
-        sum_df_columns = sum_df.columns.tolist()
-        link_cols = []
-        for col in sum_df_columns:
-            if col.startswith("Link_"):
-                sum_df_columns.remove(col)
-                link_cols.append(col)
-            elif col in default_col:
-                sum_df_columns.remove(col)
-        sum_df_columns = (
-            default_col
-            + natsort.natsorted(sum_df_columns)
-            + natsort.natsorted(link_cols)
-        )
-        linked_df = pd.DataFrame(sum_df, columns=sum_df_columns)
-
-    return linked_df
+    return resources
 
 
 if __name__ == "__main__":

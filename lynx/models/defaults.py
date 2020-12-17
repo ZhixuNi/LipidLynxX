@@ -34,6 +34,7 @@ default_cv_file = get_abs_path(app_cfg_info["controlled_vocabularies"])
 default_alias_file = get_abs_path(app_cfg_info["defined_alias"])
 default_kegg_file = get_abs_path(app_cfg_info["resource_kegg"])
 default_lion_file = get_abs_path(app_cfg_info["resource_lion"])
+default_rhea_file = get_abs_path(app_cfg_info["resource_rhea"])
 default_temp_folder = app_cfg_info.get("temp_folder", r"lynx/temp")
 default_temp_max_days = int(app_cfg_info.get("temp_max_days", "3"))
 default_temp_max_files = int(app_cfg_info.get("temp_max_files", "99"))
@@ -63,6 +64,9 @@ with open(default_kegg_file, "r") as kegg_json_obj:
 
 with open(default_lion_file, "r") as lion_json_obj:
     lion_ids = json.load(lion_json_obj)
+
+with open(default_rhea_file, "r") as rhea_json_obj:
+    rhea_ids = json.load(rhea_json_obj)
 
 
 default_template_files = {

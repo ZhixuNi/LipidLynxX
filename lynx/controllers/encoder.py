@@ -155,7 +155,7 @@ class Encoder(object):
                             and c_sum_sp_o >= max_sum_sp_o_count
                         ):
                             max_sum_sp_o_count = c_sum_sp_o
-                            best_rule_score = 1
+                            best_rule_score += 1
                         else:
                             pass
 
@@ -507,7 +507,13 @@ class Encoder(object):
                     else:
                         pass
                     if c_segments_dct and c_orders:
-                        segments_dct[c] = {"ORDER": c_orders, "INFO": c_segments_dct}
+                        if c not in segments_dct:
+                            segments_dct[c] = {
+                                "ORDER": c_orders,
+                                "INFO": c_segments_dct,
+                            }
+                        else:
+                            pass
             else:
                 self.logger.warning(f"No Class identified!")
         else:
@@ -547,39 +553,57 @@ class Encoder(object):
 
         extracted_info = self.extractor.extract(lipid_name)
         export_info = []
+
+        # check the max number of residues observed and reject the rules find fewer residues
+        max_residue_count = 0
+        if extracted_info:
+            for p in extracted_info:
+                p_info = extracted_info[p]
+                self.logger.debug(p_info)
+                for in_r in p_info:
+                    r_info = p_info[in_r]
+                    r_residue_lst = r_info.get("residues", {}).get("residues_order", [])
+                    max_residue_count = max(max_residue_count, len(r_residue_lst))
+
         if extracted_info:
             for p in extracted_info:
                 p_info = extracted_info[p]
                 self.logger.debug(p_info)
                 for in_r in p_info:
                     r_info = p_info[in_r]  # type: dict
-                    checked_seg_info = self.check_segments(r_info)
-                    if checked_seg_info:
-                        comp_dct = self.compile_segments(checked_seg_info)
-                        res_info = r_info.get("residues", {}).get("residues_info", {})
-                        sum_c = 0
-                        sum_sp_o = 0
-                        is_modified = False
-                        for res in res_info:
-                            r_info_dct = res_info[res].get("info", {})
-                            sum_c += r_info_dct.get("c_count", 0)
-                            sum_sp_o += r_info_dct.get("sp_o_count", 0)
-                            mod_info_sum = r_info_dct.get("mod_info_sum", {})
-                            mod_level = mod_info_sum.get("level", 0)
-                            mod_info = mod_info_sum.get("info", {})
-                            if float(mod_level) > 0 or mod_info:
-                                is_modified = True
-                        export_info.append(
-                            {
-                                "compiled_names": comp_dct,
-                                "sum_c": sum_c,
-                                "sp_o_count": sum_sp_o,
-                                "input_rule": in_r,
-                                "is_modified": is_modified,
-                                "segments": r_info.get("segments", {}),
-                                "lmsd_classes": r_info.get("lmsd_classes", {}),
-                            }
-                        )
+                    r_residue_lst = r_info.get("residues", {}).get("residues_order", [])
+                    if len(r_residue_lst) == max_residue_count:
+                        checked_seg_info = self.check_segments(r_info)
+                        if checked_seg_info:
+                            comp_dct = self.compile_segments(checked_seg_info)
+                            res_info = r_info.get("residues", {}).get(
+                                "residues_info", {}
+                            )
+                            sum_c = 0
+                            sum_sp_o = 0
+                            is_modified = False
+                            for res in res_info:
+                                r_info_dct = res_info[res].get("info", {})
+                                sum_c += r_info_dct.get("c_count", 0)
+                                sum_sp_o += r_info_dct.get("sp_o_count", 0)
+                                mod_info_sum = r_info_dct.get("mod_info_sum", {})
+                                mod_level = mod_info_sum.get("level", 0)
+                                mod_info = mod_info_sum.get("info", {})
+                                if float(mod_level) > 0 or mod_info:
+                                    is_modified = True
+                            export_info.append(
+                                {
+                                    "compiled_names": comp_dct,
+                                    "sum_c": sum_c,
+                                    "sp_o_count": sum_sp_o,
+                                    "input_rule": in_r,
+                                    "is_modified": is_modified,
+                                    "segments": r_info.get("segments", {}),
+                                    "lmsd_classes": r_info.get("lmsd_classes", {}),
+                                }
+                            )
+                        else:
+                            pass
                     else:
                         pass
             pre_best_export_dct, best_input_rule = self.get_best_id_series(export_info)
@@ -611,9 +635,7 @@ class Encoder(object):
         return best_id
 
     def export_level(
-        self,
-        lipid_name: str,
-        level: str = "B1",
+        self, lipid_name: str, level: str = "B1",
     ):
 
         lv_id = ""

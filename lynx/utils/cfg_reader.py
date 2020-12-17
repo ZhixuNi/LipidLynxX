@@ -36,7 +36,7 @@ def load_cfg_info(cfg_path: str = None) -> Dict[str, str]:
         "output_rules",
         "resource_kegg",
         "resource_lion",
-        "resource_lion",
+        "resource_rhea",
         "temp_folder",
         "temp_max_days",
         "temp_max_files",
@@ -101,9 +101,7 @@ def load_cfg_info(cfg_path: str = None) -> Dict[str, str]:
     return cfg_dct
 
 
-def get_log_level(
-    log_level: str = "DEBUG",
-):
+def get_log_level(log_level: str = "DEBUG",):
     if re.search(r"DEBUG", log_level, re.IGNORECASE):
         level = logging.DEBUG
     elif re.search(r"CRITI", log_level, re.IGNORECASE):
